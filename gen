@@ -1,0 +1,67 @@
+#!/usr/bin/env perl
+
+use strict;
+use warnings;
+use File::Slurp qw<slurp>;
+use Pithub::Markdown;
+
+$ENV{PERL_LWP_SSL_VERIFY_HOSTNAME} = 0;
+
+my @articles = grep { -f $_ } glob('articles/*.md');
+my (@titles, @tags, @links);
+
+sub article_tmpl { my $s = slurp('templ-article.html');       $s; }
+sub index_tmpl   { my $s = slurp('templ-index.html');         $s; }
+sub index_cnt    { my $s = slurp('templ-index.content.html'); $s; }
+
+my $regen = ($ARGV[0]//'') =~ m{^-f|--force$} ? 1 : 0;
+
+foreach my $article (sort @articles) {
+  my ($title, $slug, $tag, $data, $newfn, $templ, $html) = ((split "\n", slurp($article), 4), $article, article_tmpl);
+  $newfn =~ s/\.md$/.html/g;
+
+  push @links,  $newfn;
+  push @tags,   $tag//'unfiled';
+  push @titles, $title;
+
+  if (-f "site/$newfn" && !$regen) {
+    printf "skipping: site/%s\n", $newfn;
+    next;
+  }
+
+  my $response = Pithub::Markdown->new->render(
+    data => {
+      text    => $data,
+      context => "github/gollum",
+      mode    => "gfm",
+    },
+  );
+
+  $html  = $response->raw_content;
+
+  $templ =~ s/\{\{slug\}\}/$slug/g;
+  $templ =~ s/\{\{link\}\}/articles\/$newfn/g;
+  $templ =~ s/\{\{title\}\}/$title/g;
+  $templ =~ s/\{\{tag\}\}/$tag/g;
+  $templ =~ s/\{\{content\}\}/$html/g;
+
+  printf "site/articles/%s, slug:%s,tag=%s,len=%d\n", $newfn, $slug, $tag, length($templ);
+  open my $fh, '>', "./site/$newfn" or die $!;
+  print $fh $templ;
+  close $fh;
+}
+
+
+my $index   = index_tmpl;
+my $content = '';
+for my $idx (0..@titles - 1) {
+  my $templ = index_cnt;
+  $templ   =~ s/\{\{link\}\}/$links[$idx]/g;
+  $templ   =~ s/\{\{tag\}\}/$tags[$idx]/g;
+  $templ   =~ s/\{\{title\}\}/$titles[$idx]/g;
+  $content .= "\n" . $templ;
+}
+$index =~ s/\{\{content\}\}/$content/g;
+open my $fh, '>', './site/index.html' or die $!;
+print $fh $index;
+close $fh;

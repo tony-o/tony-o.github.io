@@ -1,0 +1,237 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <link href="https://fonts.googleapis.com/css?family=Lora:400,700|Montserrat:300" rel="stylesheet" />
+    <link rel="stylesheet" href="/s/style.css" />
+  </head>
+  <body>
+    <div id="title">
+      <img src="/i/dbks.png" /> <h1>deathbykeystroke</h1>
+    </div>
+    <div id="article">
+      <h1>writing a parser, part 1</h1>
+      <h6>// filed: test</h6>
+      <h6>// perma:  <a href="https://deathbykeystroke.com/articles/articles/20211008-writing-a-parser-part-1.html">writing-a-parser-part-1</a></h6>
+
+      <h2>welcome</h2>
+<hr>
+<p><strong>Advertisement :)</strong></p>
+<ul>
+<li><strong><a href="https://nodeca.github.io/pica/demo/" rel="nofollow">pica</a></strong> - high quality and fast image<br>
+resize in browser.</li>
+<li><strong><a href="https://github.com/nodeca/babelfish/">babelfish</a></strong> - developer friendly<br>
+i18n with plurals support and easy syntax.</li>
+</ul>
+<p>You will like those projects!</p>
+<hr>
+<h1>h1 Heading 8-)</h1>
+<h2>h2 Heading</h2>
+<h3>h3 Heading</h3>
+<h4>h4 Heading</h4>
+<h5>h5 Heading</h5>
+<h6>h6 Heading</h6>
+<h2>Horizontal Rules</h2>
+<hr>
+<hr>
+<hr>
+<h2>Typographic replacements</h2>
+<p>Enable typographer option to see result.</p>
+<p>(c) (C) (r) (R) (tm) (TM) (p) (P) +-</p>
+<p>test.. test... test..... test?..... test!....</p>
+<p>!!!!!! ???? ,,  -- ---</p>
+<p>"Smartypants, double quotes" and 'single quotes'</p>
+<h2>Emphasis</h2>
+<p><strong>This is bold text</strong></p>
+<p><strong>This is bold text</strong></p>
+<p><em>This is italic text</em></p>
+<p><em>This is italic text</em></p>
+<p><del>Strikethrough</del></p>
+<h2>Blockquotes</h2>
+<blockquote>
+<p>Blockquotes can also be nested...</p>
+<blockquote>
+<p>...by using additional greater-than signs right next to each other...</p>
+<blockquote>
+<p>...or with spaces between arrows.</p>
+</blockquote>
+</blockquote>
+</blockquote>
+<h2>Lists</h2>
+<p>Unordered</p>
+<ul>
+<li>Create a list by starting a line with <code>+</code>, <code>-</code>, or <code>*</code></li>
+<li>Sub-lists are made by indenting 2 spaces:
+<ul>
+<li>Marker character change forces new list start:
+<ul>
+<li>Ac tristique libero volutpat at</li>
+</ul>
+<ul>
+<li>Facilisis in pretium nisl aliquet</li>
+</ul>
+<ul>
+<li>Nulla volutpat aliquam velit</li>
+</ul>
+</li>
+</ul>
+</li>
+<li>Very easy!</li>
+</ul>
+<p>Ordered</p>
+<ol>
+<li>
+<p>Lorem ipsum dolor sit amet</p>
+</li>
+<li>
+<p>Consectetur adipiscing elit</p>
+</li>
+<li>
+<p>Integer molestie lorem at massa</p>
+</li>
+<li>
+<p>You can use sequential numbers...</p>
+</li>
+<li>
+<p>...or keep all the numbers as <code>1.</code></p>
+</li>
+</ol>
+<p>Start numbering with offset:</p>
+<ol start="57">
+<li>foo</li>
+<li>bar</li>
+</ol>
+<h2>Code</h2>
+<p>Inline <code>code</code></p>
+<p>Indented code</p>
+<pre><code>// Some comments
+line 1 of code
+line 2 of code
+line 3 of code
+</code></pre>
+<p>Block code "fences"</p>
+<pre><code>Sample text here...
+</code></pre>
+<p>Syntax highlighting</p>
+<div class="highlight highlight-source-js"><pre><span class="pl-k">var</span> <span class="pl-en">foo</span> <span class="pl-c1">=</span> <span class="pl-k">function</span> <span class="pl-kos">(</span><span class="pl-s1">bar</span><span class="pl-kos">)</span> <span class="pl-kos">{</span>
+  <span class="pl-k">return</span> <span class="pl-s1">bar</span><span class="pl-c1">++</span><span class="pl-kos">;</span>
+<span class="pl-kos">}</span><span class="pl-kos">;</span>
+
+<span class="pl-smi">console</span><span class="pl-kos">.</span><span class="pl-en">log</span><span class="pl-kos">(</span><span class="pl-en">foo</span><span class="pl-kos">(</span><span class="pl-c1">5</span><span class="pl-kos">)</span><span class="pl-kos">)</span><span class="pl-kos">;</span></pre></div>
+<h2>Tables</h2>
+<table role="table">
+<thead>
+<tr>
+<th>Option</th>
+<th>Description</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>data</td>
+<td>path to data files to supply the data that will be passed into templates.</td>
+</tr>
+<tr>
+<td>engine</td>
+<td>engine to be used for processing templates. Handlebars is the default.</td>
+</tr>
+<tr>
+<td>ext</td>
+<td>extension to be used for dest files.</td>
+</tr>
+</tbody>
+</table>
+<p>Right aligned columns</p>
+<table role="table">
+<thead>
+<tr>
+<th align="right">Option</th>
+<th align="right">Description</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td align="right">data</td>
+<td align="right">path to data files to supply the data that will be passed into templates.</td>
+</tr>
+<tr>
+<td align="right">engine</td>
+<td align="right">engine to be used for processing templates. Handlebars is the default.</td>
+</tr>
+<tr>
+<td align="right">ext</td>
+<td align="right">extension to be used for dest files.</td>
+</tr>
+</tbody>
+</table>
+<h2>Links</h2>
+<p><a href="http://dev.nodeca.com" rel="nofollow">link text</a></p>
+<p><a href="http://nodeca.github.io/pica/demo/" title="title text!" rel="nofollow">link with title</a></p>
+<p>Autoconverted link <a href="https://github.com/nodeca/pica">https://github.com/nodeca/pica</a> (enable linkify to see)</p>
+<h2>Images</h2>
+<p><a target="_blank" rel="noopener noreferrer" href="https://camo.githubusercontent.com/02627ff320e8516fdc2b96cf161852871a25cc067312751c1c5acc736404260d/68747470733a2f2f6f63746f6465782e6769746875622e636f6d2f696d616765732f6d696e696f6e2e706e67"><img src="https://camo.githubusercontent.com/02627ff320e8516fdc2b96cf161852871a25cc067312751c1c5acc736404260d/68747470733a2f2f6f63746f6465782e6769746875622e636f6d2f696d616765732f6d696e696f6e2e706e67" alt="Minion" data-canonical-src="https://octodex.github.com/images/minion.png" style="max-width: 100%;"></a><br>
+<a target="_blank" rel="noopener noreferrer" href="https://camo.githubusercontent.com/a1cdd487e7abab37d7ee48dc2865402769f8289b02642043cec561b86ee66e4e/68747470733a2f2f6f63746f6465782e6769746875622e636f6d2f696d616765732f73746f726d74726f6f706f6361742e6a7067"><img src="https://camo.githubusercontent.com/a1cdd487e7abab37d7ee48dc2865402769f8289b02642043cec561b86ee66e4e/68747470733a2f2f6f63746f6465782e6769746875622e636f6d2f696d616765732f73746f726d74726f6f706f6361742e6a7067" alt="Stormtroopocat" title="The Stormtroopocat" data-canonical-src="https://octodex.github.com/images/stormtroopocat.jpg" style="max-width: 100%;"></a></p>
+<p>Like links, Images also have a footnote style syntax</p>
+<p><a target="_blank" rel="noopener noreferrer" href="https://camo.githubusercontent.com/da8c014c604fb244ff7e29250b273d1eb441d473eba10c1a7761885504aabf9b/68747470733a2f2f6f63746f6465782e6769746875622e636f6d2f696d616765732f646f6a6f6361742e6a7067"><img src="https://camo.githubusercontent.com/da8c014c604fb244ff7e29250b273d1eb441d473eba10c1a7761885504aabf9b/68747470733a2f2f6f63746f6465782e6769746875622e636f6d2f696d616765732f646f6a6f6361742e6a7067" alt="Alt text" title="The Dojocat" data-canonical-src="https://octodex.github.com/images/dojocat.jpg" style="max-width: 100%;"></a></p>
+<p>With a reference later in the document defining the URL location:</p>
+<h2>Plugins</h2>
+<p>The killer feature of <code>markdown-it</code> is very effective support of<br>
+<a href="https://www.npmjs.org/browse/keyword/markdown-it-plugin" rel="nofollow">syntax plugins</a>.</p>
+<h3><a href="https://github.com/markdown-it/markdown-it-emoji">Emojies</a></h3>
+<blockquote>
+<p>Classic markup: <g-emoji class="g-emoji" alias="wink" fallback-src="https://github.githubassets.com/images/icons/emoji/unicode/1f609.png">😉</g-emoji> :crush: <g-emoji class="g-emoji" alias="cry" fallback-src="https://github.githubassets.com/images/icons/emoji/unicode/1f622.png">😢</g-emoji> :tear: <g-emoji class="g-emoji" alias="laughing" fallback-src="https://github.githubassets.com/images/icons/emoji/unicode/1f606.png">😆</g-emoji> <g-emoji class="g-emoji" alias="yum" fallback-src="https://github.githubassets.com/images/icons/emoji/unicode/1f60b.png">😋</g-emoji></p>
+<p>Shortcuts (emoticons): :-) :-( 8-) ;)</p>
+</blockquote>
+<p>see <a href="https://github.com/markdown-it/markdown-it-emoji#change-output">how to change output</a> with twemoji.</p>
+<h3><a href="https://github.com/markdown-it/markdown-it-sub">Subscript</a> / <a href="https://github.com/markdown-it/markdown-it-sup">Superscript</a></h3>
+<ul>
+<li>19^th^</li>
+<li>H<del>2</del>O</li>
+</ul>
+<h3><a href="https://github.com/markdown-it/markdown-it-ins">&lt;ins&gt;</a></h3>
+<p>++Inserted text++</p>
+<h3><a href="https://github.com/markdown-it/markdown-it-mark">&lt;mark&gt;</a></h3>
+<p>==Marked text==</p>
+<h3><a href="https://github.com/markdown-it/markdown-it-footnote">Footnotes</a></h3>
+<p>Footnote 1 link<sup><a href="#user-content-fn-first-1e63380b4ebfe5c503db84726d552936" id="user-content-fnref-first-1e63380b4ebfe5c503db84726d552936" data-footnote-ref="" aria-describedby="footnote-label">1</a></sup>.</p>
+<p>Footnote 2 link<sup><a href="#user-content-fn-second-1e63380b4ebfe5c503db84726d552936" id="user-content-fnref-second-1e63380b4ebfe5c503db84726d552936" data-footnote-ref="" aria-describedby="footnote-label">2</a></sup>.</p>
+<p>Inline footnote^[Text of inline footnote] definition.</p>
+<p>Duplicated footnote reference<sup><a href="#user-content-fn-second-1e63380b4ebfe5c503db84726d552936" id="user-content-fnref-second-2-1e63380b4ebfe5c503db84726d552936" data-footnote-ref="" aria-describedby="footnote-label">2</a></sup>.</p>
+<h3><a href="https://github.com/markdown-it/markdown-it-deflist">Definition lists</a></h3>
+<p>Term 1</p>
+<p>:   Definition 1<br>
+with lazy continuation.</p>
+<p>Term 2 with <em>inline markup</em></p>
+<p>:   Definition 2</p>
+<pre><code>    { some code, part of Definition 2 }
+
+Third paragraph of definition 2.
+</code></pre>
+<p><em>Compact style:</em></p>
+<p>Term 1<br>
+~ Definition 1</p>
+<p>Term 2<br>
+~ Definition 2a<br>
+~ Definition 2b</p>
+<h3><a href="https://github.com/markdown-it/markdown-it-abbr">Abbreviations</a></h3>
+<p>This is HTML abbreviation example.</p>
+<p>It converts "HTML", but keep intact partial entries like "xxxHTMLyyy" and so on.</p>
+<p>*[HTML]: Hyper Text Markup Language</p>
+<h3><a href="https://github.com/markdown-it/markdown-it-container">Custom containers</a></h3>
+<p>::: warning<br>
+<em>here be dragons</em><br>
+:::</p>
+<section data-footnotes="" class="footnotes"><h2 id="footnote-label" class="sr-only">Footnotes</h2>
+<ol>
+<li id="user-content-fn-first-1e63380b4ebfe5c503db84726d552936">
+<p>Footnote <strong>can have markup</strong></p>
+<p>and multiple paragraphs. <a href="#user-content-fnref-first-1e63380b4ebfe5c503db84726d552936" data-footnote-backref="" class="data-footnote-backref" aria-label="Back to content"><g-emoji class="g-emoji" alias="leftwards_arrow_with_hook" fallback-src="https://github.githubassets.com/images/icons/emoji/unicode/21a9.png">↩</g-emoji></a></p>
+</li>
+<li id="user-content-fn-second-1e63380b4ebfe5c503db84726d552936">
+<p>Footnote text. <a href="#user-content-fnref-second-1e63380b4ebfe5c503db84726d552936" data-footnote-backref="" class="data-footnote-backref" aria-label="Back to content"><g-emoji class="g-emoji" alias="leftwards_arrow_with_hook" fallback-src="https://github.githubassets.com/images/icons/emoji/unicode/21a9.png">↩</g-emoji></a> <a href="#user-content-fnref-second-2-1e63380b4ebfe5c503db84726d552936" data-footnote-backref="" class="data-footnote-backref" aria-label="Back to content"><g-emoji class="g-emoji" alias="leftwards_arrow_with_hook" fallback-src="https://github.githubassets.com/images/icons/emoji/unicode/21a9.png">↩</g-emoji><sup>2</sup></a></p>
+</li>
+</ol>
+</section>
+
+    </div>
+  </body>
+</html>

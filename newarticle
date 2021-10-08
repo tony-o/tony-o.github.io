@@ -1,0 +1,27 @@
+#!/bin/bash
+
+if [[ "${1}" = "" ]]; then
+  echo 'usage: '${0}' <title>'
+  exit 1
+fi
+
+title="${1}"
+if [[ $# -ne 1 ]]; then
+  title="$*"
+fi
+
+slug="$(echo "${title}" | perl -p -e '$_ = lc($_); $_ =~ s/ /-/g; $_ =~ s/[^\w-]+//g;')"
+name="$( date +"%Y%m%d" )-${slug}.md"
+fpath="articles/${name}"
+
+echo touch $fpath
+cat << EOF > $fpath
+${title}
+${slug}
+${tags}
+
+# ${title}
+
+EOF
+
+echo "Created file: ${fpath}"
