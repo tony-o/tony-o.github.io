@@ -14,6 +14,7 @@ html, body {
 
 pre {
   white-space: pre-wrap;
+  font-size:   .8em;
 }
 
 /* colors
@@ -55,15 +56,17 @@ body > div#articles {
   padding-top: 1em;
 }
 
-body > div#title > img {
+body > div#title > a > img {
   height:         1.5em;
   vertical-align: middle;
 }
 
-body > div#title > h1 {
-  display:        inline-block;
-  vertical-align: middle;
-  font-size:      1.5em;
+body > div#title > a > h1 {
+  display:         inline-block;
+  vertical-align:  middle;
+  font-size:       1.5em;
+  color:           #171219;
+  text-decoration: none;
 }
 
 body > div#articles > table {

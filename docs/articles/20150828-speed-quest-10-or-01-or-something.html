@@ -6,7 +6,7 @@
   </head>
   <body>
     <div id="title">
-      <img src="/i/dbks.png" /> <h1>deathbykeystroke</h1>
+      <a href="/"><img src="/i/dbks.png" /></a> <a href="/"><h1>deathbykeystroke</h1></a>
     </div>
     <div id="article">
       <h1>Speed Quest 1.0, or 0.1, or something</h1>
@@ -14,82 +14,7 @@
       <h6>// <a href="https://deathbykeystroke.com/articles/20150828-speed-quest-10-or-01-or-something.html">perma</a></h6>
       <br/>
 
-      <h2>JSON Headaches</h2>
-<p>In writing <code>zef</code>, a major bottleneck in the quest for speed was the <code>to-json</code> method provided by ecosystem modules and the built-in method.  I wasn't prepared to wait 90 seconds (that's almost a minute and a half!) for the <code>CompUnitRepo::Local::Installation</code> (CURLI henceforth) to be rewritten to include newly installed modules/files.</p>
-<p>I'm an impatient man.  I want JSON but I don't want to wait for it because waiting stinks.</p>
-<p>So, we'll begin our quest for speed on generating some JSON from a perl6 <code>Hash</code> or <code>Array</code>.</p>
-<p>For this article I'm going to be using <code>built-in</code>s, <code>JSON::Tiny</code> (<code>JSON::Fast</code> is a copy from <code>Tiny</code>), and <code>Bench</code>.</p>
-<h2>How much do you bench, bro?</h2>
-<p>I'll run 30 iterations of each, 3 in instances where I don't want to wait 4 hours for this to happen.</p>
-<h3>Built-in <code>to-json</code></h3>
-<h4>Benchmark code</h4>
-<div class="highlight highlight-source-raku"><pre><span class="pl-k">use</span> Bench;
-
-<span class="pl-k">my</span> $json <span class="pl-k">=</span> from-json(<span class="pl-s"><span class="pl-pds">'</span>projects.json<span class="pl-pds">'</span></span><span class="pl-k">.</span><span class="pl-c1">IO</span><span class="pl-k">.</span><span class="pl-c1">slurp</span>);
-
-Bench<span class="pl-k">.</span><span class="pl-c1">new</span><span class="pl-k">.</span>timethis(<span class="pl-c1">3</span>, sub { to-json($json); });</pre></div>
-<h4>Results</h4>
-<pre><code>  built-in: 297.9738 wallclock secs @ 0.0101/s (n=3)
-                		(warning: too few iterations for a reliable count)
-</code></pre>
-<p>That's painfully slow.  I couldn't wait longer than <code>n=3</code> before I lost interest.</p>
-<h3>JSON::Fast</h3>
-<h4>Benchmark code</h4>
-<div class="highlight highlight-source-raku"><pre><span class="pl-k">use</span> Bench;
-<span class="pl-k">use</span> JSON::Fast;
-
-<span class="pl-k">my</span> $json <span class="pl-k">=</span> from-json(<span class="pl-s"><span class="pl-pds">'</span>projects.json<span class="pl-pds">'</span></span><span class="pl-k">.</span><span class="pl-c1">IO</span><span class="pl-k">.</span><span class="pl-c1">slurp</span>);
-
-Bench<span class="pl-k">.</span><span class="pl-c1">new</span><span class="pl-k">.</span>timethis(<span class="pl-c1">3</span>, sub { to-json($json); });</pre></div>
-<h4>Results</h4>
-<pre><code> json-fast: 295.2473 wallclock secs @ 0.0102/s (n=3)
-                		(warning: too few iterations for a reliable count)
-</code></pre>
-<h3>Conclusion</h3>
-<p>Same.  Too slow and I don't want to sit around waiting for this one to complete.  296 seconds is too long to wait.</p>
-<p>I must do something about this.</p>
-<h2>What I wrote</h2>
-<p>I ended up writing a very simplistic recursive method as a comparative speed test.  It turned out to be super fast on the first try (at least compared to <code>built-in</code> and <code>J:F</code>).</p>
-<p>Here is the code from the initial commit</p>
-<div class="highlight highlight-source-raku"><pre><span class="pl-k">sub</span> to-json($obj, <span class="pl-c1">Bool</span> <span class="pl-k">:</span>$pretty<span class="pl-k">?</span> <span class="pl-k">=</span> <span class="pl-c1">True</span>, <span class="pl-c1">Int</span> <span class="pl-k">:</span>$level<span class="pl-k">?</span> <span class="pl-k">=</span> <span class="pl-c1">0</span>, <span class="pl-c1">Int</span> <span class="pl-k">:</span>$spacing<span class="pl-k">?</span> <span class="pl-k">=</span> <span class="pl-c1">2</span>) <span class="pl-k">is</span> <span class="pl-en">export</span> {
-  <span class="pl-k">CATCH</span> { <span class="pl-k">default</span> { <span class="pl-k">.</span><span class="pl-c1">say</span>; } }
-  <span class="pl-k">return</span> <span class="pl-s"><span class="pl-pds">"</span><span class="pl-pse">{</span>$obj<span class="pl-pse">}</span><span class="pl-pds">"</span></span>     <span class="pl-k">if</span> $obj <span class="pl-k">~~</span> <span class="pl-c1">Int</span> <span class="pl-k">||</span> $obj <span class="pl-k">~~</span> <span class="pl-c1">Rat</span>;
-  <span class="pl-k">return</span> <span class="pl-s"><span class="pl-pds">"</span><span class="pl-cce">\"</span><span class="pl-pse">{</span>$obj<span class="pl-k">.</span><span class="pl-c1">subst</span>(/<span class="pl-sr"><span class="pl-s">'"'</span></span>/, <span class="pl-s"><span class="pl-pds">'</span><span class="pl-cce">\\</span>"<span class="pl-pds">'</span></span>, <span class="pl-k">:</span>g)<span class="pl-pse">}</span><span class="pl-cce">\"</span><span class="pl-pds">"</span></span> <span class="pl-k">if</span> $obj <span class="pl-k">~~</span> <span class="pl-c1">Str</span>;
-
-  <span class="pl-k">my</span> <span class="pl-c1">Str</span>  $out <span class="pl-k">=</span> <span class="pl-s"><span class="pl-pds">'</span><span class="pl-pds">'</span></span>;
-  <span class="pl-k">my</span> <span class="pl-c1">Int</span>  $lvl <span class="pl-k">=</span> $level;
-  <span class="pl-k">my</span> <span class="pl-c1">Bool</span> $arr <span class="pl-k">=</span> $obj <span class="pl-k">~~</span> <span class="pl-c1">Array</span>;
-  <span class="pl-k">my</span> $spacer   <span class="pl-k">=</span> sub {
-    $out <span class="pl-k">~</span><span class="pl-k">=</span> <span class="pl-s"><span class="pl-pds">"</span><span class="pl-cce">\n</span><span class="pl-pds">"</span></span> <span class="pl-k">~</span> (<span class="pl-s"><span class="pl-pds">'</span> <span class="pl-pds">'</span></span> <span class="pl-k">x</span> $lvl<span class="pl-k">*</span>$spacing) <span class="pl-k">if</span> $pretty;
-  };
-
-  $out <span class="pl-k">~</span><span class="pl-k">=</span> $arr <span class="pl-k">??</span> <span class="pl-s"><span class="pl-pds">'</span>[<span class="pl-pds">'</span></span> <span class="pl-k">!!</span> <span class="pl-s"><span class="pl-pds">'</span>{<span class="pl-pds">'</span></span>;
-  $lvl<span class="pl-k">++</span>;
-  $spacer();
-  <span class="pl-k">if</span> $arr {
-    <span class="pl-k">for</span> <span class="pl-k">@</span>($obj) <span class="pl-k">-&gt;</span> $i {
-      $out <span class="pl-k">~</span><span class="pl-k">=</span> to-json($i, <span class="pl-k">:</span>level($level<span class="pl-k">+</span>1), <span class="pl-k">:</span>$spacing, <span class="pl-k">:</span>$pretty) <span class="pl-k">~</span> <span class="pl-s"><span class="pl-pds">'</span>,<span class="pl-pds">'</span></span>;
-      $spacer();
-    }
-  } <span class="pl-k">else</span> {
-    <span class="pl-k">for</span> $obj<span class="pl-k">.</span><span class="pl-c1">keys</span> <span class="pl-k">-&gt;</span> $<span class="pl-c1">key</span> {
-      $out <span class="pl-k">~</span><span class="pl-k">=</span> <span class="pl-s"><span class="pl-pds">"</span><span class="pl-cce">\"</span><span class="pl-pse">{</span>$<span class="pl-c1">key</span><span class="pl-k">.</span><span class="pl-c1">subst</span>(/<span class="pl-sr"><span class="pl-s">'"'</span></span>/, <span class="pl-s"><span class="pl-pds">'</span><span class="pl-cce">\\</span>"<span class="pl-pds">'</span></span>, <span class="pl-k">:</span>g)<span class="pl-pse">}</span><span class="pl-cce">\"</span>: <span class="pl-pds">"</span></span> <span class="pl-k">~</span> to-json($obj{$<span class="pl-c1">key</span>}, <span class="pl-k">:</span>level($level<span class="pl-k">+</span>1), <span class="pl-k">:</span>$spacing, <span class="pl-k">:</span>$pretty) <span class="pl-k">~</span> <span class="pl-s"><span class="pl-pds">'</span>,<span class="pl-pds">'</span></span>;
-      $spacer();
-    }
-  }
-  $out <span class="pl-k">.=</span><span class="pl-c1">subst</span>(/<span class="pl-sr"><span class="pl-s">','</span> <span class="pl-cce">\s</span><span class="pl-k">*</span> <span class="pl-en">$</span></span>/, <span class="pl-s"><span class="pl-pds">'</span><span class="pl-pds">'</span></span>);
-  $lvl<span class="pl-k">--</span>;
-  $spacer();
-  $out <span class="pl-k">~</span><span class="pl-k">=</span> $arr <span class="pl-k">??</span> <span class="pl-s"><span class="pl-pds">'</span>]<span class="pl-pds">'</span></span> <span class="pl-k">!!</span> <span class="pl-s"><span class="pl-pds">'</span>}<span class="pl-pds">'</span></span>;
-  <span class="pl-k">return</span> $out;
-}</pre></div>
-<p>Yea, there are a few bugs that were discovered since and have been fixed.  But the benchmark results of that were:</p>
-<pre><code>json-faster: 5.9204 wallclock secs @ 0.5067/s (n=3)
-               		(warning: too few iterations for a reliable count)
-</code></pre>
-<p>Not great, but that's 292 seconds you won't be sitting around cleaning your nose.</p>
-<p>Awesome.</p>
-<p>PS A PR has been submitted to <code>JSON::Fast</code> to include the faster <code>to-json</code> method and includes the bug fixes.  If you'd like to check that out, check <a href="https://github.com/timo/json_fast/pull/2" data-hovercard-type="pull_request" data-hovercard-url="/timo/json_fast/pull/2/hovercard">here</a></p>
+      {"message":"API rate limit exceeded for 73.13.220.22. (But here's the good news: Authenticated requests get a higher rate limit. Check out the documentation for more details.)","documentation_url":"https://docs.github.com/rest/overview/resources-in-the-rest-api#rate-limiting"}
 
     </div>
   </body>
