@@ -1,0 +1,90 @@
+* {
+  box-sizing:  border-box;
+}
+html, body {
+  min-height:  100%;
+  min-width:   100%;
+  font-size:   16pt;
+  font-family: 'Lora', serif;
+  background:  #E6EFE9;
+  color:       #171219;
+}
+
+/* colors
+// slate gray  #6B717E
+// mint cream  #E6EFE9
+// aero blue   #C5F4E0
+// xiketic     #171219
+// flickr pink #F72585
+*/
+
+h1, h2, h3, h4, h5, h6 {
+ font-family:    'Montserrat', sans-serif;
+ font-weight:    300;
+ text-transform: uppercase;
+ color:          #6B717E;
+}
+
+h1 { color: #171219; }
+
+a {
+  color:       #F72585;
+  font-weight: bold;
+}
+
+a#visited,
+a:hover {
+  color: #EC0B43;
+}
+
+body > div#title,
+body > div#article, 
+body > div#articles {
+  width:   100%;
+  padding: 5% 10% 0 10%;
+}
+
+body > div#article,
+body > div#articles {
+  padding-top: 1em;
+}
+
+body > div#title > img {
+  height:         1.5em;
+  vertical-align: middle;
+}
+
+body > div#title > h1 {
+  display:        inline-block;
+  vertical-align: middle;
+  font-size:      1.5em;
+}
+
+body > div#articles > table {
+  border-spacing:  0 1em;
+  border-collapse: separate;
+  width:           100%;
+}
+
+body > div#articles > table tr > td:first-child {
+  border-left: 1pt rgba(0,0,0,0) solid;
+}
+
+body > div#articles > table tr:hover > td:first-child {
+  border-left-color: #EC0B43;
+  border-right-color: #EC0B43;
+}
+
+body > div#articles > table td {
+  padding: .25em 0 .25em .5em;
+}
+
+body > div#articles > table td.tag {
+  border-right: 1px #6B717E solid;
+  width:        20%;
+}
+
+body > div#article > h1,
+body > div#article > h6 {
+  margin: 0;
+}
