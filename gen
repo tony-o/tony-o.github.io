@@ -24,8 +24,8 @@ foreach my $article (sort @articles) {
   push @tags,   $tag//'unfiled';
   push @titles, $title;
 
-  if (-f "site/$newfn" && !$regen) {
-    printf "skipping: site/%s\n", $newfn;
+  if (-f "docs/$newfn" && !$regen) {
+    printf "skipping: docs/%s\n", $newfn;
     next;
   }
 
@@ -40,13 +40,13 @@ foreach my $article (sort @articles) {
   $html  = $response->raw_content;
 
   $templ =~ s/\{\{slug\}\}/$slug/g;
-  $templ =~ s/\{\{link\}\}/articles\/$newfn/g;
+  $templ =~ s/\{\{link\}\}/$newfn/g;
   $templ =~ s/\{\{title\}\}/$title/g;
   $templ =~ s/\{\{tag\}\}/$tag/g;
   $templ =~ s/\{\{content\}\}/$html/g;
 
-  printf "site/articles/%s, slug:%s,tag=%s,len=%d\n", $newfn, $slug, $tag, length($templ);
-  open my $fh, '>', "./site/$newfn" or die $!;
+  printf "docs/articles/%s, slug:%s,tag=%s,len=%d\n", $newfn, $slug, $tag, length($templ);
+  open my $fh, '>', "./docs/$newfn" or die $!;
   print $fh $templ;
   close $fh;
 }
@@ -62,6 +62,6 @@ for my $idx (0..@titles - 1) {
   $content .= "\n" . $templ;
 }
 $index =~ s/\{\{content\}\}/$content/g;
-open my $fh, '>', './site/index.html' or die $!;
+open my $fh, '>', './docs/index.html' or die $!;
 print $fh $index;
 close $fh;
