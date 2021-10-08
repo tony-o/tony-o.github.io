@@ -16,7 +16,7 @@ sub index_cnt    { my $s = slurp('templ-index.content.html'); $s; }
 
 my $regen = ($ARGV[0]//'') =~ m{^-f|--force$} ? 1 : 0;
 
-foreach my $article (sort @articles) {
+foreach my $article (reverse sort @articles) {
   my ($title, $slug, $tag, $data, $newfn, $templ, $html) = ((split "\n", slurp($article), 4), $article, article_tmpl);
   $newfn =~ s/\.md$/.html/g;
 

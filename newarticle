@@ -20,8 +20,6 @@ ${title}
 ${slug}
 ${tags}
 
-# ${title}
-
 EOF
 
 echo "Created file: ${fpath}"
