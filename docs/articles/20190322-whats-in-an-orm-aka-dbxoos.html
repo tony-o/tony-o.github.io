@@ -1,0 +1,243 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <link href="https://fonts.googleapis.com/css?family=Lora:400,700|Montserrat:300" rel="stylesheet" />
+    <link rel="stylesheet" href="/s/style.css" />
+  </head>
+  <body>
+    <div id="title">
+      <img src="/i/dbks.png" /> <h1>deathbykeystroke</h1>
+    </div>
+    <div id="article">
+      <h1>What's in an ORM, aka DB::Xoos</h1>
+      <h6>// filed: rakudo</h6>
+      <h6>// perma:  <a href="https://deathbykeystroke.com/articles/20190322-whats-in-an-orm-aka-dbxoos.html">whats-in-an-orm-aka-dbxoos</a></h6>
+
+      <p>Using an ORM makes your code look a little cleaner.  Today we can take a look at Xoos, an ORM aimed at making your life simpler, your code cleaner, and not getting in the way of your development.</p>
+<p>This article will cover implementing an ERD in your code and show example uses.</p>
+<p>Key features of Xoos:</p>
+<ul>
+<li>flexible configuration (YAML files as well as classes, or just one or the other)</li>
+<li>relational modeling made easy</li>
+<li>convenience methods on both rows &amp; models</li>
+<li>validation</li>
+</ul>
+<h3>quick terminology</h3>
+<h4>model</h4>
+<p>You can think of this in database terms as a table but in the rest of the article a <code>model</code> is meant to mean the class+{convenience methods}+{optional yaml}</p>
+<p>If you're coming from DBIx this can be thought of the same as a resultclass.</p>
+<h4>row</h4>
+<p>Think of this in terms of the row class+{convenience methods}+{columns inherited from the model}</p>
+<h3>set up</h3>
+<p>Using zef we'll install Xoos (if YAML::Parser::LibYAML fails to install or you don't want to install libyaml, then don't fret - you don't need it and it's just in the article to demonstrate YAML models).</p>
+<p><code>zef install DB::Xoos YAML::Parser::LibYAML</code></p>
+<p>SQLite3, we'll create the following ERD.</p>
+<p><a target="_blank" rel="noopener noreferrer" href="https://camo.githubusercontent.com/7600ad769ba72e564633e84d075ad2dcb598f0a4e5b38a7e24bb7a9328d73a41/68747470733a2f2f646561746862797065726c362e636f6d2f636f6e74656e742f696d616765732f323031392f30332f44617461626173652d45522d4469616772616d2d2d342d2e737667"><img src="https://camo.githubusercontent.com/7600ad769ba72e564633e84d075ad2dcb598f0a4e5b38a7e24bb7a9328d73a41/68747470733a2f2f646561746862797065726c362e636f6d2f636f6e74656e742f696d616765732f323031392f30332f44617461626173652d45522d4469616772616d2d2d342d2e737667" alt="Database-ER-Diagram--4-" data-canonical-src="https://deathbyperl6.com/content/images/2019/03/Database-ER-Diagram--4-.svg" style="max-width: 100%;"></a></p>
+<pre><code>example$ sqlite3 xoos.sqlite3
+SQLite version 3.19.3 2017-06-27 16:48:08
+Enter ".help" for usage hints.
+
+sqlite&gt; create table books (book_id integer primary key autoincrement, title varchar(64) not null, author_id integer not null, date_published date, price float not null);
+
+sqlite&gt; create table authors (author_id integer primary key autoincrement, name varchar(64) not null, birth_date date);
+
+sqlite&gt; create table customers (customer_id integer primary key autoincrement, email_address varchar(64) not null, name varchar(64) not null, date_registered date default (datetime('now','localtime')));
+
+sqlite&gt; create table orders (order_id integer primary key autoincrement, customer_id integer not null, order_date date default (datetime('now','localtime')));
+
+sqlite&gt; create table order_details (order_detail_id integer primary key autoincrement, order_id integer not null, book_id integer not null);
+
+sqlite&gt; .quit
+</code></pre>
+<p>That's it for setup.  Now we can start using Xoos and implementing our application.</p>
+<h3>commence coding!</h3>
+<p>This example is going to contain a <code>lib</code> directory and a bunch of other scripts for doing useful things with our models/rows.</p>
+<h4>ORM setup</h4>
+<p>Now we must create our ORM classes.</p>
+<p>We'll develop two of the models, one with standard perl6 and one using YAML, the rest of ERD can be implemented as a practice <em>or</em> the entire project can be downloaded at the end of the article.</p>
+<h5>App::Model::Book</h5>
+<p>In our path we're going to use the prefix of <code>App</code> for our models and rows.  If you haven't already and you're following along, then create the directory <code>lib/App/Model</code> and then edit the file <code>lib/App/Model/Book.pm6</code>.</p>
+<div class="highlight highlight-source-raku"><pre><span class="pl-k">use</span> DB::Xoos::Model;
+unit <span class="pl-k">class</span> <span class="pl-en">App::Model::Book</span> <span class="pl-k">does</span> DB::Xoos::Model[<span class="pl-s"><span class="pl-pds">'</span>books<span class="pl-pds">'</span></span>];
+
+<span class="pl-s">qw</span><span class="pl-pds">&lt;</span><span class="pl-s">...</span><span class="pl-pds">&gt;</span></pre></div>
+<p>Here we are simply defining our class and telling DB::Xoos to use the table <code>books</code> as our source of data for this model.  Next we'll let the ORM know what columns are available.</p>
+<div class="highlight highlight-source-raku"><pre><span class="pl-k">has</span> @<span class="pl-k">.</span>columns <span class="pl-k">=</span> [
+  <span class="pl-s">book_id </span><span class="pl-k">=&gt;</span> {
+   <span class="pl-s">type           </span><span class="pl-k">=&gt;</span> <span class="pl-s"><span class="pl-pds">'</span>integer<span class="pl-pds">'</span></span>,
+   <span class="pl-s">is-primary-key </span><span class="pl-k">=&gt;</span> <span class="pl-c1">True</span>,
+   <span class="pl-s">auto-increment </span><span class="pl-k">=&gt;</span> <span class="pl-c1">True</span>,
+  },
+  <span class="pl-s">title </span><span class="pl-k">=&gt;</span> {
+    <span class="pl-s">type     </span><span class="pl-k">=&gt;</span> <span class="pl-s"><span class="pl-pds">'</span>varchar<span class="pl-pds">'</span></span>,
+    <span class="pl-s">nullable </span><span class="pl-k">=&gt;</span> <span class="pl-c1">False</span>,
+    <span class="pl-s">length   </span><span class="pl-k">=&gt;</span> <span class="pl-s"><span class="pl-pds">'</span>64<span class="pl-pds">'</span></span>,
+  },
+  <span class="pl-s">author_id </span><span class="pl-k">=&gt;</span> {
+    <span class="pl-s">type   </span><span class="pl-k">=&gt;</span> <span class="pl-s"><span class="pl-pds">'</span>varchar<span class="pl-pds">'</span></span>,
+    <span class="pl-s">nullable </span><span class="pl-k">=&gt;</span> <span class="pl-c1">False</span>,
+    <span class="pl-s">length </span><span class="pl-k">=&gt;</span> <span class="pl-s"><span class="pl-pds">'</span>64<span class="pl-pds">'</span></span>,
+  },
+  <span class="pl-s">date_published </span><span class="pl-k">=&gt;</span> {
+    <span class="pl-s">type   </span><span class="pl-k">=&gt;</span> <span class="pl-s"><span class="pl-pds">'</span>date<span class="pl-pds">'</span></span>,
+  },
+  <span class="pl-s">price </span><span class="pl-k">=&gt;</span> {
+    <span class="pl-s">type   </span><span class="pl-k">=&gt;</span> <span class="pl-s"><span class="pl-pds">'</span>float<span class="pl-pds">'</span></span>,
+  },
+];</pre></div>
+<p>Fairly straight forward.  Using <code>is-primary-key</code> on multiple columns will allow you to key off of multiple columns, creating a compounded key.</p>
+<div class="highlight highlight-source-raku"><pre><span class="pl-k">has</span> @<span class="pl-k">.</span>relations <span class="pl-k">=</span> [
+  <span class="pl-s">authors </span><span class="pl-k">=&gt;</span> {
+    <span class="pl-k">:</span>has-one,
+    <span class="pl-k">:</span>model&lt;<span class="pl-s">Author</span>&gt;,
+    <span class="pl-k">:</span>relate(<span class="pl-s">author_id </span><span class="pl-k">=&gt;</span> <span class="pl-s"><span class="pl-pds">'</span>author_id<span class="pl-pds">'</span></span>),
+  },
+  <span class="pl-s">order_details </span><span class="pl-k">=&gt;</span> {
+    <span class="pl-k">:</span>has-many,
+    <span class="pl-k">:</span>model&lt;<span class="pl-s">OrderDetails</span>&gt;,
+    <span class="pl-k">:</span>relate(<span class="pl-s">book_id </span><span class="pl-k">=&gt;</span> <span class="pl-s"><span class="pl-pds">'</span>book_id<span class="pl-pds">'</span></span>),
+  },
+];</pre></div>
+<p>Here we're defining the relationships that models have with other models.  We have a 1:N with <code>:has-many</code> and a 1:1 with <code>:has-one</code>.</p>
+<p>After that our model is defined and if we have no <code>row</code> methods we would like to implement then we're done.</p>
+<h5>App::Model::OrderDetail</h5>
+<p>If you haven't already and you're following along, then create and edit the file <code>models/orderdetail.yaml</code>.</p>
+<div class="highlight highlight-source-yaml"><pre><span class="pl-ent">table</span>: <span class="pl-s">order_details</span>
+<span class="pl-ent">name</span>: <span class="pl-s">OrderDetail</span>
+<span class="pl-ent">columns</span>:
+  <span class="pl-ent">order_detail_id</span>:
+    <span class="pl-ent">type</span>: <span class="pl-s">integer</span>
+    <span class="pl-ent">nullable</span>: <span class="pl-c1">false</span>
+    <span class="pl-ent">is-primary-key</span>: <span class="pl-c1">true</span>
+    <span class="pl-ent">auto-increment</span>: <span class="pl-c1">true</span>
+  <span class="pl-ent">order_id</span>:
+    <span class="pl-ent">type</span>: <span class="pl-s">integer</span>
+    <span class="pl-ent">nullable</span>: <span class="pl-c1">false</span>
+  <span class="pl-ent">book_id</span>:
+    <span class="pl-ent">type</span>: <span class="pl-s">integer</span>
+    <span class="pl-ent">nullable</span>: <span class="pl-c1">false</span>
+<span class="pl-ent">relations</span>:
+  <span class="pl-ent">book</span>:
+    <span class="pl-ent">has-one</span>: <span class="pl-c1">true</span>
+    <span class="pl-ent">model</span>: <span class="pl-s">Book</span>
+    <span class="pl-ent">relate</span>:
+      <span class="pl-ent">book_id</span>: <span class="pl-s">book_id</span>
+  <span class="pl-ent">order</span>:
+    <span class="pl-ent">has-one</span>: <span class="pl-c1">true</span>
+    <span class="pl-ent">model</span>: <span class="pl-s">Order</span>
+    <span class="pl-ent">relate</span>:
+      <span class="pl-ent">order_id</span>: <span class="pl-s">order_id</span></pre></div>
+<p>As you can see this is essentially doing what we did above without necessitating the explicit creation of the entire class.</p>
+<p><em>Note: using yaml doesn't preclude you from putting model methods in a class App::Model::OrderDetail but it can make your model class methods look cleaner!</em></p>
+<h5>App::Model::*</h5>
+<p>The rest of the model creations would be redundant so, the rest of the exercise is left as just that (or it's available at the end of the article).</p>
+<p>That's it!  Your models are ready to be used, the rest of the code is going to be in scripts placed in the <code>bin/</code> folder.</p>
+<h3>Example Usage</h3>
+<h4>First ORM usage</h4>
+<p>We'll list what models we have available to us from ORM, this script is called <code>show-models</code>.  All of the following examples will assume you've done the same code up to and including the <code>.connect</code> and will be omitted for brevity.</p>
+<div class="highlight highlight-source-raku"><pre><span class="pl-k">use</span> DB::Xoos::SQLite;
+
+<span class="pl-k">my</span> $xoos <span class="pl-k">=</span> DB::Xoos::SQLite<span class="pl-k">.</span><span class="pl-c1">new</span>;
+
+$xoos<span class="pl-k">.</span><span class="pl-c1">connect</span>(<span class="pl-s"><span class="pl-pds">'</span>sqlite://xoos.sqlite3<span class="pl-pds">'</span></span>, <span class="pl-k">:</span>options({
+    <span class="pl-k">:</span>prefix&lt;<span class="pl-s">App</span>&gt;,               <span class="pl-c"><span class="pl-c">#</span> loads classes from App::Model::*</span>
+    <span class="pl-s">model-dirs </span><span class="pl-k">=&gt;</span> [<span class="pl-s">qw</span><span class="pl-pds">&lt;</span><span class="pl-s">models</span><span class="pl-pds">&gt;</span>], <span class="pl-c"><span class="pl-c">#</span> for our yaml column definitions</span>
+}));
+
+<span class="pl-s"><span class="pl-pds">"</span>Successfully loaded models:<span class="pl-cce">\n</span>  <span class="pl-pse">{</span>$xoos<span class="pl-k">.</span>loaded-models<span class="pl-k">.</span><span class="pl-c1">join</span>(<span class="pl-s"><span class="pl-pds">"</span><span class="pl-cce">\n</span>  <span class="pl-pds">"</span></span>)<span class="pl-pse">}</span><span class="pl-pds">"</span></span><span class="pl-k">.</span><span class="pl-c1">say</span>;</pre></div>
+<p>This script should output something like:</p>
+<pre><code>Successfully loaded models:
+  Customer
+  Author
+  OrderDetail
+  Order
+  Books
+</code></pre>
+<p>While not entirely useful, it does let us know that everything loaded well.  Now let's fill up our tables.</p>
+<h4>Loading data into tables from CSV</h4>
+<p>This script will use <code>Text::CSV</code> and load data from <code>data/books.csv</code> and generate other made up data.  This is a truncated version because it's mostly long and repititous for our use.  Generating customers, orders, and order details is left to the user or, again, you can find a full script in the file at the end of the article.</p>
+<div class="highlight highlight-source-raku"><pre><span class="pl-s">qw</span><span class="pl-pds">&lt;</span><span class="pl-s">snipped setup for Xoos</span><span class="pl-pds">&gt;</span>;
+<span class="pl-k">use</span> Text::CSV;
+
+<span class="pl-k">my</span> @rows    <span class="pl-k">=</span> csv(<span class="pl-k">:</span>in(<span class="pl-s"><span class="pl-pds">'</span>data/books.csv<span class="pl-pds">'</span></span>));
+
+<span class="pl-k">my</span> $book <span class="pl-k">=</span> $xoos<span class="pl-k">.</span>model(<span class="pl-s"><span class="pl-pds">'</span>Book<span class="pl-pds">'</span></span>);
+<span class="pl-k">my</span> $auth <span class="pl-k">=</span> $xoos<span class="pl-k">.</span>model(<span class="pl-s"><span class="pl-pds">'</span>Author<span class="pl-pds">'</span></span>);
+
+<span class="pl-c"><span class="pl-c">#</span> generate book and author data from csv</span>
+<span class="pl-k">for</span> @rows[<span class="pl-c1">1</span><span class="pl-k">..</span><span class="pl-c1">*</span>] <span class="pl-k">-&gt;</span> $row {
+
+  <span class="pl-c"><span class="pl-c">#</span> determine whether an author by that name exists, this isn't</span>
+  <span class="pl-c"><span class="pl-c">#</span> robust as there may be many authors by the same name</span>
+  <span class="pl-k">my</span> $author <span class="pl-k">=</span> $auth<span class="pl-k">.</span>search({
+    <span class="pl-s">name </span><span class="pl-k">=&gt;</span> $row[<span class="pl-c1">1</span>] <span class="pl-k">eq</span> <span class="pl-s"><span class="pl-pds">'</span><span class="pl-pds">'</span></span> <span class="pl-k">??</span> <span class="pl-s"><span class="pl-pds">'</span>unknown<span class="pl-pds">'</span></span> <span class="pl-k">!!</span> $row[<span class="pl-c1">1</span>];
+  });
+
+  <span class="pl-c"><span class="pl-c">#</span> if an author was found, use it</span>
+  <span class="pl-k">if</span> $author<span class="pl-k">.</span><span class="pl-c1">count</span> {
+    $author <span class="pl-k">.=</span><span class="pl-c1">first</span>;
+  } <span class="pl-k">else</span> {
+    $author <span class="pl-k">=</span> $auth<span class="pl-k">.</span>new-row;
+    $author<span class="pl-k">.</span><span class="pl-c1">name</span>($row[<span class="pl-c1">1</span>] <span class="pl-k">eq</span> <span class="pl-s"><span class="pl-pds">'</span><span class="pl-pds">'</span></span> <span class="pl-k">??</span> <span class="pl-s"><span class="pl-pds">'</span>unknown<span class="pl-pds">'</span></span> <span class="pl-k">!!</span> $row[<span class="pl-c1">1</span>]);
+    $author<span class="pl-k">.</span>update;
+  }
+
+  <span class="pl-c"><span class="pl-c">#</span> create our book and generate a random price</span>
+  $book<span class="pl-k">.</span>new-row({
+    <span class="pl-s">author_id </span><span class="pl-k">=&gt;</span> $author<span class="pl-k">.</span>author_id,
+    <span class="pl-s">title     </span><span class="pl-k">=&gt;</span> $row[<span class="pl-c1">0</span>],
+    <span class="pl-s">price     </span><span class="pl-k">=&gt;</span> (<span class="pl-c1">299</span> <span class="pl-k">..</span> <span class="pl-c1">5000</span>)<span class="pl-k">.</span><span class="pl-c1">pick</span>(<span class="pl-c1">1</span>)[<span class="pl-c1">0</span>] <span class="pl-k">/</span> <span class="pl-c1">100</span>,
+  })<span class="pl-k">.</span>update;
+}</pre></div>
+<h4>Viewing or finding customer information</h4>
+<p>In this example we'll be using a relationship on customer to get the number of orders and how many items each order contained. The script <em>also</em> uses a convenience method built upon the <code>App::Row::Customer</code> to show how many total items they've ordered.</p>
+<div class="highlight highlight-source-raku"><pre><span class="pl-k">use</span> DB::Xoos::SQLite;
+<span class="pl-k">my</span> DB::Xoos::SQLite $db <span class="pl-k">.=</span><span class="pl-c1">new</span>;
+
+
+<span class="pl-k">multi</span> MAIN(<span class="pl-k">:</span>$email<span class="pl-k">?</span>, <span class="pl-k">:</span>$<span class="pl-c1">name</span>, <span class="pl-k">:</span>$customer-id) {
+
+  $db<span class="pl-k">.</span><span class="pl-c1">connect</span>(<span class="pl-s"><span class="pl-pds">'</span>sqlite://xoos.sqlite3<span class="pl-pds">'</span></span>, <span class="pl-k">:</span>options({
+    <span class="pl-s">model-dirs </span><span class="pl-k">=&gt;</span> [<span class="pl-s">qw</span><span class="pl-pds">&lt;</span><span class="pl-s">models</span><span class="pl-pds">&gt;</span>],
+    <span class="pl-s">prefix     </span><span class="pl-k">=&gt;</span> <span class="pl-s"><span class="pl-pds">'</span>App<span class="pl-pds">'</span></span>,
+  }));
+
+
+  <span class="pl-k">my</span> <span class="pl-k">%</span>search;
+  <span class="pl-k">my</span> $customers <span class="pl-k">=</span> $db<span class="pl-k">.</span>model(<span class="pl-s"><span class="pl-pds">'</span>Customer<span class="pl-pds">'</span></span>);
+
+  <span class="pl-k">%</span>search&lt;<span class="pl-s">customer_id</span>&gt; <span class="pl-k">=</span> $customer-id <span class="pl-k">if</span> $customer-id<span class="pl-k">.</span><span class="pl-c1">defined</span>;
+  <span class="pl-k">%</span>search&lt;<span class="pl-s">name</span>&gt;        <span class="pl-k">=</span> <span class="pl-k">%</span>(
+    <span class="pl-s"><span class="pl-pds">'</span>like<span class="pl-pds">'</span></span> <span class="pl-k">=&gt;</span> <span class="pl-s"><span class="pl-pds">'</span>%<span class="pl-pds">'</span></span> <span class="pl-k">~</span> $<span class="pl-c1">name</span> <span class="pl-k">~</span> <span class="pl-s"><span class="pl-pds">'</span>%<span class="pl-pds">'</span></span>,
+  ) <span class="pl-k">if</span> $<span class="pl-c1">name</span><span class="pl-k">.</span><span class="pl-c1">defined</span>;
+  <span class="pl-k">%</span>search&lt;<span class="pl-s">email_address</span>&gt;        <span class="pl-k">=</span> <span class="pl-k">%</span>(
+    <span class="pl-s"><span class="pl-pds">'</span>like<span class="pl-pds">'</span></span> <span class="pl-k">=&gt;</span> <span class="pl-s"><span class="pl-pds">'</span>%<span class="pl-pds">'</span></span> <span class="pl-k">~</span> $email <span class="pl-k">~</span> <span class="pl-s"><span class="pl-pds">'</span>%<span class="pl-pds">'</span></span>,
+  ) <span class="pl-k">if</span> $email<span class="pl-k">.</span><span class="pl-c1">defined</span>;
+
+  <span class="pl-k">if</span> <span class="pl-k">%</span>search<span class="pl-k">.</span><span class="pl-c1">keys</span> {
+    $customers <span class="pl-k">.=</span>search(%search);
+    <span class="pl-c1">say</span> <span class="pl-s"><span class="pl-pds">"</span>Searching with params:<span class="pl-pds">"</span></span>;
+    <span class="pl-c1">dd</span> <span class="pl-k">%</span>search;
+  }
+  <span class="pl-c1">say</span> <span class="pl-s"><span class="pl-pds">'</span>Customer info:<span class="pl-pds">'</span></span>;
+  <span class="pl-c1">printf</span> <span class="pl-s"><span class="pl-pds">"</span>| %-14s | %-17s | %-14s | %-12s | %-14s |<span class="pl-cce">\n</span><span class="pl-pds">"</span></span>, <span class="pl-s">qw</span><span class="pl-pds">&lt;</span><span class="pl-s">customer_id email name orders order-items</span><span class="pl-pds">&gt;</span>;
+  <span class="pl-c1">say</span> <span class="pl-s"><span class="pl-pds">'</span>x<span class="pl-pds">'</span></span> <span class="pl-k">x</span> <span class="pl-c1">87</span>;
+
+  <span class="pl-k">for</span> $customers<span class="pl-k">.</span><span class="pl-c1">all</span> <span class="pl-k">-&gt;</span> $customer {
+    <span class="pl-c1">printf</span> <span class="pl-s"><span class="pl-pds">"</span>| %-14s | %-17s | %-14s | %-12s | %-14s |<span class="pl-cce">\n</span><span class="pl-pds">"</span></span>,
+      $customer<span class="pl-k">.</span>customer_id,
+      $customer<span class="pl-k">.</span>email_address,
+      $customer<span class="pl-k">.</span><span class="pl-c1">name</span>,
+      $customer<span class="pl-k">.</span>orders<span class="pl-k">.</span><span class="pl-c1">count</span>,
+      $customer<span class="pl-k">.</span>total-order-items; <span class="pl-c"><span class="pl-c">#</span> this uses the row level convenience method in App::Row::Customer</span>
+  }
+
+  <span class="pl-c1">say</span> <span class="pl-s"><span class="pl-pds">'</span>x<span class="pl-pds">'</span></span> <span class="pl-k">x</span> <span class="pl-c1">87</span>;
+
+}</pre></div>
+<p>If you have questions or would like to see more, exploring this or other topics, please ping me <a class="user-mention" data-hovercard-type="user" data-hovercard-url="/users/tony-o/hovercard" data-octo-click="hovercard-link-click" data-octo-dimensions="link_type:self" href="https://github.com/tony-o">@tony-o</a> in #perl6 on freenode.</p>
+<p>Here is a link to files for this guide <a href="https://github.com/tony-o/perl6-xoos-guide">github repo</a>, <a href="https://github.com/tony-o/perl6-xoos-guide/archive/master.zip">zip file</a></p>
+
+    </div>
+  </body>
+</html>

@@ -1,0 +1,169 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <link href="https://fonts.googleapis.com/css?family=Lora:400,700|Montserrat:300" rel="stylesheet" />
+    <link rel="stylesheet" href="/s/style.css" />
+  </head>
+  <body>
+    <div id="title">
+      <img src="/i/dbks.png" /> <h1>deathbykeystroke</h1>
+    </div>
+    <div id="article">
+      <h1>zef plugin - a very alpha glimpse</h1>
+      <h6>// filed: rakudo</h6>
+      <h6>// perma:  <a href="https://deathbykeystroke.com/articles/20190328-zef-plugin---a-very-alpha-glimpse.html">zef-plugin---a-very-alpha-glimpse</a></h6>
+
+      <p><strong>Disclaimer:</strong> This design could change before zef plugins is thrown into the world but this is the initial look at the plugin paradigm and something you can follow along and actually use today.</p>
+<p>Let's take a look at implementing a plugin to let us edit/view config from the CLI without firing up a text editor and editing zef's config manually.</p>
+<h2>set up</h2>
+<p>Right now the plugin code is all residing in a branch other than zef master so we need to set up an alternate version of zef for us to use for the tutorial.  This tutorial will use the alias <code>zef-p</code> to denote the version of zef capable of plugins.  Doing a basic install using <code>zef-p install</code> will install modules the same as your system/local zef.</p>
+<pre><code>$ git clone https://github.com/ugexe/zef.git zef-p
+# clones zef into directory zef-p
+$ cd zef-p
+
+zef-p$ git fetch origin allow-runtime-interface-plugins
+# fetch the WIP plugins branch
+zef-p$ git checkout allow-runtime-interface-plugins
+# check out the plugins branch
+zef-p$ alias zef-p="perl6 -I$(pwd)/lib $(pwd)/bin/zef"
+# make an alias to make using our plugin capable zef easy to use
+zef-p$ cd ..
+
+$ # now we have zef-p available and the rest of the tutorial
+</code></pre>
+<h2>writing a plugin</h2>
+<p>The example we're going to use is a basic view, add, remove for <code>zef-p test</code> configuration.  We're going to add the commands <code>zef-p config</code> and <code>zef-p config.test</code> to zef in the rest of this tutorial.</p>
+<h3>the skeleton</h3>
+<p>Creating your command is as easy as writing a script and putting it in the <code>bin/</code> directory of your module.  We'll go through the creation of <code>zef-p config</code> and <code>zef-p config.test</code>.</p>
+<h4>zef-p config</h4>
+<p>Create a file in your <code>bin/</code> directory called <code>zef-config</code>.</p>
+<h4>zef-p config.test</h4>
+<p>Create a file in your <code>bin/</code> directory called <code>zef-config.test</code>.</p>
+<h4>all done!</h4>
+<p>Not really. Let's add some functionality to <code>zef-config</code>!</p>
+<h3>implementing zef-p config</h3>
+<p>Open your <code>bin/zef-config</code> file and add the following</p>
+<div class="highlight highlight-source-raku"><pre><span class="pl-k">multi</span> MAIN(<span class="pl-s"><span class="pl-pds">'</span>config<span class="pl-pds">'</span></span>) {
+  <span class="pl-c1">note</span> <span class="pl-s"><span class="pl-s">qq</span><span class="pl-c1">:to</span>/<span class="pl-e">END_USAGE</span>/</span>
+<span class="pl-s">    zef config - a plugin for zef config management</span>
+<span class="pl-s"></span>
+<span class="pl-s">    zef config.test</span>
+<span class="pl-s"></span>
+<span class="pl-s">      ls</span>
+<span class="pl-s">        List all of the plugins zef has available for testing</span>
+<span class="pl-s"></span>
+<span class="pl-s">      push --module (--comment?) (--short-name?)</span>
+<span class="pl-s">        Appends the specified module to the test plugins</span>
+<span class="pl-s"></span>
+<span class="pl-s">      remove index(Int)</span>
+<span class="pl-s">        Removes the module from the config with index of Int</span>
+<span class="pl-s"></span>
+<span class="pl-s">      prepend --module (--comment?) (--short-name?)</span>
+<span class="pl-s">        Prepends the specified module to the test plugins</span>
+<span class="pl-s"><span class="pl-e">  END_USAGE</span></span>
+}</pre></div>
+<p>The part above to be most interested in is the use of <code>multi MAIN('config')</code>.  <em>This</em> is the function that brings the functionality to <code>zef-p config</code> and it behaves as you'd expect of MAIN. The key part is the keyed in <code>'config'</code>. When an unknown $command is supplied to zef, say <code>zef-p config</code> out of the box, zef will search for any modules providing <code>bin/zef-$command</code> and will load them so if your module provides three different $command then you will need three bin scripts (or one depending on how symlink handy you are and expect your users to be).</p>
+<p>A second note, these plugins are <em>not</em> installed to your perl6 compunit repository.  This is to save zef from combing your normal CURs every time a command it doesn't recognize is received.</p>
+<p>This will just print out our usage for <code>zef-p config.test</code>.  Just like that, when we <code>zef-p install --plugin .</code> (this plugin installation interface will likely change) we can then run <code>zef-p config</code> and it will show our usage.  The <code>--plugin</code> option is what tells zef-p to install in its private plugin CUR.</p>
+<h3>implementing zef-p config.test</h3>
+<p>To keep the tutorial informative and less about how to write perl, we'll implement the <code>ls</code> feature and add the stubs for <code>push|remove|prepend</code> as described in our usage above.</p>
+<p>In your <code>bin/zef-config.test</code></p>
+<div class="highlight highlight-source-raku"><pre><span class="pl-k">use</span> Zef;
+
+<span class="pl-k">sub</span> pad (<span class="pl-c1">Int</span> $w, <span class="pl-c1">Str</span> $val) {
+  <span class="pl-c1">sprintf</span>(<span class="pl-s"><span class="pl-pds">"</span> %-<span class="pl-pse">{</span>$w <span class="pl-k">-</span> <span class="pl-c1">1</span><span class="pl-pse">}</span>s<span class="pl-pds">"</span></span>, $val);
+}
+
+<span class="pl-k">multi</span> MAIN(<span class="pl-s"><span class="pl-pds">'</span>config.test<span class="pl-pds">'</span></span>, <span class="pl-s"><span class="pl-pds">'</span>ls<span class="pl-pds">'</span></span>) {
+  <span class="pl-k">my</span> $idx <span class="pl-k">=</span> <span class="pl-c1">0</span>;
+  <span class="pl-k">my</span> @widths  <span class="pl-k">=</span>
+    <span class="pl-k">max</span>(<span class="pl-c1">7</span>, $<span class="pl-k">*</span>zef<span class="pl-k">.</span>config<span class="pl-k">.</span>hash&lt;<span class="pl-s">Test</span>&gt;<span class="pl-k">.</span><span class="pl-c1">elems</span><span class="pl-k">.</span><span class="pl-c1">Str</span><span class="pl-k">.</span><span class="pl-c1">chars</span>), <span class="pl-c"><span class="pl-c">#</span>indexes</span>
+    <span class="pl-c1">24</span>,
+    <span class="pl-c1">20</span>,
+    <span class="pl-c1">28</span>,
+  ;
+  <span class="pl-k">my</span> @headers <span class="pl-k">=</span> <span class="pl-s"><span class="pl-pds">'</span>index<span class="pl-pds">'</span></span>, <span class="pl-s"><span class="pl-pds">'</span>module<span class="pl-pds">'</span></span>, <span class="pl-s"><span class="pl-pds">'</span>short-name<span class="pl-pds">'</span></span>, <span class="pl-s"><span class="pl-pds">'</span>comment<span class="pl-pds">'</span></span>;
+
+  <span class="pl-k">for</span> <span class="pl-k">|</span>$<span class="pl-k">*</span>zef<span class="pl-k">.</span>config<span class="pl-k">.</span>hash&lt;<span class="pl-s">Test</span>&gt; <span class="pl-k">-&gt;</span> $info {
+    @widths[<span class="pl-c1">1</span>] <span class="pl-k">=</span> <span class="pl-k">max</span>(@widths[<span class="pl-c1">1</span>], ($info&lt;<span class="pl-s">module</span>&gt;<span class="pl-k">//</span><span class="pl-s"><span class="pl-pds">'</span><span class="pl-pds">'</span></span>)<span class="pl-k">.</span><span class="pl-c1">chars</span> <span class="pl-k">+</span> <span class="pl-c1">2</span>);
+    @widths[<span class="pl-c1">2</span>] <span class="pl-k">=</span> <span class="pl-k">max</span>(@widths[<span class="pl-c1">2</span>], ($info&lt;<span class="pl-s">short-name</span>&gt;<span class="pl-k">//</span><span class="pl-s"><span class="pl-pds">'</span><span class="pl-pds">'</span></span>)<span class="pl-k">.</span><span class="pl-c1">chars</span> <span class="pl-k">+</span> <span class="pl-c1">2</span>);
+    @widths[<span class="pl-c1">3</span>] <span class="pl-k">=</span> <span class="pl-k">max</span>(@widths[<span class="pl-c1">3</span>], ($info&lt;<span class="pl-s">comment</span>&gt;<span class="pl-k">//</span><span class="pl-s"><span class="pl-pds">'</span><span class="pl-pds">'</span></span>)<span class="pl-k">.</span><span class="pl-c1">chars</span> <span class="pl-k">+</span> <span class="pl-c1">2</span>);
+  }
+
+  <span class="pl-c1">say</span> <span class="pl-s"><span class="pl-pds">'</span>-<span class="pl-pds">'</span></span> <span class="pl-k">x</span> <span class="pl-c1">2</span> <span class="pl-k">+</span> ([<span class="pl-k">+</span>] @widths);
+  <span class="pl-c1">say</span> (<span class="pl-c1">0</span><span class="pl-k">..</span><span class="pl-k">^</span>@headers<span class="pl-k">.</span><span class="pl-c1">elems</span>)<span class="pl-k">.</span><span class="pl-c1">map</span>({ pad(@widths[<span class="pl-k">$_</span>], @headers[<span class="pl-k">$_</span>]) })<span class="pl-k">.</span><span class="pl-c1">join</span>(<span class="pl-s"><span class="pl-pds">'</span>|<span class="pl-pds">'</span></span>);
+  <span class="pl-c1">say</span> <span class="pl-s"><span class="pl-pds">'</span>-<span class="pl-pds">'</span></span> <span class="pl-k">x</span> <span class="pl-c1">2</span> <span class="pl-k">+</span> ([<span class="pl-k">+</span>] @widths);
+
+  <span class="pl-k">for</span> <span class="pl-k">|</span>$<span class="pl-k">*</span>zef<span class="pl-k">.</span>config<span class="pl-k">.</span>hash&lt;<span class="pl-s">Test</span>&gt; <span class="pl-k">-&gt;</span> $info {
+    <span class="pl-c1">say</span> (
+      pad(@widths[<span class="pl-c1">0</span>], $idx<span class="pl-k">++</span><span class="pl-k">.</span><span class="pl-c1">Str</span>),
+      <span class="pl-k">|</span>(<span class="pl-c1">1</span><span class="pl-k">..</span><span class="pl-k">^</span>@headers<span class="pl-k">.</span><span class="pl-c1">elems</span>)<span class="pl-k">.</span><span class="pl-c1">map</span>({ pad(@widths[<span class="pl-k">$_</span>], $info{@headers[<span class="pl-k">$_</span>]}<span class="pl-k">//</span><span class="pl-s"><span class="pl-pds">'</span><span class="pl-pds">'</span></span>) })
+    )<span class="pl-k">.</span><span class="pl-c1">join</span>(<span class="pl-s"><span class="pl-pds">'</span>|<span class="pl-pds">'</span></span>);
+  }
+
+  <span class="pl-c1">say</span> <span class="pl-s"><span class="pl-pds">'</span>-<span class="pl-pds">'</span></span> <span class="pl-k">x</span> <span class="pl-c1">2</span> <span class="pl-k">+</span> ([<span class="pl-k">+</span>] @widths);
+}
+
+<span class="pl-k">multi</span> MAIN(<span class="pl-s"><span class="pl-pds">'</span>config.test<span class="pl-pds">'</span></span>, <span class="pl-s"><span class="pl-pds">'</span>remove<span class="pl-pds">'</span></span>, <span class="pl-c1">Int</span> $<span class="pl-c1">index</span>) { <span class="pl-k">...</span> }
+
+<span class="pl-k">multi</span> MAIN(<span class="pl-s"><span class="pl-pds">'</span>config.test<span class="pl-pds">'</span></span>, <span class="pl-s"><span class="pl-pds">'</span>prepend<span class="pl-pds">'</span></span>, <span class="pl-c1">Str</span><span class="pl-k">:</span><span class="pl-k">D</span> $module, <span class="pl-c1">Str</span> <span class="pl-k">:</span>$short-name<span class="pl-k">?</span>, <span class="pl-c1">Str</span> <span class="pl-k">:</span>$comment<span class="pl-k">?</span>) { <span class="pl-k">...</span> }
+
+<span class="pl-k">multi</span> MAIN(<span class="pl-s"><span class="pl-pds">'</span>config.test<span class="pl-pds">'</span></span>, <span class="pl-s"><span class="pl-pds">'</span>push<span class="pl-pds">'</span></span>, <span class="pl-c1">Str</span><span class="pl-k">:</span><span class="pl-k">D</span> $module, <span class="pl-c1">Str</span> <span class="pl-k">:</span>$short-name<span class="pl-k">?</span>, <span class="pl-c1">Str</span> <span class="pl-k">:</span>$comment<span class="pl-k">?</span>) { <span class="pl-k">...</span> }</pre></div>
+<p>Looking deeper into our <code>ls</code> command, you may notice <code>$*zef</code>.  That variable gives access to the config and setup that happens in <code>Zef::CLI</code>.  In the <code>ls</code> command we're using it to look at the config that was loaded from zef's configuration file, getting the width of columns to print out, and finally printing out all of the data we find in zef's config regarding <code>Test</code> plugins.  The output of that command is displayed later in this post.</p>
+<h3>make our plugin installable</h3>
+<p>To make this plugin installable, we need a META6.json file.  Here is a barebones template (please, if you're releasing real modules into the ecosystem then put some effort and time into your META6.json files so others can read/understand them).</p>
+<div class="highlight highlight-source-json"><pre>{
+  <span class="pl-s"><span class="pl-pds">"</span>perl<span class="pl-pds">"</span></span>: <span class="pl-s"><span class="pl-pds">"</span>6.d+<span class="pl-pds">"</span></span>,
+  <span class="pl-s"><span class="pl-pds">"</span>name<span class="pl-pds">"</span></span>: <span class="pl-s"><span class="pl-pds">"</span>Zef::Plugin::PluginManager<span class="pl-pds">"</span></span>,
+  <span class="pl-s"><span class="pl-pds">"</span>auth<span class="pl-pds">"</span></span>: <span class="pl-s"><span class="pl-pds">"</span>deathbyperl6:the-viewer<span class="pl-pds">"</span></span>,
+  <span class="pl-s"><span class="pl-pds">"</span>description<span class="pl-pds">"</span></span>: <span class="pl-s"><span class="pl-pds">"</span>a zef plugin that supplies a partial cli to managing zef's config<span class="pl-pds">"</span></span>,
+  <span class="pl-s"><span class="pl-pds">"</span>provides<span class="pl-pds">"</span></span>: { }
+}</pre></div>
+<h2>install the plugin</h2>
+<p>So, we've created our <code>bin/</code> scripts to provide <code>zef-p config|config.test</code>.  Now it's time to install and test it out.</p>
+<pre><code>zef-p install --plugin .
+</code></pre>
+<p>As stated previously, <code>--plugin</code> will go away but at this time it's letting <code>zef-p</code> know that it should install our scripts to zef's private plugin CUR.  The other thing of note, shown below, is that a plugin's USAGE will override zef's <em>if</em> the plugin successfully loads.</p>
+<p>At this point you should be able to run the following commands:</p>
+<pre><code>Î» ~/projects/zef-plugin-tutorial$ zef-p config
+  zef config - a plugin for zef config management
+
+  zef config.test
+
+    ls
+      List all of the plugins zef has available for testing
+
+    push --module (--comment?) (--short-name?)
+      Appends the specified module to the test plugins
+
+    remove index(Int)
+      Removes the module from the config with index of Int
+
+    prepend --module (--comment?) (--short-name?)
+      Prepends the specified module to the test plugins
+
+Î» ~/projects/zef-plugin-tutorial$ zef-p config.test ls
+-------------------------------------------------------------------------------------
+ index | module                     | short-name         | comment
+-------------------------------------------------------------------------------------
+ 0     | Zef::Service::TAP          | tap-harness        | Perl6 TAP::Harness adapter
+ 1     | Zef::Service::Shell::prove | prove              |
+ 2     | Zef::Service::Shell::Test  | perl6-test         |
+-------------------------------------------------------------------------------------
+
+Î» ~/projects/zef-plugin-tutorial$ zef-p config.test
+Usage:
+  /Users/tonyo/projects/zef-plugin-tutorial/zef/bin/zef config.test ls
+  /Users/tonyo/projects/zef-plugin-tutorial/zef/bin/zef config.test remove &lt;index&gt;
+  /Users/tonyo/projects/zef-plugin-tutorial/zef/bin/zef [--short-name=&lt;Str&gt;] [--comment=&lt;Str&gt;] config.test prepend &lt;module&gt;
+  /Users/tonyo/projects/zef-plugin-tutorial/zef/bin/zef [--short-name=&lt;Str&gt;] [--comment=&lt;Str&gt;] config.test push &lt;module&gt;
+</code></pre>
+<h2>clean up</h2>
+<p>If you have installed any modules not using <code>--plugin</code> then they likely went into one of your [pre]configured repositories and you can remove them with <code>zef uninstall</code> if you need to.  From here, to get rid of <code>zef-p</code> or start anew, just remove the <code>zef-p</code> directory we created when cloning <code>zef</code> in the <strong>setup</strong> phase of this post.</p>
+<h2>conclusion</h2>
+<p>The code in this repo can be found <a href="https://github.com/tony-o/perl6-zef-plugin-tutorial">here</a></p>
+<p>This is a barebones primer to extending the functionality of zef. If you have questions, thoughts, concerns please reach out to me <a class="user-mention" data-hovercard-type="user" data-hovercard-url="/users/tony-o/hovercard" data-octo-click="hovercard-link-click" data-octo-dimensions="link_type:self" href="https://github.com/tony-o">@tony-o</a> in #perl6 on freenode.  A <code>.tell</code> in that channel is helpful because I'm not always able to monitor.</p>
+
+    </div>
+  </body>
+</html>

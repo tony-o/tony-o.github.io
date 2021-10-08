@@ -1,0 +1,94 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <link href="https://fonts.googleapis.com/css?family=Lora:400,700|Montserrat:300" rel="stylesheet" />
+    <link rel="stylesheet" href="/s/style.css" />
+  </head>
+  <body>
+    <div id="title">
+      <img src="/i/dbks.png" /> <h1>deathbykeystroke</h1>
+    </div>
+    <div id="article">
+      <h1>Hello Web! with Purée Perl 6</h1>
+      <h6>// filed: rakudo</h6>
+      <h6>// perma:  <a href="https://deathbykeystroke.com/articles/20170109-hello-web-with-pure-perl-6.html">hello-web-with-pure-perl-6</a></h6>
+
+      <h2>Let's build a website.</h2>
+<p>Websites are easy to build.  There are dozens of frameworks out there to use, perl has Mojo and Catalyst as its major frameworks and other languages also have quite a few decent options.  Some of them come with boilerplate templates and you just go from there.  Others don't and you spend your first few hours learning how to actually set up the framework and reading about how to share your DB connection between all of your controllers and blah, blah, blah.  Let's look at one of P6's web frameworks.</p>
+<h2>Enter <code>Hiker</code></h2>
+<p>Hiker doesn't introduce a lot of (if any) new ideas.  It does use paradigms you're probably used to and it aims to make the initialization of creating your website very straight forward and easy, that way you can get straight to work sharing your content with the English.</p>
+<h3>The Framework</h3>
+<p>Hiker is intended to make things fast and easy from the development side.  Here's how it works.  If you're not into the bleep blop and just want to get started, skip to the Boilerplate heading.</p>
+<h4>Application Initialization</h4>
+<ol>
+<li>Hiker reads from the subdirectories we'll look at later.  The controllers and models are classes.</li>
+<li>Looking at all controllers, initializes a new object for that class, and then checks for their <code>.path</code> attribute</li>
+<li>If Hiker can't find the path attribute then it doesn't bind anything and produces a warning</li>
+<li>After setting up the controller routes, it instantiates a new object for the model as specified by the controller (<code>.model</code>)</li>
+<li>If none is given by the controller then nothing is instantiated or bound and nothing happens</li>
+<li>If a model is required by the controller but it cannot be found then Hiker refuses to bind</li>
+<li>Finally, <code>HTTP::Server::Router</code> is alerted to all of the <code>path</code>s that Hiker was able to find and verify</li>
+</ol>
+<h4>The Request</h4>
+<ol>
+<li>If the path is found, then the associated class' <code>.model.bind</code> is called.</li>
+<li>The response (second parameter of <code>.model.bind($req, $res)</code>) has a hash to store information: <code>$res.data</code></li>
+<li>The controller's <code>.handler($req, $res)</code> is then executed</li>
+<li>The <code>$res.data</code> hash is available in this context</li>
+<li>If the handler returns a <code>Promise</code> then Hiker waits for that to be kept (and expects the result to be True or False)</li>
+<li>If the response is already rendered and the Promise's status is True then the router is alerted that no more routes should be explored</li>
+<li>If the response isn't rendered and the Promise's result is True, then <code>.render</code> is called automagically for you</li>
+<li>If the response isn't rendered and the Promise's result is False, then the next matching route is called</li>
+</ol>
+<h3>Boilerplate</h3>
+<p>Ensure you have <code>Hiker</code> installed:</p>
+<div class="highlight highlight-source-shell"><pre>$ zef install Hiker
+$ rakudobrew rehash <span class="pl-c"><span class="pl-c">#</span>this may be necessary to get the bin to work</span></pre></div>
+<p>Create a new directory where you'd like to create your project's boilerplate and <code>cd</code>.  From here we'll initialize some boilerplate and look at the content of the files.</p>
+<div class="highlight highlight-source-shell"><pre>somedir$ hiker init
+==<span class="pl-k">&gt;</span> Creating directory controllers
+==<span class="pl-k">&gt;</span> Creating directory models
+==<span class="pl-k">&gt;</span> Creating directory templates
+==<span class="pl-k">&gt;</span> Creating route MyApp::Route1: controllers/Route1.pm6
+==<span class="pl-k">&gt;</span> Creating route MyApp::Model1: models/Model1.pm6
+==<span class="pl-k">&gt;</span> Creating template templates/Route1.mustache
+==<span class="pl-k">&gt;</span> Creating app.pl6</pre></div>
+<p>Neato burrito.  From the output you can see that Hiker created some directories - controllers, models, templates - for us so we can start out organized.  In those directories you will find a few files, let's take a look.</p>
+<h3>The Model</h3>
+<div class="highlight highlight-source-raku"><pre><span class="pl-k">use</span> Hiker::Model;
+
+<span class="pl-k">class</span> <span class="pl-en">MyApp::Model1</span> <span class="pl-k">does</span> Hiker::Model {
+  <span class="pl-k">method</span> bind($req, $res) {
+    $res<span class="pl-k">.</span>data&lt;<span class="pl-s">who</span>&gt; <span class="pl-k">=</span> <span class="pl-s"><span class="pl-pds">'</span>web!<span class="pl-pds">'</span></span>;
+  }
+}</pre></div>
+<p>Pretty straight forward.  <code>MyApp::Model1</code> is instantiated during Hiker initialization and <code>.bind</code> is called whenever the controller's corresponding path is requested.  As you can see here, this Model just adds to the <code>$res.data</code> hash the key value pair of <code>who =&gt; 'web!'</code>.  This data will be available in the Controller as well as available in the template files (if the controller decides to use that).</p>
+<h3>The Controller</h3>
+<div class="highlight highlight-source-raku"><pre><span class="pl-k">use</span> Hiker::Route;
+
+<span class="pl-k">class</span> <span class="pl-en">MyApp::Route1</span> <span class="pl-k">does</span> Hiker::Route {
+  <span class="pl-k">has</span> $.<span class="pl-c1">path</span>     <span class="pl-k">=</span> <span class="pl-s"><span class="pl-pds">'</span>/<span class="pl-pds">'</span></span>;
+  <span class="pl-k">has</span> $.template <span class="pl-k">=</span> <span class="pl-s"><span class="pl-pds">'</span>Route1.mustache<span class="pl-pds">'</span></span>;
+  <span class="pl-k">has</span> $.model    <span class="pl-k">=</span> <span class="pl-s"><span class="pl-pds">'</span>MyApp::Model1<span class="pl-pds">'</span></span>;
+
+  <span class="pl-k">method</span> handler($req, $res) {
+    $res<span class="pl-k">.</span>headers&lt;<span class="pl-s">Content-Type</span>&gt; <span class="pl-k">=</span> <span class="pl-s"><span class="pl-pds">'</span>text/plain<span class="pl-pds">'</span></span>;
+  }
+}</pre></div>
+<p>As you can see above, the <code>Hiker::Route</code> has a lot of information in a small space and it's a class that does a Hiker role called <code>Hiker::Route</code>.  This let's our framework know that we should inspect that class for the <code>path, template, model</code> so it can handle those operations for us - <code>path and template</code> are the only required attributes.</p>
+<p>As discussed above, our Route can return a Promise if there is some asynchronous operation that is to be performed.  In this case all we're going to do is set the header's to indicated the Content Type and then, automagically, render the template file.  Note: if you return a <code>False</code>y value from the handler method, then the router will not auto render and it will attempt to find the next route.  This is so that you can cascade paths in the event that you want to chain them together, do some type of decision making real time to determine whether that's the right class for the request, or perform some other unsaid dark magic.  In the controller above we return a <code>True</code>thy value and it auto renders.</p>
+<p>By specifying the Model in the Route, you're able to re-use the same Model class across multiple routes.</p>
+<h4>The Path</h4>
+<p>Quick notes about <code>.path</code>.  You can pass a (<code>'/staticpath'</code>), maybe a path with a placeholder (<code>'/api/:placeholder'</code>), or if you're path is a little more complicated then you can pass in a regex (<code>/ .* /</code>).  Check out the documentation for <code>HTTP::Server::Router</code> (<a href="https://github.com/tony-o/perl6-http-server-router">repo</a>).</p>
+<h3>The Template</h3>
+<p>The template is specified by the controller's <code>.template</code> attribute and Hiker checks for that file in the <code>./templates</code> folder.  The default template engine is <code>Template::Mustache</code> (<a href="https://github.com/softmoth/p6-Template-Mustache">repo</a>).  See that module's documentation for more info.</p>
+<h3>Running the App</h3>
+<p>Really pretty straight forward from the boilerplate:</p>
+<div class="highlight highlight-source-shell"><pre>somedir$ perl6 app.pl6</pre></div>
+<p>Now you can visit <code>http://127.0.0.1:8080/</code> in your favorite Internet Explorer and find a nice 'Hello web!' message waiting to greet you.  If you visit any other URI you'll receive the default 'no route found' message from <code>HTTP::Server::Router</code>.</p>
+<h3>The Rest</h3>
+<p>The module is relatively young.  With feedback from the community, practical applications, and some extra feature expansion, Hiker could be pretty great and it's a good start to taking the tediousness out of building a website in P6.  I'm open to feedback and I'd love to hear/see where you think Hiker can be improved, what it's missing to be productive, and possibly anything else [constructive or otherwise] you'd like to see in a practical, rapid development P6 web server.</p>
+
+    </div>
+  </body>
+</html>
