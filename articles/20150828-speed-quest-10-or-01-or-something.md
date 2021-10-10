@@ -1,6 +1,6 @@
 Speed Quest 1.0, or 0.1, or something
 speed-quest-10-or-01-or-something
-programming
+programming, rakudo
 
 ## JSON Headaches
 

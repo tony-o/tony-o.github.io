@@ -1,6 +1,6 @@
 Refactoring HTTP::Server::Async
 refactoring-httpserverasync
-rakudo
+programming, rakudo
 
 Even serialized HTTP servers are complicated.  Let's make one that is asynchronous for the three Fs; fun, frustration, fury.
 

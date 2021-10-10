@@ -1,6 +1,6 @@
 faq: zef ecosystem
 faq-zef-ecosystem
-rakudo
+programming, rakudo
 
 ## What's fez and what's the zef eco?
 

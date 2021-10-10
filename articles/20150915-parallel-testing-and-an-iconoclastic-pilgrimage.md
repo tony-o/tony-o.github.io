@@ -1,6 +1,6 @@
 Parallel Testing and an Iconoclastic Pilgrimage
 parallel-testing-and-an-iconoclastic-pilgrimage
-rakudo
+programming, rakudo
 
 # This is an article about `Green`
 

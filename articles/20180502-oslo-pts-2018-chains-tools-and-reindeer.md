@@ -1,6 +1,6 @@
 Oslo PTS 2018; Chains, tools, and reindeer
 oslo-pts-2018-chains-tools-and-reindeer
-programming
+programming, rakudo
 
 This year at PTS we picked up where we left off last year, talking about the build system, dependency chains, and walking to the next food spot.  Last year we had developed perl6 Warthog.  Warthog is a hash "collapser" that works on OS \[distro|kernel\] and environment variables.  This allows you to do things like determine native dependencies (like libcrypt in linux vs libgcrypt on osx) in your META6.json.  An example of that [here](https://github.com/tony-o/p6-warthog).  So, that was last year.
 

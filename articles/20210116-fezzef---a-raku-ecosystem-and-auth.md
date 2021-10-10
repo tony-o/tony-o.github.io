@@ -1,6 +1,6 @@
 fez|zef - a raku ecosystem and auth
 fezzef---a-raku-ecosystem-and-auth
-rakudo
+programming, rakudo
 
 fez is a utility for interacting with the zef ecosystem.  you can think of it as the opposite of zef. zef downloads distributions and installs them and fez uploads making them available to zef.
 

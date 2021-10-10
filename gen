@@ -3,61 +3,91 @@
 use strict;
 use warnings;
 use File::Slurp qw<slurp>;
+use HTTP::Request;
+use JSON::MaybeXS qw<encode_json decode_json>;
 use Pithub::Markdown;
+use LWP::UserAgent;
+use DDP;
 
 $ENV{PERL_LWP_SSL_VERIFY_HOSTNAME} = 0;
 
 my @articles = grep { -f $_ } glob('articles/*.md');
-my (@titles, @tags, @links);
+my (@titles, @dates, %tags, @links);
 
 sub article_tmpl { my $s = slurp('templ-article.html');       $s; }
 sub index_tmpl   { my $s = slurp('templ-index.html');         $s; }
+sub tags_tmpl    { my $s = slurp('templ-tags.html');          $s; }
 sub index_cnt    { my $s = slurp('templ-index.content.html'); $s; }
+#sub render {
+#  my $req = HTTP::Request->new('POST', 'https://api.github.com/markdown/raw', ['Content-Type', 'application/json; charset=UTF-8'], encode_json({ text => $_[0] }));
+#  my $ua = LWP::UserAgent->new();
+#  my $res = $ua->request($req);
+#  my $json = 
+#  p $res;
+#  return '';
+#}
 
 my $regen = ($ARGV[0]//'') =~ m{^-f|--force$} ? 1 : 0;
 
+# article gen
 foreach my $article (reverse sort @articles) {
-  my ($title, $slug, $tag, $data, $newfn, $templ, $html) = ((split "\n", slurp($article), 4), $article, article_tmpl);
+  my ($title, $slug, $tagstr, $data, $newfn, $templ, $date, $html, @linktags) = ((split "\n", slurp($article), 4), $article, article_tmpl);
   $newfn =~ s/\.md$/.html/g;
+  $date  = substr $article, 9, 8;
+  $date  = join('-', substr($date, 0, 4), substr($date, 4, 2), substr($date, 6, 2));
 
   push @links,  $newfn;
-  push @tags,   $tag//'unfiled';
+  push @dates,  $date;
   push @titles, $title;
+  
+  foreach my $tag (split ',', $tagstr) {
+    $tag =~ s/^\s*|\s*$//g;
+    next if $tag eq '';
+    push $tags{$tag}->{links}->@*, $newfn;
+    push $tags{$tag}->{dates}->@*, $date;
+    push $tags{$tag}->{titles}->@*, $title;
+    push @linktags, '<a href="/tags/'.$tag.'.html">'.$tag.'</a>';
+  }
 
   if (-f "docs/$newfn" && !$regen) {
     printf "skipping: docs/%s\n", $newfn;
     next;
   }
 
+#  render $data;
+#  die;
   my $response = Pithub::Markdown->new->render(
     data => {
       text    => $data,
       context => "github/gollum",
-      mode    => "gfm",
+      mode    => "markdown",
     },
   );
 
   $html  = $response->raw_content;
 
+  my $lt = join(', ', @linktags);
+  $templ =~ s/\{\{date\}\}/$date/g;
   $templ =~ s/\{\{slug\}\}/$slug/g;
   $templ =~ s/\{\{link\}\}/$newfn/g;
   $templ =~ s/\{\{title\}\}/$title/g;
-  $templ =~ s/\{\{tag\}\}/$tag/g;
+  $templ =~ s/\{\{tags\}\}/$tagstr/g;
   $templ =~ s/\{\{content\}\}/$html/g;
+  $templ =~ s/\{\{taglinks\}\}/$lt/g;
 
-  printf "docs/articles/%s, slug:%s,tag=%s,len=%d\n", $newfn, $slug, $tag, length($templ);
+  printf "docs/articles/%s, slug:%s,tag=%s,len=%d\n", $newfn, $slug, $tagstr, length($templ);
   open my $fh, '>', "./docs/$newfn" or die $!;
   print $fh $templ;
   close $fh;
 }
 
-
+# index gen
 my $index   = index_tmpl;
 my $content = '';
 for my $idx (0..@titles - 1) {
   my $templ = index_cnt;
   $templ   =~ s/\{\{link\}\}/$links[$idx]/g;
-  $templ   =~ s/\{\{tag\}\}/$tags[$idx]/g;
+  $templ   =~ s/\{\{date\}\}/$dates[$idx]/g;
   $templ   =~ s/\{\{title\}\}/$titles[$idx]/g;
   $content .= "\n" . $templ;
 }
@@ -65,3 +95,22 @@ $index =~ s/\{\{content\}\}/$content/g;
 open my $fh, '>', './docs/index.html' or die $!;
 print $fh $index;
 close $fh;
+
+# tag gen
+foreach my $tag (sort keys %tags) {
+  my $templ   = tags_tmpl;
+  my $content = '';
+
+  foreach my $idx (0..$tags{$tag}->{links}->@* - 1) {
+    my $templ = index_cnt;
+    $templ   =~ s/\{\{link\}\}/$tags{$tag}->{links}->[$idx]/g;
+    $templ   =~ s/\{\{date\}\}/$tags{$tag}->{dates}->[$idx]/g;
+    $templ   =~ s/\{\{title\}\}/$tags{$tag}->{titles}->[$idx]/g;
+    $content .= "\n" . $templ;
+  }
+
+  $templ =~ s/\{\{content\}\}/$content/g;
+  open my $fh, '>', './docs/tags/'.$tag.'.html' or die $!;
+  print $fh $index;
+  close $fh;
+}

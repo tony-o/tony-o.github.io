@@ -1,6 +1,6 @@
 Rakudo Nightly & Faster CI
 rakudo-nightly--faster-ci
-rakudo
+programming, rakudo
 
 This article is going to walk through using a docker image to CI little modules on Circle CI and Travis CI - tl;dr just copy the appropriate config files for your choice of CI and modify for system dependencies.
 

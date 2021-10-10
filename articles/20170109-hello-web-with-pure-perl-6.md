@@ -1,6 +1,6 @@
 Hello Web! with Purée Perl 6
 hello-web-with-pure-perl-6
-rakudo
+programming, rakudo
 
 ## Let's build a website.
 

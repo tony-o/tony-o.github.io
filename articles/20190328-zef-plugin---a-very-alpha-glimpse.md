@@ -1,6 +1,6 @@
 zef plugin - a very alpha glimpse
 zef-plugin---a-very-alpha-glimpse
-rakudo
+programming, rakudo
 
 **Disclaimer:** This design could change before zef plugins is thrown into the world but this is the initial look at the plugin paradigm and something you can follow along and actually use today.
 

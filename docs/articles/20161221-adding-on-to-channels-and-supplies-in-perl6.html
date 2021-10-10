@@ -10,11 +10,132 @@
     </div>
     <div id="article">
       <h1>Adding on to Channels and Supplies in Perl6</h1>
-      <h6>// filed: rakudo</h6>
+      <h6>// date:  2016-12-21</h6>
+      <h6>// filed: <a href="/tags/programming.html">programming</a>, <a href="/tags/rakudo.html">rakudo</a></h6>
       <h6>// <a href="https://deathbykeystroke.com/articles/20161221-adding-on-to-channels-and-supplies-in-perl6.html">perma</a></h6>
       <br/>
 
-      {"message":"API rate limit exceeded for 73.13.220.22. (But here's the good news: Authenticated requests get a higher rate limit. Check out the documentation for more details.)","documentation_url":"https://docs.github.com/rest/overview/resources-in-the-rest-api#rate-limiting"}
+      <p>Channels and supplies are perl6's way of implementing the Oberserver pattern.  There's some significant differences behind the scenes of the two but both can be used to implement a <code>jQuery.on("event"</code> like experience for the user.  Not a jQuery fan?  Don't you worry your pretty little head because this is perl6 and it's much more fun than whatever you thought.</p>
+<h2>
+<a id="user-content-why" class="anchor" href="#why" aria-hidden="true"><span aria-hidden="true" class="octicon octicon-link"></span></a>Why?</h2>
+<p>Uhh, why do we want this?</p>
+<p>This adds some sugar to the basic reactive constructs and it makes the passing of messages a lot more friendly, readable, and manageable.</p>
+<h2>
+<a id="user-content-what-in-heck-does-that-look-like" class="anchor" href="#what-in-heck-does-that-look-like" aria-hidden="true"><span aria-hidden="true" class="octicon octicon-link"></span></a>What in Heck Does that Look Like?</h2>
+<p>Let's have an example and then we'll dissect it.</p>
+<h3>
+<a id="user-content-a-basic-example" class="anchor" href="#a-basic-example" aria-hidden="true"><span aria-hidden="true" class="octicon octicon-link"></span></a>A Basic Example</h3>
+<div class="highlight highlight-source-raku"><pre><span class="pl-k">use</span> Event::Emitter;
+<span class="pl-k">my</span> Event::Emitter $e <span class="pl-k">.=</span> <span class="pl-c1">new</span>;
+
+$e<span class="pl-k">.</span>on(/<span class="pl-sr"><span class="pl-en">^^</span> <span class="pl-k">.+</span> <span class="pl-en">$$</span></span>/, <span class="pl-k">-&gt;</span> $data {
+  <span class="pl-c"><span class="pl-c">#</span> you can operate on $data here</span>
+  <span class="pl-s"><span class="pl-pds">'</span>  regex matches<span class="pl-pds">'</span></span><span class="pl-k">.</span><span class="pl-c1">say</span>;
+});
+
+$e<span class="pl-k">.</span>on({ <span class="pl-c1">True</span>; }, <span class="pl-k">-&gt;</span> $data {
+  <span class="pl-s"><span class="pl-pds">'</span>  block matches<span class="pl-pds">'</span></span><span class="pl-k">.</span><span class="pl-c1">say</span>;
+});
+
+$e<span class="pl-k">.</span>on(<span class="pl-s"><span class="pl-pds">'</span>event<span class="pl-pds">'</span></span>, <span class="pl-k">-&gt;</span> $data {
+  <span class="pl-s"><span class="pl-pds">'</span>  string matches<span class="pl-pds">'</span></span><span class="pl-k">.</span><span class="pl-c1">say</span>;
+});
+
+<span class="pl-s"><span class="pl-pds">'</span>event<span class="pl-pds">'</span></span><span class="pl-k">.</span><span class="pl-c1">say</span>;
+$e<span class="pl-k">.</span><span class="pl-c1">emit</span>(<span class="pl-s"><span class="pl-pds">"</span>event<span class="pl-pds">"</span></span>, { });
+
+<span class="pl-s"><span class="pl-pds">'</span>empty event<span class="pl-pds">'</span></span><span class="pl-k">.</span><span class="pl-c1">say</span>;
+$e<span class="pl-k">.</span><span class="pl-c1">emit</span>(<span class="pl-s"><span class="pl-pds">"</span><span class="pl-pds">"</span></span>, { });
+
+<span class="pl-s"><span class="pl-pds">'</span>abc<span class="pl-pds">'</span></span><span class="pl-k">.</span><span class="pl-c1">say</span>;
+$e<span class="pl-k">.</span><span class="pl-c1">emit</span>(<span class="pl-s"><span class="pl-pds">"</span>abc<span class="pl-pds">"</span></span>, { });</pre></div>
+<p><strong>Output</strong> <em>* this is the output for an emitter using <code>Supply</code>, more on this later</em></p>
+<pre><code>event
+  regex matches
+  block matches
+  string matches
+empty event
+  block matches
+abc
+  regex matches
+  block matches
+</code></pre>
+<p>Okay, that looks like a lot.  It is, and it's much nicer to use than a large <code>given</code>/<code>when</code> combination.  It also reduces indenting, so you have that going for you, which is nice.</p>
+<p>Let's start with the simple <code>.on</code> blocks we have.</p>
+<div class="highlight highlight-source-raku"><pre>  $e<span class="pl-k">.</span>on(/<span class="pl-sr"><span class="pl-en">^^</span> <span class="pl-k">.+</span> <span class="pl-en">$$</span></span>/, <span class="pl-k">-&gt;</span> $data { <span class="pl-k">...</span></pre></div>
+<p>This is telling the emitter handler that whenever an event is received, run that regular expression against it and if it matches, execute the block (passed in as the second argument).  As a note, and illustrated in the example above, the handler can match against a <code>Callable</code>, <code>Str</code>, or <code>Regex</code>.  The <code>Callable</code> must return <code>True</code> or <code>False</code> to let the handler know whether or not to execute the block.</p>
+<p>If that seems pretty basic, it is.  But little things like this add up over time and help keep things manageable.  Prepare yourself for more convenience.</p>
+<h3>
+<a id="user-content-the-sugar" class="anchor" href="#the-sugar" aria-hidden="true"><span aria-hidden="true" class="octicon octicon-link"></span></a>The Sugar</h3>
+<p><em>Do you want ants?  This is how you get ants.</em></p>
+<p>So, now we're looking for more value in something like this.  Here it is: you can inherit from the <code>Event::Emitter::Role::Template</code> (or roll your own) and then your classes will automatically inherit these <code>on</code> events.</p>
+<h5>
+<a id="user-content-example" class="anchor" href="#example" aria-hidden="true"><span aria-hidden="true" class="octicon octicon-link"></span></a>Example</h5>
+<div class="highlight highlight-source-raku"><pre><span class="pl-k">use</span> Event::Emitter::Role::Template;
+
+<span class="pl-k">class</span> <span class="pl-en">ZefClass</span> <span class="pl-k">does</span> Event::Emitter::Role::Template {
+  <span class="pl-k">submethod</span> TWEAK {
+    $<span class="pl-k">!</span>event-emitter<span class="pl-k">.</span>on(<span class="pl-s"><span class="pl-pds">"</span>fresh<span class="pl-pds">"</span></span>, <span class="pl-k">-&gt;</span> $data {
+      <span class="pl-s"><span class="pl-pds">'</span>Aint that the freshness<span class="pl-pds">'</span></span><span class="pl-k">.</span><span class="pl-c1">say</span>;
+    });
+  }
+}</pre></div>
+<p>Then, further along in your application, whenever an object wants <code>ZefClass</code> to react to the <code>'fresh'</code> event, all it needs to do is:</p>
+<blockquote>
+<p><code>$zef-class-instance.emit('fresh');</code></p>
+</blockquote>
+<p>Pretty damn cool.</p>
+<p>Development time is reduced significantly for a few reasons right off the bat:</p>
+<ol>
+<li>Implementing <code>Supplier</code> (or <code>Channel</code>) methods, setup, and event handling becomes unnecessary</li>
+<li>Event naming or matching is handled so it's easy to debug</li>
+<li>Handling or adding new event handling functions during runtime (imagine a plugin that may want to add more events to handle - like an IRC client that implements a handler for channel parting messages)</li>
+<li>Messages can be multiplexed through one Channel or Supply rather easily</li>
+<li>Creates more readable code</li>
+</ol>
+<p>That last reason is a big one.  Imagine going back into one of your modules 2 years from now and debugging an issue where a <code>Supplier</code> is given an event and some data and digging through that 600 lines of <code>given</code>/<code>when</code>.</p>
+<p>Worse, imagine debugging someone else's.</p>
+<h2>
+<a id="user-content-a-quick-note-on-channel-vs-supply" class="anchor" href="#a-quick-note-on-channel-vs-supply" aria-hidden="true"><span aria-hidden="true" class="octicon octicon-link"></span></a>A Quick Note on <code>Channel</code> vs <code>Supply</code>
+</h2>
+<p>The <code>Channel</code> and <code>Supply</code> thing can take some getting used to for newcomers.  The quick and dirty is that a <code>Channel</code> will distribute the event to only <strong>one</strong> listener (chosen by the scheduler) and order isn't guaranteed while a <code>Supply</code> will distribute to all listeners and the order of the messages are distributed in the order received.  Because the <code>Event::Emitter</code> <code>Channel</code> based handler executes the methods registered with it directly, when it receives a message <em>all</em> of your methods are called with the data.</p>
+<p>So, you've seen the example above as a <code>Supply</code> based event handler, check it out as a <code>Channel</code> based and note the difference in <code>.say</code> and the instantiation of the event handler.</p>
+<div class="highlight highlight-source-raku"><pre><span class="pl-k">use</span> Event::Emitter;
+<span class="pl-k">my</span> Event::Emitter $e <span class="pl-k">.=</span> <span class="pl-c1">new</span>(<span class="pl-k">:</span>threaded); <span class="pl-c"><span class="pl-c">#</span> !important - this signifies a Channel based E:E</span>
+
+$e<span class="pl-k">.</span>on(/<span class="pl-sr"><span class="pl-en">^^</span> <span class="pl-k">.+</span> <span class="pl-en">$$</span></span>/, <span class="pl-k">-&gt;</span> $data {
+  <span class="pl-c"><span class="pl-c">#</span> you can operate on $data here</span>
+  <span class="pl-s"><span class="pl-pds">"</span>  regex matches: $data<span class="pl-pds">"</span></span><span class="pl-k">.</span><span class="pl-c1">say</span>;
+});
+
+$e<span class="pl-k">.</span>on({ <span class="pl-c1">True</span>; }, <span class="pl-k">-&gt;</span> $data {
+  <span class="pl-s"><span class="pl-pds">"</span>  block matches: $data<span class="pl-pds">"</span></span><span class="pl-k">.</span><span class="pl-c1">say</span>;
+});
+
+$e<span class="pl-k">.</span>on(<span class="pl-s"><span class="pl-pds">'</span>event<span class="pl-pds">'</span></span>, <span class="pl-k">-&gt;</span> $data {
+  <span class="pl-s"><span class="pl-pds">"</span>  string matches: $data<span class="pl-pds">"</span></span><span class="pl-k">.</span><span class="pl-c1">say</span>;
+});
+
+<span class="pl-s"><span class="pl-pds">'</span>event<span class="pl-pds">'</span></span><span class="pl-k">.</span><span class="pl-c1">say</span>;
+$e<span class="pl-k">.</span><span class="pl-c1">emit</span>(<span class="pl-s"><span class="pl-pds">"</span>event<span class="pl-pds">"</span></span>, <span class="pl-s"><span class="pl-pds">"</span>event<span class="pl-pds">"</span></span>);
+
+<span class="pl-s"><span class="pl-pds">'</span>empty event<span class="pl-pds">'</span></span><span class="pl-k">.</span><span class="pl-c1">say</span>;
+$e<span class="pl-k">.</span><span class="pl-c1">emit</span>(<span class="pl-s"><span class="pl-pds">"</span><span class="pl-pds">"</span></span>, <span class="pl-s"><span class="pl-pds">"</span>empty event<span class="pl-pds">"</span></span>);
+
+<span class="pl-s"><span class="pl-pds">'</span>abc<span class="pl-pds">'</span></span><span class="pl-k">.</span><span class="pl-c1">say</span>;
+$e<span class="pl-k">.</span><span class="pl-c1">emit</span>(<span class="pl-s"><span class="pl-pds">"</span>abc<span class="pl-pds">"</span></span>, <span class="pl-s"><span class="pl-pds">"</span>abc<span class="pl-pds">"</span></span>);</pre></div>
+<p><strong>Output</strong></p>
+<pre><code>event
+empty event
+abc
+  regex matches: event
+  block matches: event
+  string matches: event
+  block matches: empty event
+  regex matches: abc
+  block matches: abc
+</code></pre>
+
 
     </div>
   </body>

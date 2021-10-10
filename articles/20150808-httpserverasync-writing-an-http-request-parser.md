@@ -1,6 +1,6 @@
 HTTP::Server::Async: Writing an HTTP Request Parser
 httpserverasync-writing-an-http-request-parser
-rakudo
+programming, rakudo
 
 This is part 2 of a 2 part series.  You may want to check out the [first part](http://deathbyperl6.com/refactoring-httpserverasync/) if you haven't already.
 

@@ -1,6 +1,6 @@
 Adding on to Channels and Supplies in Perl6
 adding-on-to-channels-and-supplies-in-perl6
-rakudo
+programming, rakudo
 
 Channels and supplies are perl6's way of implementing the Oberserver pattern.  There's some significant differences behind the scenes of the two but both can be used to implement a `jQuery.on("event"` like experience for the user.  Not a jQuery fan?  Don't you worry your pretty little head because this is perl6 and it's much more fun than whatever you thought.
 
