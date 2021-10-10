@@ -33,7 +33,7 @@ Using zef we'll install Xoos (if YAML::Parser::LibYAML fails to install or you d
 
 SQLite3, we'll create the following ERD.
 
-![Database-ER-Diagram--4-](https://deathbyperl6.com/content/images/2019/03/Database-ER-Diagram--4-.svg)
+![Database-ER-Diagram](/i/erd.png)
 
 ```
 example$ sqlite3 xoos.sqlite3
