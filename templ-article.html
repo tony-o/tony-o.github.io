@@ -40,7 +40,6 @@
               break;
             }
           }
-          console.log('%d=%s', i, cn, pre);
           codes = pre.getElementsByTagName("code")
           for(j = 0; j < codes.length; j++){
             codes[j].setAttribute("class", (codes[j].getAttribute("class") + " hljs " + cn).trim())
