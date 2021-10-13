@@ -106,3 +106,14 @@ foreach my $tag (sort keys %tags) {
   print $fh $index;
   close $fh;
 }
+
+# sitemap
+sub rglob {
+  my ($dir) = @_;
+  glob("$dir/*"), map { rglob($_); } grep { -d $_ && $_ ne '.' && $_ ne '..' && $_ ne $dir } glob("$dir/*"); 
+}
+my @docs = grep { -f $_ && $_ ~~ m{\.html$} } rglob('docs');
+open my $fh, '>', './docs/sitemap.txt' or die $!;
+binmode $fh, ':utf8';
+print $fh join("\n", @docs);
+close $fh;
