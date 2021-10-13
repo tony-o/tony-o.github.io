@@ -16,7 +16,7 @@ Let's have an example and then we'll dissect it.
 
 ### A Basic Example
 
-```perl6
+```perl
 use Event::Emitter;
 my Event::Emitter $e .= new;
 
@@ -60,7 +60,7 @@ abc
 Okay, that looks like a lot.  It is, and it's much nicer to use than a large `given`/`when` combination.  It also reduces indenting, so you have that going for you, which is nice.
 
 Let's start with the simple `.on` blocks we have.
-```perl6
+```perl
   $e.on(/^^ .+ $$/, -> $data { ...
 ```
 This is telling the emitter handler that whenever an event is received, run that regular expression against it and if it matches, execute the block (passed in as the second argument).  As a note, and illustrated in the example above, the handler can match against a `Callable`, `Str`, or `Regex`.  The `Callable` must return `True` or `False` to let the handler know whether or not to execute the block.
@@ -75,7 +75,7 @@ So, now we're looking for more value in something like this.  Here it is: you ca
 
 ##### Example
 
-```perl6
+```perl
 use Event::Emitter::Role::Template;
 
 class ZefClass does Event::Emitter::Role::Template {
@@ -110,7 +110,7 @@ The `Channel` and `Supply` thing can take some getting used to for newcomers.  T
 
 So, you've seen the example above as a `Supply` based event handler, check it out as a `Channel` based and note the difference in `.say` and the instantiation of the event handler.
 
-```perl6
+```perl
 use Event::Emitter;
 my Event::Emitter $e .= new(:threaded); # !important - this signifies a Channel based E:E
 

@@ -13,8 +13,11 @@ html, body {
 }
 
 pre {
-  white-space: pre-wrap;
   font-size:   .8em;
+}
+
+pre > code {
+  overflow-x: scroll;
 }
 
 /* colors

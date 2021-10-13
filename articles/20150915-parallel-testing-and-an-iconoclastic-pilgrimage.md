@@ -14,7 +14,7 @@ This is confusing.
 
 Let's take a look at an example, then we'll talk about how the module was put together.  Afterwards, more in depth examples.
 
-```perl6
+```perl
 use Green :harness;
 
 set("Group 1", sub {
@@ -102,7 +102,7 @@ Doesn't get much easier than that.
 
 Another feature of `Green` is the quick testing shorthands.
 
-```perl6
+```perl
 use Green :harness;
 
 >> { <Callable 1>; };
@@ -113,7 +113,7 @@ This will execute both `Callable`s in series.
 
 Too much crap?  Try again.
 
-```perl6
+```perl
 use Green :harness;
 
 ok 1==1;
@@ -126,7 +126,7 @@ This is also acceptable shorthand.
 
 Have some tests that require some parallel processing and don't want to deal with writing your own promise/result handlers?  Check this out
 
-```perl6
+```perl
 use Green :harness;
 
 set('Set 1', sub {
@@ -174,7 +174,7 @@ The output of this is easy to read.  `set`s are output all at once along with th
 
 ###### Concise series
 
-```perl6
+```perl
 #!/usr/bin/env perl6
 
 use lib '../lib';
@@ -211,7 +211,7 @@ use Green :harness;
 
 ###### Failure
 
-```perl6
+```perl
 #!/usr/bin/env perl6
 
 use lib '../lib';
@@ -241,7 +241,7 @@ ok 1 == 0, 'test';
 
 ###### More Concise
 
-```perl6
+```perl
 #!/usr/bin/env perl6
 
 use lib '../lib';
@@ -275,7 +275,7 @@ ok 0 == 1;
 
 ###### Parallel Tests
 
-```perl6
+```perl
 #!/usr/bin/env perl6
 
 use lib '../lib';
@@ -326,7 +326,7 @@ set("time me 4", sub {
 
 ###### Series
 
-```perl6
+```perl
 #!/usr/bin/env perl6
 
 use lib '../lib';

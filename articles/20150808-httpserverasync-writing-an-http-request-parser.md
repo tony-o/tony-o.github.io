@@ -24,7 +24,7 @@ The first part of parsing is implementing `HTTP::Request` so we have something t
 
 Here's our starter template for HTTP::Request:
 
-```perl6
+```perl
 use HTTP::Request;
 
 class HTTP::Server::Async::Request does HTTP::Request {
@@ -37,7 +37,7 @@ class HTTP::Server::Async::Request does HTTP::Request {
 
 Now we'll implement the `self!parse` method we used in the last article.  Now we're actually parsing an HTTP request and parsing headers, getting the URI, the method, etc.
 
-```perl6
+```perl
   method !parse($data is rw, $index is rw, $req is rw, $connection) {
     $req = Nil if $req !~~ Nil && $req.^can('complete') && $req.complete;
     if $req ~~ Nil || !( $req.^can('headers') && $req.headers.keys.elems ) {
@@ -76,7 +76,7 @@ After that, if we need a new req/res pair then we create one.  It's important th
 
 After that, if the headers are complete then we run through our middleware with the request and allow them to hijack the request if they want.  This is useful for things like `websocket`s and other types of custom applications.
 
-```perl6
+```perl
     if $req !~~ Nil && $req.header('Transfer-Encoding').lc.index('chunked') !~~ Nil {
       my ($i, $bytes) = 0,;
       my Buf $rn .=new("\r\n".encode);
@@ -113,14 +113,14 @@ If the request is complete then we send it off to be handled by the request hand
 You may notice that the last line (`$.requests`) isn't discussed anywhere else in the blog.  This application is using a `Channel` to detect the end of requests.  Here is the relevant code
 
 ######Setting up the channel as an attribute of our server
-```perl6
+```perl
 class HTTP::Server::Async does HTTP::Server {
   has Int     $.port          = 1666;
   has Str     $.ip            = '0.0.0.0';
   has Channel $.requests     .= new; #added for this blog
 ```
 ######Setting up the handler to work asynchronously of the parser and listener
-```perl6
+```perl
   method !responder {
     start {
       loop {

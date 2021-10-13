@@ -61,7 +61,7 @@ Neato burrito.  From the output you can see that Hiker created some directories 
 
 ### The Model
 
-```perl6
+```perl
 
 use Hiker::Model;
 
@@ -76,7 +76,7 @@ Pretty straight forward.  `MyApp::Model1` is instantiated during Hiker initializ
 
 ### The Controller
 
-```perl6
+```perl
 use Hiker::Route;
 
 class MyApp::Route1 does Hiker::Route {

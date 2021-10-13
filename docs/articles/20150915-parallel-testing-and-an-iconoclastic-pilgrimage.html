@@ -1,7 +1,8 @@
 <!DOCTYPE html>
 <html>
   <head>
-    <link href="https://fonts.googleapis.com/css?family=Lora:400,700|Montserrat:300" rel="stylesheet" />
+    <link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Lora:400,700|Montserrat:300" />
+    <link rel="stylesheet" href="//cdnjs.cloudflare.com/ajax/libs/highlight.js/11.2.0/styles/github.min.css" />
     <link rel="stylesheet" href="/s/style.css" />
   </head>
   <body>
@@ -15,34 +16,32 @@
       <h6>// <a href="https://deathbykeystroke.com/articles/20150915-parallel-testing-and-an-iconoclastic-pilgrimage.html">perma</a></h6>
       <br/>
 
-      <h1>
-<a id="user-content-this-is-an-article-about-green" class="anchor" href="#this-is-an-article-about-green" aria-hidden="true"><span aria-hidden="true" class="octicon octicon-link"></span></a>This is an article about <code>Green</code>
-</h1>
+      <h1 id="this-is-an-article-about-green">This is an article about <code>Green</code></h1>
 <p><code>Green</code> is a module I wrote with the intention of replacing the well loved <code>prove</code> command in favor of something that can parallel test all files and even perform parallel testing of functions inside of a test file.</p>
 <p>Wait, what?</p>
-<p>Don't worry, the parallel testing of functions doesn't mean all your code is going to run at once.  It means that you can put multiple test groups into one file and have those groups all tested in parallel while the methods in those groups retain their order and are executed in series.</p>
+<p>Don't worry, the parallel testing of functions doesn't mean all your code is going to run at once. It means that you can put multiple test groups into one file and have those groups all tested in parallel while the methods in those groups retain their order and are executed in series.</p>
 <p>This is confusing.</p>
-<p>Let's take a look at an example, then we'll talk about how the module was put together.  Afterwards, more in depth examples.</p>
-<div class="highlight highlight-source-raku"><pre><span class="pl-k">use</span> Green <span class="pl-k">:</span>harness;
-
-set(<span class="pl-s"><span class="pl-pds">"</span>Group 1<span class="pl-pds">"</span></span>, sub {
-  test(<span class="pl-s"><span class="pl-pds">"</span>Group 1, Test 1<span class="pl-pds">"</span></span>, sub { <span class="pl-c1">ok</span> <span class="pl-c1">1</span><span class="pl-k">==</span><span class="pl-c1">1</span>; });
-  test(<span class="pl-s"><span class="pl-pds">"</span>Group 1, Test 2<span class="pl-pds">"</span></span>, sub {
-    <span class="pl-c1">sleep</span> <span class="pl-c1">2</span>;
-    <span class="pl-c1">ok</span> <span class="pl-c1">1</span><span class="pl-k">==</span><span class="pl-c1">1</span>;
-  });
-});
-
-set(<span class="pl-s"><span class="pl-pds">"</span>Group 2<span class="pl-pds">"</span></span>, sub {
-  test(<span class="pl-s"><span class="pl-pds">"</span>Group 2, Test 1<span class="pl-pds">"</span></span>, sub {
-    <span class="pl-c1">sleep</span> <span class="pl-c1">1</span>;
-    <span class="pl-c1">ok</span> <span class="pl-c1">1</span><span class="pl-k">==</span><span class="pl-c1">1</span>; <span class="pl-c1">sleep</span> <span class="pl-c1">1</span>;
-  });
-  test(<span class="pl-s"><span class="pl-pds">"</span>Group 2, Test 2<span class="pl-pds">"</span></span>, sub {
-    <span class="pl-c1">sleep</span> <span class="pl-c1">1</span>;
-    <span class="pl-c1">ok</span> <span class="pl-c1">1</span><span class="pl-k">==</span><span class="pl-c1">1</span>;
-  });
-});</pre></div>
+<p>Let's take a look at an example, then we'll talk about how the module was put together. Afterwards, more in depth examples.</p>
+<div class="sourceCode" id="cb1"><pre class="sourceCode perl"><code class="sourceCode perl"><span id="cb1-1"><a href="#cb1-1" aria-hidden="true" tabindex="-1"></a><span class="fu">use</span> Green :harness;</span>
+<span id="cb1-2"><a href="#cb1-2" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-3"><a href="#cb1-3" aria-hidden="true" tabindex="-1"></a>set(<span class="ot">&quot;</span><span class="st">Group 1</span><span class="ot">&quot;</span>, <span class="kw">sub </span>{</span>
+<span id="cb1-4"><a href="#cb1-4" aria-hidden="true" tabindex="-1"></a>  test(<span class="ot">&quot;</span><span class="st">Group 1, Test 1</span><span class="ot">&quot;</span>, <span class="kw">sub </span>{ ok <span class="dv">1</span>==<span class="dv">1</span>; });</span>
+<span id="cb1-5"><a href="#cb1-5" aria-hidden="true" tabindex="-1"></a>  test(<span class="ot">&quot;</span><span class="st">Group 1, Test 2</span><span class="ot">&quot;</span>, <span class="kw">sub </span>{</span>
+<span id="cb1-6"><a href="#cb1-6" aria-hidden="true" tabindex="-1"></a>    <span class="fu">sleep</span> <span class="dv">2</span>;</span>
+<span id="cb1-7"><a href="#cb1-7" aria-hidden="true" tabindex="-1"></a>    ok <span class="dv">1</span>==<span class="dv">1</span>;</span>
+<span id="cb1-8"><a href="#cb1-8" aria-hidden="true" tabindex="-1"></a>  });</span>
+<span id="cb1-9"><a href="#cb1-9" aria-hidden="true" tabindex="-1"></a>});</span>
+<span id="cb1-10"><a href="#cb1-10" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-11"><a href="#cb1-11" aria-hidden="true" tabindex="-1"></a>set(<span class="ot">&quot;</span><span class="st">Group 2</span><span class="ot">&quot;</span>, <span class="kw">sub </span>{</span>
+<span id="cb1-12"><a href="#cb1-12" aria-hidden="true" tabindex="-1"></a>  test(<span class="ot">&quot;</span><span class="st">Group 2, Test 1</span><span class="ot">&quot;</span>, <span class="kw">sub </span>{</span>
+<span id="cb1-13"><a href="#cb1-13" aria-hidden="true" tabindex="-1"></a>    <span class="fu">sleep</span> <span class="dv">1</span>;</span>
+<span id="cb1-14"><a href="#cb1-14" aria-hidden="true" tabindex="-1"></a>    ok <span class="dv">1</span>==<span class="dv">1</span>; <span class="fu">sleep</span> <span class="dv">1</span>;</span>
+<span id="cb1-15"><a href="#cb1-15" aria-hidden="true" tabindex="-1"></a>  });</span>
+<span id="cb1-16"><a href="#cb1-16" aria-hidden="true" tabindex="-1"></a>  test(<span class="ot">&quot;</span><span class="st">Group 2, Test 2</span><span class="ot">&quot;</span>, <span class="kw">sub </span>{</span>
+<span id="cb1-17"><a href="#cb1-17" aria-hidden="true" tabindex="-1"></a>    <span class="fu">sleep</span> <span class="dv">1</span>;</span>
+<span id="cb1-18"><a href="#cb1-18" aria-hidden="true" tabindex="-1"></a>    ok <span class="dv">1</span>==<span class="dv">1</span>;</span>
+<span id="cb1-19"><a href="#cb1-19" aria-hidden="true" tabindex="-1"></a>  });</span>
+<span id="cb1-20"><a href="#cb1-20" aria-hidden="true" tabindex="-1"></a>});</span></code></pre></div>
 <p>Output:</p>
 <pre><code>   [P] Group 1
       [P] Group 1, Test 1
@@ -52,77 +51,68 @@ set(<span class="pl-s"><span class="pl-pds">"</span>Group 2<span class="pl-pds">
       [P] Group 2, Test 1
       [P] Group 2, Test 2
 
-   [P] 4 of 4 passing (2511.628ms)
-</code></pre>
-<p>Notice the runtime of 2.5 seconds.  Normally if you combined all four of those <code>test</code> groups into a series, you'd have ended up waiting around four seconds (Group 1 has a <code>sleep 2</code> and Group 2 has <code>sleep 1</code> twice).</p>
+   [P] 4 of 4 passing (2511.628ms)</code></pre>
+<p>Notice the runtime of 2.5 seconds. Normally if you combined all four of those <code>test</code> groups into a series, you'd have ended up waiting around four seconds (Group 1 has a <code>sleep 2</code> and Group 2 has <code>sleep 1</code> twice).</p>
 <p>*Please note that the startup time for my perl6 is anywhere between <code>500ms</code> and <code>1s</code>.</p>
-<h2>
-<a id="user-content-pitfalls--considerations" class="anchor" href="#pitfalls--considerations" aria-hidden="true"><span aria-hidden="true" class="octicon octicon-link"></span></a>Pitfalls &amp; Considerations</h2>
+<h2 id="pitfalls-considerations">Pitfalls &amp; Considerations</h2>
 <ul>
 <li>Output can get jumbled if you have multiple groups testing at the same time, <code>test()</code> output should be cached and wait for the <code>set</code> to be completed</li>
 <li>Tests should be able to return a promise, that promise will determine the result of the test</li>
 <li>Concision for simple and short test files</li>
-<li>Output of failing tests should be reserved for the end of the <code>set</code> to be completed, this provides a nicer output and aids in troubleshooting.  <code>prove</code> has always driven me nuts with trying to figure out the trace for the error</li>
+<li>Output of failing tests should be reserved for the end of the <code>set</code> to be completed, this provides a nicer output and aids in troubleshooting. <code>prove</code> has always driven me nuts with trying to figure out the trace for the error</li>
 <li>Output from <code>say</code> and <code>warn</code> should be immediately written and unimpeded</li>
 </ul>
-<h4>
-<a id="user-content-why-is-it-such-a-big-deal-to-have-a-test-give-its-result-as-soon-as-its-available" class="anchor" href="#why-is-it-such-a-big-deal-to-have-a-test-give-its-result-as-soon-as-its-available" aria-hidden="true"><span aria-hidden="true" class="octicon octicon-link"></span></a>Why is it such a big deal to have a <code>test</code> give its result as soon as its available?</h4>
-<p>This causes issues when tests fail.  When a test fails and you need to print the stack trace for the test, you can't guarantee that another test being executed in parallel isn't busy writing to the output.  This can cause jumbled or confusing stuff on the command line.  Imagine that two tests complete at roughly the same time, the first fails and needs to print the failure and then the stack trace.  The second completes with success and brags about its accomplishment to stdout between the time that the first test showed error and generated the stack trace information to be printed.  You'd end up with some output that looks roughly like</p>
+<h4 id="why-is-it-such-a-big-deal-to-have-a-test-give-its-result-as-soon-as-its-available">Why is it such a big deal to have a <code>test</code> give its result as soon as its available?</h4>
+<p>This causes issues when tests fail. When a test fails and you need to print the stack trace for the test, you can't guarantee that another test being executed in parallel isn't busy writing to the output. This can cause jumbled or confusing stuff on the command line. Imagine that two tests complete at roughly the same time, the first fails and needs to print the failure and then the stack trace. The second completes with success and brags about its accomplishment to stdout between the time that the first test showed error and generated the stack trace information to be printed. You'd end up with some output that looks roughly like</p>
 <pre><code>[F] #1 Failed test 1
 [P] Passed test 2
 
 #1 - not ok
   in block  at &lt;path&gt;.pm6:103
-  in block  at &lt;path&gt;.pm6:94
-</code></pre>
-<p>Yes, that's manageable for two tests.  It's not when you have a test file with several tens or hundreds of tests in it.  It's certainly not manageable when you have several test files running at once, all trying to write at once.</p>
+  in block  at &lt;path&gt;.pm6:94</code></pre>
+<p>Yes, that's manageable for two tests. It's not when you have a test file with several tens or hundreds of tests in it. It's certainly not manageable when you have several test files running at once, all trying to write at once.</p>
 <p>There are other ways to deal with it, I think this solution is the cleanest and that's why Green is built in this way.</p>
-<h4>
-<a id="user-content-other-problems-with-parallelization-and-testing" class="anchor" href="#other-problems-with-parallelization-and-testing" aria-hidden="true"><span aria-hidden="true" class="octicon octicon-link"></span></a>Other problems with parallelization and testing</h4>
-<p>There exists another big issue; what about when you want to do some asynchronous IO and don't want to have to handle setting up your own <code>await</code> and returning mechanisms to get the result?  <code>Green</code> handles this too.  If your test returns a <code>Promise</code> then <code>Green</code> will automatically await the promise and use its result as the output for the test result.  This is useful when you need to do things like non-blocking database calls or non-blocking file reads, reading data from channels, etc.  This also prevents <code>Green</code> from executing the next consecutive test until the <code>Promise</code> is <code>Kept|Broken</code>, this keeps <code>test</code>s executing in serial despite containing potentially a large amount of non-blocking code.</p>
-<p>Why not let the user handle that?  The user can handle that, they just shouldn't return a <code>Promise</code> from the <code>test()</code>'s method.</p>
-<h4>
-<a id="user-content-considerations" class="anchor" href="#considerations" aria-hidden="true"><span aria-hidden="true" class="octicon octicon-link"></span></a>Considerations</h4>
+<h4 id="other-problems-with-parallelization-and-testing">Other problems with parallelization and testing</h4>
+<p>There exists another big issue; what about when you want to do some asynchronous IO and don't want to have to handle setting up your own <code>await</code> and returning mechanisms to get the result? <code>Green</code> handles this too. If your test returns a <code>Promise</code> then <code>Green</code> will automatically await the promise and use its result as the output for the test result. This is useful when you need to do things like non-blocking database calls or non-blocking file reads, reading data from channels, etc. This also prevents <code>Green</code> from executing the next consecutive test until the <code>Promise</code> is <code>Kept|Broken</code>, this keeps <code>test</code>s executing in serial despite containing potentially a large amount of non-blocking code.</p>
+<p>Why not let the user handle that? The user can handle that, they just shouldn't return a <code>Promise</code> from the <code>test()</code>'s method.</p>
+<h4 id="considerations">Considerations</h4>
 <p>The main purpose of a testing suite is to make testing easy, having a stack trace not be a two step process, make the testing output simple to read, and to keep things simple.</p>
-<h5>
-<a id="user-content-making-test-easy" class="anchor" href="#making-test-easy" aria-hidden="true"><span aria-hidden="true" class="octicon octicon-link"></span></a>Making test easy</h5>
-<p>To run <code>Green</code> against the current directory, you have to simply type <code>green</code> on the command line.  Done.</p>
+<h5 id="making-test-easy">Making test easy</h5>
+<p>To run <code>Green</code> against the current directory, you have to simply type <code>green</code> on the command line. Done.</p>
 <p><code>Green</code> automatically <code>-Iblib -Ilib</code> and looks for the following directories in order <code>t/, test/, tests/</code>, stops on the first match and continues to test every file in that directory that ends with <code>.t</code></p>
 <p>Doesn't get much easier than that.</p>
-<hr>
+<hr />
 <p>Another feature of <code>Green</code> is the quick testing shorthands.</p>
-<div class="highlight highlight-source-raku"><pre><span class="pl-k">use</span> Green <span class="pl-k">:</span>harness;
-
-<span class="pl-k">&gt;&gt;</span> { &lt;<span class="pl-s">Callable 1</span>&gt;; };
-<span class="pl-k">&gt;&gt;</span> { &lt;<span class="pl-s">Callable 2</span>&gt;; };</pre></div>
+<div class="sourceCode" id="cb4"><pre class="sourceCode perl"><code class="sourceCode perl"><span id="cb4-1"><a href="#cb4-1" aria-hidden="true" tabindex="-1"></a><span class="fu">use</span> Green :harness;</span>
+<span id="cb4-2"><a href="#cb4-2" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb4-3"><a href="#cb4-3" aria-hidden="true" tabindex="-1"></a>&gt;&gt; { &lt;Callable <span class="dv">1</span>&gt;; };</span>
+<span id="cb4-4"><a href="#cb4-4" aria-hidden="true" tabindex="-1"></a>&gt;&gt; { &lt;Callable <span class="dv">2</span>&gt;; };</span></code></pre></div>
 <p>This will execute both <code>Callable</code>s in series.</p>
-<p>Too much crap?  Try again.</p>
-<div class="highlight highlight-source-raku"><pre><span class="pl-k">use</span> Green <span class="pl-k">:</span>harness;
-
-<span class="pl-c1">ok</span> <span class="pl-c1">1</span><span class="pl-k">==</span><span class="pl-c1">1</span>;
-<span class="pl-c1">ok</span> <span class="pl-c1">2</span><span class="pl-k">==</span><span class="pl-c1">1</span>;</pre></div>
+<p>Too much crap? Try again.</p>
+<div class="sourceCode" id="cb5"><pre class="sourceCode perl"><code class="sourceCode perl"><span id="cb5-1"><a href="#cb5-1" aria-hidden="true" tabindex="-1"></a><span class="fu">use</span> Green :harness;</span>
+<span id="cb5-2"><a href="#cb5-2" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb5-3"><a href="#cb5-3" aria-hidden="true" tabindex="-1"></a>ok <span class="dv">1</span>==<span class="dv">1</span>;</span>
+<span id="cb5-4"><a href="#cb5-4" aria-hidden="true" tabindex="-1"></a>ok <span class="dv">2</span>==<span class="dv">1</span>;</span></code></pre></div>
 <p>This is also acceptable shorthand.</p>
-<hr>
-<p>Have some tests that require some parallel processing and don't want to deal with writing your own promise/result handlers?  Check this out</p>
-<div class="highlight highlight-source-raku"><pre><span class="pl-k">use</span> Green <span class="pl-k">:</span>harness;
-
-set(<span class="pl-s"><span class="pl-pds">'</span>Set 1<span class="pl-pds">'</span></span>, sub {
-  test(<span class="pl-s"><span class="pl-pds">'</span>Test 1<span class="pl-pds">'</span></span>, <span class="pl-k">-&gt;</span> $<span class="pl-c1">done</span> {
-    <span class="pl-k">start</span> {
-      <span class="pl-c1">sleep</span> <span class="pl-c1">20</span>; <span class="pl-c"><span class="pl-c">#</span>let them wait</span>
-      $<span class="pl-c1">done</span>();  <span class="pl-c"><span class="pl-c">#</span>'Test 2' is now executed</span>
-    };
-  });
-  test(<span class="pl-s"><span class="pl-pds">'</span>Test 2<span class="pl-pds">'</span></span>, {
-    <span class="pl-c1">sleep</span> <span class="pl-c1">1</span>;
-    <span class="pl-c1">ok</span> <span class="pl-c1">1</span><span class="pl-k">==</span><span class="pl-c1">1</span>;
-  });
-});
-</pre></div>
-<p>When there is an extra parameter expected on the <code>Callable</code> that <code>test</code> is passed, <code>Green</code> handles tossing in a sub that the test can execute when it's done processing.  Easy doggone peasy.</p>
-<h4>
-<a id="user-content-visibility-on-stack-traces-and-easy-to-read-output" class="anchor" href="#visibility-on-stack-traces-and-easy-to-read-output" aria-hidden="true"><span aria-hidden="true" class="octicon octicon-link"></span></a>Visibility on stack traces and easy to read output</h4>
-<p>My only really major complaint with <code>prove</code> is that it's a pain to get a stack trace.  Sure it gives me the first line, that's great.  Rarely is my issue on that first line of a stack trace.  <code>Green</code> took cues from other testing suites from other languages that are much easier to read.  Sample failure output from <code>Green</code> looks like the following:</p>
+<hr />
+<p>Have some tests that require some parallel processing and don't want to deal with writing your own promise/result handlers? Check this out</p>
+<div class="sourceCode" id="cb6"><pre class="sourceCode perl"><code class="sourceCode perl"><span id="cb6-1"><a href="#cb6-1" aria-hidden="true" tabindex="-1"></a><span class="fu">use</span> Green :harness;</span>
+<span id="cb6-2"><a href="#cb6-2" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb6-3"><a href="#cb6-3" aria-hidden="true" tabindex="-1"></a>set(<span class="ot">&#39;</span><span class="ss">Set 1</span><span class="ot">&#39;</span>, <span class="kw">sub </span>{</span>
+<span id="cb6-4"><a href="#cb6-4" aria-hidden="true" tabindex="-1"></a>  test(<span class="ot">&#39;</span><span class="ss">Test 1</span><span class="ot">&#39;</span>, -&gt; <span class="dt">$done</span> {</span>
+<span id="cb6-5"><a href="#cb6-5" aria-hidden="true" tabindex="-1"></a>    start {</span>
+<span id="cb6-6"><a href="#cb6-6" aria-hidden="true" tabindex="-1"></a>      <span class="fu">sleep</span> <span class="dv">20</span>; <span class="co">#let them wait</span></span>
+<span id="cb6-7"><a href="#cb6-7" aria-hidden="true" tabindex="-1"></a>      <span class="dt">$done</span>();  <span class="co">#&#39;Test 2&#39; is now executed</span></span>
+<span id="cb6-8"><a href="#cb6-8" aria-hidden="true" tabindex="-1"></a>    };</span>
+<span id="cb6-9"><a href="#cb6-9" aria-hidden="true" tabindex="-1"></a>  });</span>
+<span id="cb6-10"><a href="#cb6-10" aria-hidden="true" tabindex="-1"></a>  test(<span class="ot">&#39;</span><span class="ss">Test 2</span><span class="ot">&#39;</span>, {</span>
+<span id="cb6-11"><a href="#cb6-11" aria-hidden="true" tabindex="-1"></a>    <span class="fu">sleep</span> <span class="dv">1</span>;</span>
+<span id="cb6-12"><a href="#cb6-12" aria-hidden="true" tabindex="-1"></a>    ok <span class="dv">1</span>==<span class="dv">1</span>;</span>
+<span id="cb6-13"><a href="#cb6-13" aria-hidden="true" tabindex="-1"></a>  });</span>
+<span id="cb6-14"><a href="#cb6-14" aria-hidden="true" tabindex="-1"></a>});</span></code></pre></div>
+<p>When there is an extra parameter expected on the <code>Callable</code> that <code>test</code> is passed, <code>Green</code> handles tossing in a sub that the test can execute when it's done processing. Easy doggone peasy.</p>
+<h4 id="visibility-on-stack-traces-and-easy-to-read-output">Visibility on stack traces and easy to read output</h4>
+<p>My only really major complaint with <code>prove</code> is that it's a pain to get a stack trace. Sure it gives me the first line, that's great. Rarely is my issue on that first line of a stack trace. <code>Green</code> took cues from other testing suites from other languages that are much easier to read. Sample failure output from <code>Green</code> looks like the following:</p>
 <pre><code>tonyo@imac ~/projects/perl6-green/examples$ perl6 failure.pl6
    [F] Prefixed Tests
       [F] #1 - Prefixed 1
@@ -135,56 +125,51 @@ set(<span class="pl-s"><span class="pl-pds">'</span>Set 1<span class="pl-pds">'<
          in block  at /Users/tonyo/projects/perl6-green/examples/../lib/Green.pm6:106
          in block  at /Users/tonyo/projects/perl6-green/examples/../lib/Green.pm6:97
 
-   [F] 0 of 2 passing (501.065ms)
-</code></pre>
+   [F] 0 of 2 passing (501.065ms)</code></pre>
 <p>Again, easy.</p>
-<p>The output of this is easy to read.  <code>set</code>s are output all at once along with the failures.  Nothing is jumbled, it's just clean.</p>
-<h2>
-<a id="user-content-some-more-examples" class="anchor" href="#some-more-examples" aria-hidden="true"><span aria-hidden="true" class="octicon octicon-link"></span></a>Some more examples</h2>
-<h6>
-<a id="user-content-concise-series" class="anchor" href="#concise-series" aria-hidden="true"><span aria-hidden="true" class="octicon octicon-link"></span></a>Concise series</h6>
-<div class="highlight highlight-source-raku"><pre><span class="pl-c"><span class="pl-c">#</span>!/usr/bin/env perl6</span>
-
-<span class="pl-k">use</span> <span class="pl-c1">lib</span> <span class="pl-s"><span class="pl-pds">'</span>../lib<span class="pl-pds">'</span></span>;
-<span class="pl-k">use</span> Green <span class="pl-k">:</span>harness;
-
-<span class="pl-c"><span class="pl-c">#</span>all of these tests should complete in 2 seconds</span>
-<span class="pl-k">&gt;&gt;</span> {
-  <span class="pl-c1">sleep</span> <span class="pl-c1">2</span>;
-  <span class="pl-c1">ok</span> <span class="pl-c1">1</span> <span class="pl-k">==</span> <span class="pl-c1">1</span>;
-};
-
-<span class="pl-k">&gt;&gt;</span> {
-  <span class="pl-c1">sleep</span> <span class="pl-c1">2</span>;
-  <span class="pl-c1">ok</span> <span class="pl-c1">1</span> <span class="pl-k">==</span> <span class="pl-c1">1</span>;
-};
-<span class="pl-k">&gt;&gt;</span> {
-  <span class="pl-c1">sleep</span> <span class="pl-c1">2</span>;
-  <span class="pl-c1">ok</span> <span class="pl-c1">1</span> <span class="pl-k">==</span> <span class="pl-c1">1</span>;
-};
-
-
-<span class="pl-k">&gt;&gt;</span> { <span class="pl-c1">1</span> <span class="pl-k">==</span> <span class="pl-c1">1</span>; }</pre></div>
+<p>The output of this is easy to read. <code>set</code>s are output all at once along with the failures. Nothing is jumbled, it's just clean.</p>
+<h2 id="some-more-examples">Some more examples</h2>
+<h6 id="concise-series">Concise series</h6>
+<div class="sourceCode" id="cb8"><pre class="sourceCode perl"><code class="sourceCode perl"><span id="cb8-1"><a href="#cb8-1" aria-hidden="true" tabindex="-1"></a><span class="kw">#!/usr/bin/env perl6</span></span>
+<span id="cb8-2"><a href="#cb8-2" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb8-3"><a href="#cb8-3" aria-hidden="true" tabindex="-1"></a><span class="fu">use</span> lib <span class="ot">&#39;</span><span class="ss">../lib</span><span class="ot">&#39;</span>;</span>
+<span id="cb8-4"><a href="#cb8-4" aria-hidden="true" tabindex="-1"></a><span class="fu">use</span> Green :harness;</span>
+<span id="cb8-5"><a href="#cb8-5" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb8-6"><a href="#cb8-6" aria-hidden="true" tabindex="-1"></a><span class="co">#all of these tests should complete in 2 seconds</span></span>
+<span id="cb8-7"><a href="#cb8-7" aria-hidden="true" tabindex="-1"></a>&gt;&gt; {</span>
+<span id="cb8-8"><a href="#cb8-8" aria-hidden="true" tabindex="-1"></a>  <span class="fu">sleep</span> <span class="dv">2</span>;</span>
+<span id="cb8-9"><a href="#cb8-9" aria-hidden="true" tabindex="-1"></a>  ok <span class="dv">1</span> == <span class="dv">1</span>;</span>
+<span id="cb8-10"><a href="#cb8-10" aria-hidden="true" tabindex="-1"></a>};</span>
+<span id="cb8-11"><a href="#cb8-11" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb8-12"><a href="#cb8-12" aria-hidden="true" tabindex="-1"></a>&gt;&gt; {</span>
+<span id="cb8-13"><a href="#cb8-13" aria-hidden="true" tabindex="-1"></a>  <span class="fu">sleep</span> <span class="dv">2</span>;</span>
+<span id="cb8-14"><a href="#cb8-14" aria-hidden="true" tabindex="-1"></a>  ok <span class="dv">1</span> == <span class="dv">1</span>;</span>
+<span id="cb8-15"><a href="#cb8-15" aria-hidden="true" tabindex="-1"></a>};</span>
+<span id="cb8-16"><a href="#cb8-16" aria-hidden="true" tabindex="-1"></a>&gt;&gt; {</span>
+<span id="cb8-17"><a href="#cb8-17" aria-hidden="true" tabindex="-1"></a>  <span class="fu">sleep</span> <span class="dv">2</span>;</span>
+<span id="cb8-18"><a href="#cb8-18" aria-hidden="true" tabindex="-1"></a>  ok <span class="dv">1</span> == <span class="dv">1</span>;</span>
+<span id="cb8-19"><a href="#cb8-19" aria-hidden="true" tabindex="-1"></a>};</span>
+<span id="cb8-20"><a href="#cb8-20" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb8-21"><a href="#cb8-21" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb8-22"><a href="#cb8-22" aria-hidden="true" tabindex="-1"></a>&gt;&gt; { <span class="dv">1</span> == <span class="dv">1</span>; }</span></code></pre></div>
 <pre><code>   [P] Prefixed Tests
       [P] Prefixed 1
       [P] Prefixed 2
       [P] Prefixed 3
       [P] Prefixed 4
 
-   [P] 4 of 4 passing (6528.732ms)
-</code></pre>
-<h6>
-<a id="user-content-failure" class="anchor" href="#failure" aria-hidden="true"><span aria-hidden="true" class="octicon octicon-link"></span></a>Failure</h6>
-<div class="highlight highlight-source-raku"><pre><span class="pl-c"><span class="pl-c">#</span>!/usr/bin/env perl6</span>
-
-<span class="pl-k">use</span> <span class="pl-c1">lib</span> <span class="pl-s"><span class="pl-pds">'</span>../lib<span class="pl-pds">'</span></span>;
-<span class="pl-k">use</span> Green <span class="pl-k">:</span>harness;
-
-<span class="pl-c1">ok</span> <span class="pl-c1">1</span> <span class="pl-k">==</span> <span class="pl-c1">0</span>, <span class="pl-s"><span class="pl-pds">'</span>test<span class="pl-pds">'</span></span>;
-
-<span class="pl-k">&gt;&gt;</span> sub {
-  <span class="pl-c1">ok</span> <span class="pl-c1">False</span>;
-}, <span class="pl-s"><span class="pl-pds">'</span>not ok<span class="pl-pds">'</span></span>;</pre></div>
+   [P] 4 of 4 passing (6528.732ms)</code></pre>
+<h6 id="failure">Failure</h6>
+<div class="sourceCode" id="cb10"><pre class="sourceCode perl"><code class="sourceCode perl"><span id="cb10-1"><a href="#cb10-1" aria-hidden="true" tabindex="-1"></a><span class="kw">#!/usr/bin/env perl6</span></span>
+<span id="cb10-2"><a href="#cb10-2" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb10-3"><a href="#cb10-3" aria-hidden="true" tabindex="-1"></a><span class="fu">use</span> lib <span class="ot">&#39;</span><span class="ss">../lib</span><span class="ot">&#39;</span>;</span>
+<span id="cb10-4"><a href="#cb10-4" aria-hidden="true" tabindex="-1"></a><span class="fu">use</span> Green :harness;</span>
+<span id="cb10-5"><a href="#cb10-5" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb10-6"><a href="#cb10-6" aria-hidden="true" tabindex="-1"></a>ok <span class="dv">1</span> == <span class="dv">0</span>, <span class="ot">&#39;</span><span class="ss">test</span><span class="ot">&#39;</span>;</span>
+<span id="cb10-7"><a href="#cb10-7" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb10-8"><a href="#cb10-8" aria-hidden="true" tabindex="-1"></a>&gt;&gt; <span class="kw">sub </span>{</span>
+<span id="cb10-9"><a href="#cb10-9" aria-hidden="true" tabindex="-1"></a>  ok False;</span>
+<span id="cb10-10"><a href="#cb10-10" aria-hidden="true" tabindex="-1"></a>}, <span class="ot">&#39;</span><span class="ss">not ok</span><span class="ot">&#39;</span>;</span></code></pre></div>
 <pre><code>   [F] Prefixed Tests
       [F] #1 - Prefixed 1
       [F] #2 - Prefixed 2
@@ -196,23 +181,21 @@ set(<span class="pl-s"><span class="pl-pds">'</span>Set 1<span class="pl-pds">'<
          in block  at /Users/tonyo/projects/perl6-green/examples/../lib/Green.pm6:106
          in block  at /Users/tonyo/projects/perl6-green/examples/../lib/Green.pm6:97
 
-   [F] 0 of 2 passing (535.971ms)
-</code></pre>
-<h6>
-<a id="user-content-more-concise" class="anchor" href="#more-concise" aria-hidden="true"><span aria-hidden="true" class="octicon octicon-link"></span></a>More Concise</h6>
-<div class="highlight highlight-source-raku"><pre><span class="pl-c"><span class="pl-c">#</span>!/usr/bin/env perl6</span>
-
-<span class="pl-k">use</span> <span class="pl-c1">lib</span> <span class="pl-s"><span class="pl-pds">'</span>../lib<span class="pl-pds">'</span></span>;
-<span class="pl-k">use</span> Green <span class="pl-k">:</span>harness;
-
-
-<span class="pl-c1">ok</span> <span class="pl-c1">1</span> <span class="pl-k">==</span> <span class="pl-c1">1</span>;
-
-<span class="pl-c1">ok</span> <span class="pl-c1">0</span> <span class="pl-k">==</span> <span class="pl-c1">1</span>;
-
-<span class="pl-k">&gt;&gt;</span> {
-  <span class="pl-c1">ok</span> <span class="pl-c1">0</span> <span class="pl-k">==</span> <span class="pl-c1">1</span>;
-};</pre></div>
+   [F] 0 of 2 passing (535.971ms)</code></pre>
+<h6 id="more-concise">More Concise</h6>
+<div class="sourceCode" id="cb12"><pre class="sourceCode perl"><code class="sourceCode perl"><span id="cb12-1"><a href="#cb12-1" aria-hidden="true" tabindex="-1"></a><span class="kw">#!/usr/bin/env perl6</span></span>
+<span id="cb12-2"><a href="#cb12-2" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb12-3"><a href="#cb12-3" aria-hidden="true" tabindex="-1"></a><span class="fu">use</span> lib <span class="ot">&#39;</span><span class="ss">../lib</span><span class="ot">&#39;</span>;</span>
+<span id="cb12-4"><a href="#cb12-4" aria-hidden="true" tabindex="-1"></a><span class="fu">use</span> Green :harness;</span>
+<span id="cb12-5"><a href="#cb12-5" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb12-6"><a href="#cb12-6" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb12-7"><a href="#cb12-7" aria-hidden="true" tabindex="-1"></a>ok <span class="dv">1</span> == <span class="dv">1</span>;</span>
+<span id="cb12-8"><a href="#cb12-8" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb12-9"><a href="#cb12-9" aria-hidden="true" tabindex="-1"></a>ok <span class="dv">0</span> == <span class="dv">1</span>;</span>
+<span id="cb12-10"><a href="#cb12-10" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb12-11"><a href="#cb12-11" aria-hidden="true" tabindex="-1"></a>&gt;&gt; {</span>
+<span id="cb12-12"><a href="#cb12-12" aria-hidden="true" tabindex="-1"></a>  ok <span class="dv">0</span> == <span class="dv">1</span>;</span>
+<span id="cb12-13"><a href="#cb12-13" aria-hidden="true" tabindex="-1"></a>};</span></code></pre></div>
 <pre><code>   [F] Prefixed Tests
       [P] Prefixed 1
       [F] #1 - Prefixed 2
@@ -225,40 +208,38 @@ set(<span class="pl-s"><span class="pl-pds">'</span>Set 1<span class="pl-pds">'<
          in block  at /Users/tonyo/projects/perl6-green/examples/../lib/Green.pm6:106
          in block  at /Users/tonyo/projects/perl6-green/examples/../lib/Green.pm6:97
 
-   [F] 1 of 3 passing (602.168ms)
-</code></pre>
-<h6>
-<a id="user-content-parallel-tests" class="anchor" href="#parallel-tests" aria-hidden="true"><span aria-hidden="true" class="octicon octicon-link"></span></a>Parallel Tests</h6>
-<div class="highlight highlight-source-raku"><pre><span class="pl-c"><span class="pl-c">#</span>!/usr/bin/env perl6</span>
-
-<span class="pl-k">use</span> <span class="pl-c1">lib</span> <span class="pl-s"><span class="pl-pds">'</span>../lib<span class="pl-pds">'</span></span>;
-<span class="pl-k">use</span> Green <span class="pl-k">:</span>harness;
-
-<span class="pl-c"><span class="pl-c">#</span>all of these tests should complete in 2 seconds</span>
-set(<span class="pl-s"><span class="pl-pds">"</span>time me 1<span class="pl-pds">"</span></span>, sub {
-  test(<span class="pl-s"><span class="pl-pds">"</span>delay 2<span class="pl-pds">"</span></span>, sub {
-    <span class="pl-c1">sleep</span> <span class="pl-c1">2</span>;
-    <span class="pl-c1">ok</span> <span class="pl-c1">1</span><span class="pl-k">==</span><span class="pl-c1">1</span>;
-  });
-});
-set(<span class="pl-s"><span class="pl-pds">"</span>time me 2<span class="pl-pds">"</span></span>, sub {
-  test(<span class="pl-s"><span class="pl-pds">"</span>delay 2<span class="pl-pds">"</span></span>, sub {
-    <span class="pl-c1">sleep</span> <span class="pl-c1">2</span>;
-    <span class="pl-c1">ok</span> <span class="pl-c1">1</span><span class="pl-k">==</span><span class="pl-c1">1</span>;
-  });
-});
-set(<span class="pl-s"><span class="pl-pds">"</span>time me 3<span class="pl-pds">"</span></span>, sub {
-  test(<span class="pl-s"><span class="pl-pds">"</span>delay 2<span class="pl-pds">"</span></span>, sub {
-    <span class="pl-c1">sleep</span> <span class="pl-c1">2</span>;
-    <span class="pl-c1">ok</span> <span class="pl-c1">1</span><span class="pl-k">==</span><span class="pl-c1">1</span>;
-  });
-});
-set(<span class="pl-s"><span class="pl-pds">"</span>time me 4<span class="pl-pds">"</span></span>, sub {
-  test(<span class="pl-s"><span class="pl-pds">"</span>delay 2<span class="pl-pds">"</span></span>, sub {
-    <span class="pl-c1">sleep</span> <span class="pl-c1">2</span>;
-    <span class="pl-c1">ok</span> <span class="pl-c1">1</span><span class="pl-k">==</span><span class="pl-c1">1</span>;
-  });
-});</pre></div>
+   [F] 1 of 3 passing (602.168ms)</code></pre>
+<h6 id="parallel-tests">Parallel Tests</h6>
+<div class="sourceCode" id="cb14"><pre class="sourceCode perl"><code class="sourceCode perl"><span id="cb14-1"><a href="#cb14-1" aria-hidden="true" tabindex="-1"></a><span class="kw">#!/usr/bin/env perl6</span></span>
+<span id="cb14-2"><a href="#cb14-2" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb14-3"><a href="#cb14-3" aria-hidden="true" tabindex="-1"></a><span class="fu">use</span> lib <span class="ot">&#39;</span><span class="ss">../lib</span><span class="ot">&#39;</span>;</span>
+<span id="cb14-4"><a href="#cb14-4" aria-hidden="true" tabindex="-1"></a><span class="fu">use</span> Green :harness;</span>
+<span id="cb14-5"><a href="#cb14-5" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb14-6"><a href="#cb14-6" aria-hidden="true" tabindex="-1"></a><span class="co">#all of these tests should complete in 2 seconds</span></span>
+<span id="cb14-7"><a href="#cb14-7" aria-hidden="true" tabindex="-1"></a>set(<span class="ot">&quot;</span><span class="st">time me 1</span><span class="ot">&quot;</span>, <span class="kw">sub </span>{</span>
+<span id="cb14-8"><a href="#cb14-8" aria-hidden="true" tabindex="-1"></a>  test(<span class="ot">&quot;</span><span class="st">delay 2</span><span class="ot">&quot;</span>, <span class="kw">sub </span>{</span>
+<span id="cb14-9"><a href="#cb14-9" aria-hidden="true" tabindex="-1"></a>    <span class="fu">sleep</span> <span class="dv">2</span>;</span>
+<span id="cb14-10"><a href="#cb14-10" aria-hidden="true" tabindex="-1"></a>    ok <span class="dv">1</span>==<span class="dv">1</span>;</span>
+<span id="cb14-11"><a href="#cb14-11" aria-hidden="true" tabindex="-1"></a>  });</span>
+<span id="cb14-12"><a href="#cb14-12" aria-hidden="true" tabindex="-1"></a>});</span>
+<span id="cb14-13"><a href="#cb14-13" aria-hidden="true" tabindex="-1"></a>set(<span class="ot">&quot;</span><span class="st">time me 2</span><span class="ot">&quot;</span>, <span class="kw">sub </span>{</span>
+<span id="cb14-14"><a href="#cb14-14" aria-hidden="true" tabindex="-1"></a>  test(<span class="ot">&quot;</span><span class="st">delay 2</span><span class="ot">&quot;</span>, <span class="kw">sub </span>{</span>
+<span id="cb14-15"><a href="#cb14-15" aria-hidden="true" tabindex="-1"></a>    <span class="fu">sleep</span> <span class="dv">2</span>;</span>
+<span id="cb14-16"><a href="#cb14-16" aria-hidden="true" tabindex="-1"></a>    ok <span class="dv">1</span>==<span class="dv">1</span>;</span>
+<span id="cb14-17"><a href="#cb14-17" aria-hidden="true" tabindex="-1"></a>  });</span>
+<span id="cb14-18"><a href="#cb14-18" aria-hidden="true" tabindex="-1"></a>});</span>
+<span id="cb14-19"><a href="#cb14-19" aria-hidden="true" tabindex="-1"></a>set(<span class="ot">&quot;</span><span class="st">time me 3</span><span class="ot">&quot;</span>, <span class="kw">sub </span>{</span>
+<span id="cb14-20"><a href="#cb14-20" aria-hidden="true" tabindex="-1"></a>  test(<span class="ot">&quot;</span><span class="st">delay 2</span><span class="ot">&quot;</span>, <span class="kw">sub </span>{</span>
+<span id="cb14-21"><a href="#cb14-21" aria-hidden="true" tabindex="-1"></a>    <span class="fu">sleep</span> <span class="dv">2</span>;</span>
+<span id="cb14-22"><a href="#cb14-22" aria-hidden="true" tabindex="-1"></a>    ok <span class="dv">1</span>==<span class="dv">1</span>;</span>
+<span id="cb14-23"><a href="#cb14-23" aria-hidden="true" tabindex="-1"></a>  });</span>
+<span id="cb14-24"><a href="#cb14-24" aria-hidden="true" tabindex="-1"></a>});</span>
+<span id="cb14-25"><a href="#cb14-25" aria-hidden="true" tabindex="-1"></a>set(<span class="ot">&quot;</span><span class="st">time me 4</span><span class="ot">&quot;</span>, <span class="kw">sub </span>{</span>
+<span id="cb14-26"><a href="#cb14-26" aria-hidden="true" tabindex="-1"></a>  test(<span class="ot">&quot;</span><span class="st">delay 2</span><span class="ot">&quot;</span>, <span class="kw">sub </span>{</span>
+<span id="cb14-27"><a href="#cb14-27" aria-hidden="true" tabindex="-1"></a>    <span class="fu">sleep</span> <span class="dv">2</span>;</span>
+<span id="cb14-28"><a href="#cb14-28" aria-hidden="true" tabindex="-1"></a>    ok <span class="dv">1</span>==<span class="dv">1</span>;</span>
+<span id="cb14-29"><a href="#cb14-29" aria-hidden="true" tabindex="-1"></a>  });</span>
+<span id="cb14-30"><a href="#cb14-30" aria-hidden="true" tabindex="-1"></a>});</span></code></pre></div>
 <pre><code>   [P] time me 1
       [P] delay 2
 
@@ -271,43 +252,41 @@ set(<span class="pl-s"><span class="pl-pds">"</span>time me 4<span class="pl-pds
    [P] time me 4
       [P] delay 2
 
-   [P] 4 of 4 passing (2629.375ms)
-</code></pre>
-<h6>
-<a id="user-content-series" class="anchor" href="#series" aria-hidden="true"><span aria-hidden="true" class="octicon octicon-link"></span></a>Series</h6>
-<div class="highlight highlight-source-raku"><pre><span class="pl-c"><span class="pl-c">#</span>!/usr/bin/env perl6</span>
-
-<span class="pl-k">use</span> <span class="pl-c1">lib</span> <span class="pl-s"><span class="pl-pds">'</span>../lib<span class="pl-pds">'</span></span>;
-<span class="pl-k">use</span> Green <span class="pl-k">:</span>harness;
-
-
-set(<span class="pl-s"><span class="pl-pds">'</span>Async tests in series<span class="pl-pds">'</span></span>, sub {
-  test(<span class="pl-s"><span class="pl-pds">'</span>Sleep 1<span class="pl-pds">'</span></span>, <span class="pl-k">-&gt;</span> $<span class="pl-c1">done</span> {
-    <span class="pl-k">start</span> {
-      <span class="pl-c1">sleep</span> <span class="pl-c1">1</span>;
-      <span class="pl-c1">ok</span> <span class="pl-c1">1</span><span class="pl-k">==</span><span class="pl-c1">1</span>;
-      $<span class="pl-c1">done</span>();
-    };
-  });
-
-  test(<span class="pl-s"><span class="pl-pds">'</span>Sleep 2<span class="pl-pds">'</span></span>, <span class="pl-k">-&gt;</span> $<span class="pl-c1">done</span> {
-    <span class="pl-k">start</span> {
-      <span class="pl-c1">sleep</span> <span class="pl-c1">2</span>;
-      <span class="pl-c1">ok</span> <span class="pl-c1">2</span> <span class="pl-k">==</span> <span class="pl-c1">2</span>;
-      $<span class="pl-c1">done</span>();
-    };
-  });
-});
-
-set(<span class="pl-s"><span class="pl-pds">'</span>This happens async with the first set<span class="pl-pds">'</span></span>, sub {
-  test(<span class="pl-s"><span class="pl-pds">'</span>Sleep 1<span class="pl-pds">'</span></span>, <span class="pl-k">-&gt;</span> $<span class="pl-c1">done</span> {
-    <span class="pl-k">start</span> {
-      <span class="pl-c1">sleep</span> <span class="pl-c1">1</span>;
-      <span class="pl-c1">ok</span> <span class="pl-c1">1</span><span class="pl-k">==</span><span class="pl-c1">1</span>;
-      $<span class="pl-c1">done</span>();
-    };
-  });
-});</pre></div>
+   [P] 4 of 4 passing (2629.375ms)</code></pre>
+<h6 id="series">Series</h6>
+<div class="sourceCode" id="cb16"><pre class="sourceCode perl"><code class="sourceCode perl"><span id="cb16-1"><a href="#cb16-1" aria-hidden="true" tabindex="-1"></a><span class="kw">#!/usr/bin/env perl6</span></span>
+<span id="cb16-2"><a href="#cb16-2" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb16-3"><a href="#cb16-3" aria-hidden="true" tabindex="-1"></a><span class="fu">use</span> lib <span class="ot">&#39;</span><span class="ss">../lib</span><span class="ot">&#39;</span>;</span>
+<span id="cb16-4"><a href="#cb16-4" aria-hidden="true" tabindex="-1"></a><span class="fu">use</span> Green :harness;</span>
+<span id="cb16-5"><a href="#cb16-5" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb16-6"><a href="#cb16-6" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb16-7"><a href="#cb16-7" aria-hidden="true" tabindex="-1"></a>set(<span class="ot">&#39;</span><span class="ss">Async tests in series</span><span class="ot">&#39;</span>, <span class="kw">sub </span>{</span>
+<span id="cb16-8"><a href="#cb16-8" aria-hidden="true" tabindex="-1"></a>  test(<span class="ot">&#39;</span><span class="ss">Sleep 1</span><span class="ot">&#39;</span>, -&gt; <span class="dt">$done</span> {</span>
+<span id="cb16-9"><a href="#cb16-9" aria-hidden="true" tabindex="-1"></a>    start {</span>
+<span id="cb16-10"><a href="#cb16-10" aria-hidden="true" tabindex="-1"></a>      <span class="fu">sleep</span> <span class="dv">1</span>;</span>
+<span id="cb16-11"><a href="#cb16-11" aria-hidden="true" tabindex="-1"></a>      ok <span class="dv">1</span>==<span class="dv">1</span>;</span>
+<span id="cb16-12"><a href="#cb16-12" aria-hidden="true" tabindex="-1"></a>      <span class="dt">$done</span>();</span>
+<span id="cb16-13"><a href="#cb16-13" aria-hidden="true" tabindex="-1"></a>    };</span>
+<span id="cb16-14"><a href="#cb16-14" aria-hidden="true" tabindex="-1"></a>  });</span>
+<span id="cb16-15"><a href="#cb16-15" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb16-16"><a href="#cb16-16" aria-hidden="true" tabindex="-1"></a>  test(<span class="ot">&#39;</span><span class="ss">Sleep 2</span><span class="ot">&#39;</span>, -&gt; <span class="dt">$done</span> {</span>
+<span id="cb16-17"><a href="#cb16-17" aria-hidden="true" tabindex="-1"></a>    start {</span>
+<span id="cb16-18"><a href="#cb16-18" aria-hidden="true" tabindex="-1"></a>      <span class="fu">sleep</span> <span class="dv">2</span>;</span>
+<span id="cb16-19"><a href="#cb16-19" aria-hidden="true" tabindex="-1"></a>      ok <span class="dv">2</span> == <span class="dv">2</span>;</span>
+<span id="cb16-20"><a href="#cb16-20" aria-hidden="true" tabindex="-1"></a>      <span class="dt">$done</span>();</span>
+<span id="cb16-21"><a href="#cb16-21" aria-hidden="true" tabindex="-1"></a>    };</span>
+<span id="cb16-22"><a href="#cb16-22" aria-hidden="true" tabindex="-1"></a>  });</span>
+<span id="cb16-23"><a href="#cb16-23" aria-hidden="true" tabindex="-1"></a>});</span>
+<span id="cb16-24"><a href="#cb16-24" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb16-25"><a href="#cb16-25" aria-hidden="true" tabindex="-1"></a>set(<span class="ot">&#39;</span><span class="ss">This happens async with the first set</span><span class="ot">&#39;</span>, <span class="kw">sub </span>{</span>
+<span id="cb16-26"><a href="#cb16-26" aria-hidden="true" tabindex="-1"></a>  test(<span class="ot">&#39;</span><span class="ss">Sleep 1</span><span class="ot">&#39;</span>, -&gt; <span class="dt">$done</span> {</span>
+<span id="cb16-27"><a href="#cb16-27" aria-hidden="true" tabindex="-1"></a>    start {</span>
+<span id="cb16-28"><a href="#cb16-28" aria-hidden="true" tabindex="-1"></a>      <span class="fu">sleep</span> <span class="dv">1</span>;</span>
+<span id="cb16-29"><a href="#cb16-29" aria-hidden="true" tabindex="-1"></a>      ok <span class="dv">1</span>==<span class="dv">1</span>;</span>
+<span id="cb16-30"><a href="#cb16-30" aria-hidden="true" tabindex="-1"></a>      <span class="dt">$done</span>();</span>
+<span id="cb16-31"><a href="#cb16-31" aria-hidden="true" tabindex="-1"></a>    };</span>
+<span id="cb16-32"><a href="#cb16-32" aria-hidden="true" tabindex="-1"></a>  });</span>
+<span id="cb16-33"><a href="#cb16-33" aria-hidden="true" tabindex="-1"></a>});</span></code></pre></div>
 <pre><code>   [P] This happens async with the first set
       [P] Sleep 1
 
@@ -315,16 +294,42 @@ set(<span class="pl-s"><span class="pl-pds">'</span>This happens async with the 
       [P] Sleep 1
       [P] Sleep 2
 
-   [P] 3 of 3 passing (3572.252ms)
-</code></pre>
-<h1>
-<a id="user-content-final-thoughts" class="anchor" href="#final-thoughts" aria-hidden="true"><span aria-hidden="true" class="octicon octicon-link"></span></a>Final thoughts</h1>
-<p>Comments or PRs are welcome.  You can find the repository for <code>Green</code> <a href="https://github.com/tony-o/perl6-green">here</a>.  You can leave your rude dude peanut gallery in #perl6 if you're so inclined.</p>
+   [P] 3 of 3 passing (3572.252ms)</code></pre>
+<h1 id="final-thoughts">Final thoughts</h1>
+<p>Comments or PRs are welcome. You can find the repository for <code>Green</code> <a href="https://github.com/tony-o/perl6-green">here</a>. You can leave your rude dude peanut gallery in #perl6 if you're so inclined.</p>
 
 
     </div>
     <div id="footer">
       <h6>// social twitter:<a href="https://twitter.com/oynoto">@oynoto</a>, patreon:<a href="https://www.patreon.com/oynot">@oynot</a>, github:<a href="https://github.com/tony-o">tony-o</a></h6>
     </div>
+    <script src="//cdnjs.cloudflare.com/ajax/libs/highlight.js/11.2.0/highlight.min.js"></script>
+    <script>
+      (function(){
+        languages = {}
+        pres      = document.getElementsByTagName("pre");
+        for(i = 0; i < hljs.listLanguages().length; i++){
+          languages['language-' + hljs.listLanguages()[i]] = 1;
+        }
+        for(i = 0; i < pres.length; i++){
+          pre = pres[i];
+          cn  = 'language-plaintext';
+          ls  = (pre.getAttribute("class") || 'plaintext').split(' ');
+          for(j = 0; j < ls.length; j++){
+            if(languages['language-' + ls[j]]){
+              cn = 'language-' + ls[j];
+              break;
+            }
+          }
+          console.log('%d=%s', i, cn, pre);
+          codes = pre.getElementsByTagName("code")
+          for(j = 0; j < codes.length; j++){
+            codes[j].setAttribute("class", (codes[j].getAttribute("class") + " hljs " + cn).trim())
+          }
+        }
+        hljs.highlightAll();
+      })();
+    </script>
+
   </body>
 </html>

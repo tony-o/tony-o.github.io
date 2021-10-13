@@ -50,7 +50,7 @@ Not really. Let's add some functionality to `zef-config`!
 
 Open your `bin/zef-config` file and add the following
 
-```perl6
+```perl
 multi MAIN('config') {
   note qq:to/END_USAGE/
     zef config - a plugin for zef config management
@@ -84,7 +84,7 @@ To keep the tutorial informative and less about how to write perl, we'll impleme
 
 In your `bin/zef-config.test`
 
-```perl6
+```perl
 use Zef;
 
 sub pad (Int $w, Str $val) {

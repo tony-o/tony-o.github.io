@@ -69,7 +69,7 @@ We'll develop two of the models, one with standard perl6 and one using YAML, the
 
 In our path we're going to use the prefix of `App` for our models and rows.  If you haven't already and you're following along, then create the directory `lib/App/Model` and then edit the file `lib/App/Model/Book.pm6`.
 
-```perl6
+```perl
 use DB::Xoos::Model;
 unit class App::Model::Book does DB::Xoos::Model['books'];
 
@@ -78,7 +78,7 @@ qw<...>
 
 Here we are simply defining our class and telling DB::Xoos to use the table `books` as our source of data for this model.  Next we'll let the ORM know what columns are available.
 
-```perl6
+```perl
 has @.columns = [
   book_id => {
    type           => 'integer',
@@ -106,7 +106,7 @@ has @.columns = [
 
 Fairly straight forward.  Using `is-primary-key` on multiple columns will allow you to key off of multiple columns, creating a compounded key.
 
-```perl6
+```perl
 has @.relations = [
   authors => {
     :has-one,
@@ -173,7 +173,7 @@ That's it!  Your models are ready to be used, the rest of the code is going to b
 
 We'll list what models we have available to us from ORM, this script is called `show-models`.  All of the following examples will assume you've done the same code up to and including the `.connect` and will be omitted for brevity.
 
-```perl6
+```perl
 use DB::Xoos::SQLite;
 
 my $xoos = DB::Xoos::SQLite.new;
@@ -203,7 +203,7 @@ While not entirely useful, it does let us know that everything loaded well.  Now
 
 This script will use `Text::CSV` and load data from `data/books.csv` and generate other made up data.  This is a truncated version because it's mostly long and repititous for our use.  Generating customers, orders, and order details is left to the user or, again, you can find a full script in the file at the end of the article.
 
-```perl6
+```perl
 qw<snipped setup for Xoos>;
 use Text::CSV;
 
@@ -243,7 +243,7 @@ for @rows[1..*] -> $row {
 
 In this example we'll be using a relationship on customer to get the number of orders and how many items each order contained. The script _also_ uses a convenience method built upon the `App::Row::Customer` to show how many total items they've ordered.
 
-```perl6
+```perl
 use DB::Xoos::SQLite;
 my DB::Xoos::SQLite $db .=new;
 

@@ -20,7 +20,7 @@ I'll run 30 iterations of each, 3 in instances where I don't want to wait 4 hour
 
 #### Benchmark code
 
-```perl6
+```perl
 use Bench;
 
 my $json = from-json('projects.json'.IO.slurp);
@@ -41,7 +41,7 @@ That's painfully slow.  I couldn't wait longer than `n=3` before I lost interest
 
 #### Benchmark code
 
-```perl6
+```perl
 use Bench;
 use JSON::Fast;
 
@@ -68,7 +68,7 @@ I ended up writing a very simplistic recursive method as a comparative speed tes
 
 Here is the code from the initial commit
 
-```perl6
+```perl
 sub to-json($obj, Bool :$pretty? = True, Int :$level? = 0, Int :$spacing? = 2) is export {
   CATCH { default { .say; } }
   return "{$obj}"     if $obj ~~ Int || $obj ~~ Rat;

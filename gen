@@ -3,35 +3,34 @@
 use strict;
 use warnings;
 use File::Slurp qw<slurp>;
-use HTTP::Request;
-use JSON::MaybeXS qw<encode_json decode_json>;
-use Pithub::Markdown;
-use LWP::UserAgent;
-use DDP;
+use open qw<:std IO :encoding(UTF-8)>;
 
 $ENV{PERL_LWP_SSL_VERIFY_HOSTNAME} = 0;
 
 my @articles = grep { -f $_ } glob('articles/*.md');
 my (@titles, @dates, %tags, @links);
 
-sub article_tmpl { my $s = slurp('templ-article.html');       $s; }
-sub index_tmpl   { my $s = slurp('templ-index.html');         $s; }
-sub tags_tmpl    { my $s = slurp('templ-tags.html');          $s; }
-sub index_cnt    { my $s = slurp('templ-index.content.html'); $s; }
-#sub render {
-#  my $req = HTTP::Request->new('POST', 'https://api.github.com/markdown/raw', ['Content-Type', 'application/json; charset=UTF-8'], encode_json({ text => $_[0] }));
-#  my $ua = LWP::UserAgent->new();
-#  my $res = $ua->request($req);
-#  my $json = 
-#  p $res;
-#  return '';
-#}
+sub article_tmpl { my $s = slurp('templ-article.html', binmode => 'utf8');       $s; }
+sub index_tmpl   { my $s = slurp('templ-index.html', binmode => 'utf8');         $s; }
+sub tags_tmpl    { my $s = slurp('templ-tags.html', binmode => 'utf8');          $s; }
+sub index_cnt    { my $s = slurp('templ-index.content.html', binmode => 'utf8'); $s; }
+sub render {
+  my ($data) = @_;
+  open my $fh, '>', '/tmp/dbks.md' or die $!;
+  binmode $fh, ':utf8';
+  print {$fh} $data;
+  close $fh;
+
+  qx`pandoc '/tmp/dbks.md' -o '/tmp/dbks.html' -t html -f markdown_mmd-tex_math_dollars`;
+  my $in = slurp('/tmp/dbks.html', binmode => 'utf8');
+  $in;
+}
 
 my $regen = ($ARGV[0]//'') =~ m{^-f|--force$} ? 1 : 0;
 
 # article gen
 foreach my $article (reverse sort @articles) {
-  my ($title, $slug, $tagstr, $data, $newfn, $templ, $date, $html, @linktags) = ((split "\n", slurp($article), 4), $article, article_tmpl);
+  my ($title, $slug, $tagstr, $data, $newfn, $templ, $date, $html, @linktags) = ((split "\n", slurp($article, binmode => 'utf8'), 4), $article, article_tmpl);
   $newfn =~ s/\.md$/.html/g;
   $date  = substr $article, 9, 8;
   $date  = join('-', substr($date, 0, 4), substr($date, 4, 2), substr($date, 6, 2));
@@ -54,17 +53,7 @@ foreach my $article (reverse sort @articles) {
     next;
   }
 
-#  render $data;
-#  die;
-  my $response = Pithub::Markdown->new->render(
-    data => {
-      text    => $data,
-      context => "github/gollum",
-      mode    => "markdown",
-    },
-  );
-
-  $html  = $response->raw_content;
+  $html = render $data;
 
   my $lt = join(', ', @linktags);
   $templ =~ s/\{\{date\}\}/$date/g;
@@ -77,6 +66,7 @@ foreach my $article (reverse sort @articles) {
 
   printf "docs/articles/%s, slug:%s,tag=%s,len=%d\n", $newfn, $slug, $tagstr, length($templ);
   open my $fh, '>', "./docs/$newfn" or die $!;
+  binmode $fh, ':utf8';
   print $fh $templ;
   close $fh;
 }
@@ -93,6 +83,7 @@ for my $idx (0..@titles - 1) {
 }
 $index =~ s/\{\{content\}\}/$content/g;
 open my $fh, '>', './docs/index.html' or die $!;
+binmode $fh, ':utf8';
 print $fh $index;
 close $fh;
 
@@ -111,6 +102,7 @@ foreach my $tag (sort keys %tags) {
 
   $templ =~ s/\{\{content\}\}/$content/g;
   open my $fh, '>', './docs/tags/'.$tag.'.html' or die $!;
+  binmode $fh, ':utf8';
   print $fh $index;
   close $fh;
 }

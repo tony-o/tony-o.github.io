@@ -1,7 +1,8 @@
 <!DOCTYPE html>
 <html>
   <head>
-    <link href="https://fonts.googleapis.com/css?family=Lora:400,700|Montserrat:300" rel="stylesheet" />
+    <link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Lora:400,700|Montserrat:300" />
+    <link rel="stylesheet" href="//cdnjs.cloudflare.com/ajax/libs/highlight.js/11.2.0/styles/github.min.css" />
     <link rel="stylesheet" href="/s/style.css" />
   </head>
   <body>
@@ -15,20 +16,48 @@
       <h6>// <a href="https://deathbykeystroke.com/articles/20200121-zef--ecosystem.html">perma</a></h6>
       <br/>
 
-      <p>TLDR; making the entire git ecosystem available to zef is in testing and should be available soon.  Module author tools are in early alpha phase and, if you'd like to contribute, please contact @tony-o on freenode.</p>
-<p>The current state of the raku ecosystem is not great.  It can be better.</p>
-<p>Currently, most of the modules are hosted on CPAN or in a git repo with a centralized list of those modules in yet another repo.  CPAN has shortcomings with raku because it was designed for perl and the module specs between the two languages, though related, are dissimilar.  The github solution is a bit of hack.  It works but it's tedious and requires a lot of trust to allow module authors just add things to the ecosystem via a repo that can affect so many others.</p>
+      <p>TLDR; making the entire git ecosystem available to zef is in testing and should be available soon. Module author tools are in early alpha phase and, if you'd like to contribute, please contact @tony-o on freenode.</p>
+<p>The current state of the raku ecosystem is not great. It can be better.</p>
+<p>Currently, most of the modules are hosted on CPAN or in a git repo with a centralized list of those modules in yet another repo. CPAN has shortcomings with raku because it was designed for perl and the module specs between the two languages, though related, are dissimilar. The github solution is a bit of hack. It works but it's tedious and requires a lot of trust to allow module authors just add things to the ecosystem via a repo that can affect so many others.</p>
 <p>Enter: zeco.</p>
-<p>For authors; module authors should be able to upload their modules without interfering with others' modules and they should be able to do it without remember what repo they need to go update or going to a website and uploading a tar file.  Let's make this easy.  With the zeco system there are two ways to publish your modules.  You can upload a tar file using a zef plugin (think: <code>zef publish</code> or similar, this is preferred) and the other method is to publish your module using a git repo link - this will not be mirrored by zeco (at least not immediately).</p>
+<p>For authors; module authors should be able to upload their modules without interfering with others' modules and they should be able to do it without remember what repo they need to go update or going to a website and uploading a tar file. Let's make this easy. With the zeco system there are two ways to publish your modules. You can upload a tar file using a zef plugin (think: <code>zef publish</code> or similar, this is preferred) and the other method is to publish your module using a git repo link - this will not be mirrored by zeco (at least not immediately).</p>
 <p>For general consumption; zeco provides endpoints for searching and downloading different modules which will help zef be efficient with your time.</p>
 <p>Current status of zeco:</p>
-<p>The server is up and currently makes several endpoints available to both authors and consumers of modules.  Transferring the git repo META list is in testing and, once testing is complete, will provide a full ecosystem list to zef with info on how to obtain the module.</p>
-<p>There exists a zef plugin to register/upload modules.  If you're interested in helping or testing this tool so we can make it ready for production then please contact <code>tony-o</code> in any of the <code>#raku</code> channels.</p>
+<p>The server is up and currently makes several endpoints available to both authors and consumers of modules. Transferring the git repo META list is in testing and, once testing is complete, will provide a full ecosystem list to zef with info on how to obtain the module.</p>
+<p>There exists a zef plugin to register/upload modules. If you're interested in helping or testing this tool so we can make it ready for production then please contact <code>tony-o</code> in any of the <code>#raku</code> channels.</p>
 
 
     </div>
     <div id="footer">
       <h6>// social twitter:<a href="https://twitter.com/oynoto">@oynoto</a>, patreon:<a href="https://www.patreon.com/oynot">@oynot</a>, github:<a href="https://github.com/tony-o">tony-o</a></h6>
     </div>
+    <script src="//cdnjs.cloudflare.com/ajax/libs/highlight.js/11.2.0/highlight.min.js"></script>
+    <script>
+      (function(){
+        languages = {}
+        pres      = document.getElementsByTagName("pre");
+        for(i = 0; i < hljs.listLanguages().length; i++){
+          languages['language-' + hljs.listLanguages()[i]] = 1;
+        }
+        for(i = 0; i < pres.length; i++){
+          pre = pres[i];
+          cn  = 'language-plaintext';
+          ls  = (pre.getAttribute("class") || 'plaintext').split(' ');
+          for(j = 0; j < ls.length; j++){
+            if(languages['language-' + ls[j]]){
+              cn = 'language-' + ls[j];
+              break;
+            }
+          }
+          console.log('%d=%s', i, cn, pre);
+          codes = pre.getElementsByTagName("code")
+          for(j = 0; j < codes.length; j++){
+            codes[j].setAttribute("class", (codes[j].getAttribute("class") + " hljs " + cn).trim())
+          }
+        }
+        hljs.highlightAll();
+      })();
+    </script>
+
   </body>
 </html>
