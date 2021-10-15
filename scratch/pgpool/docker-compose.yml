@@ -1,0 +1,58 @@
+version: "3.9"
+services:
+  pgpool:
+    build:
+      dockerfile: 'pgpool.dockerfile'
+      context: '.'
+    container_name: 'pgpool'
+    restart: always
+    networks:
+      test_net:
+        ipv4_address: '172.16.1.100'
+        aliases:
+          - pgpool
+    ports:
+      - "5432:5432"
+
+  db-primary:
+    build:
+      dockerfile: 'psql.dockerfile'
+      context: '.'
+    container_name: psql-primary
+    restart: always
+    volumes:
+      - "data-primary:/var/lib/postgresql/data"
+    networks:
+      test_net:
+        ipv4_address: '172.16.1.200'
+        aliases:
+          - postgres.primary
+    
+  db-secondary:
+    build:
+      dockerfile: 'psql.dockerfile'
+      context: '.'
+      args:
+        - SECONDARY=true
+    container_name: psql-secondary
+    restart: always
+    volumes:
+      - "data-secondary:/var/lib/postgresql/data"
+    networks:
+      test_net:
+        ipv4_address: '172.16.1.201'
+        aliases:
+          - postgres.secondary
+    environment:
+      PRIMARY_CONNINFO: "psql://172.16.1.200:5432/"
+
+networks:
+  test_net:
+    ipam:
+      driver: default
+      config:
+      - subnet: "172.16.1.0/24"
+
+volumes:
+  data-secondary:
+  data-primary:
