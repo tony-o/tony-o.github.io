@@ -1,6 +1,6 @@
 What's in an ORM, aka DB::Xoos
 whats-in-an-orm-aka-dbxoos
-programming, rakudo
+programming, rakudo, database
 
 Using an ORM makes your code look a little cleaner.  Today we can take a look at Xoos, an ORM aimed at making your life simpler, your code cleaner, and not getting in the way of your development.
 

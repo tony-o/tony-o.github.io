@@ -25,6 +25,13 @@ sub render {
   my $in = slurp('/tmp/dbks.html', binmode => 'utf8');
   $in;
 }
+sub spurt {
+  my ($fn, $data) = @_;
+  open my $fh, '>', $fn or die $!;
+  binmode $fh, ':utf8';
+  print $fh $data;
+  close $fh;
+}
 
 my $regen = ($ARGV[0]//'') =~ m{^-f|--force$} ? 1 : 0;
 
@@ -65,10 +72,7 @@ foreach my $article (reverse sort @articles) {
   $templ =~ s/\{\{taglinks\}\}/$lt/g;
 
   printf "docs/articles/%s, slug:%s,tag=%s,len=%d\n", $newfn, $slug, $tagstr, length($templ);
-  open my $fh, '>', "./docs/$newfn" or die $!;
-  binmode $fh, ':utf8';
-  print $fh $templ;
-  close $fh;
+  spurt "./docs/$newfn", $templ;
 }
 
 # index gen
@@ -82,10 +86,7 @@ for my $idx (0..@titles - 1) {
   $content .= "\n" . $templ;
 }
 $index =~ s/\{\{content\}\}/$content/g;
-open my $fh, '>', './docs/index.html' or die $!;
-binmode $fh, ':utf8';
-print $fh $index;
-close $fh;
+spurt "./docs/index.html", $index;
 
 # tag gen
 foreach my $tag (sort keys %tags) {
@@ -93,18 +94,15 @@ foreach my $tag (sort keys %tags) {
   my $content = '';
 
   foreach my $idx (0..$tags{$tag}->{links}->@* - 1) {
-    my $templ = index_cnt;
-    $templ   =~ s/\{\{link\}\}/$tags{$tag}->{links}->[$idx]/g;
-    $templ   =~ s/\{\{date\}\}/$tags{$tag}->{dates}->[$idx]/g;
-    $templ   =~ s/\{\{title\}\}/$tags{$tag}->{titles}->[$idx]/g;
-    $content .= "\n" . $templ;
+    my $templ_row = index_cnt;
+    $templ_row   =~ s/\{\{link\}\}/$tags{$tag}->{links}->[$idx]/g;
+    $templ_row   =~ s/\{\{date\}\}/$tags{$tag}->{dates}->[$idx]/g;
+    $templ_row   =~ s/\{\{title\}\}/$tags{$tag}->{titles}->[$idx]/g;
+    $content     .= "\n" . $templ_row;
   }
-
   $templ =~ s/\{\{content\}\}/$content/g;
-  open my $fh, '>', './docs/tags/'.$tag.'.html' or die $!;
-  binmode $fh, ':utf8';
-  print $fh $index;
-  close $fh;
+  $templ =~ s/\{\{tag\}\}/$tag/g;
+  spurt "./docs/tags/$tag.html", $templ;
 }
 
 # sitemap
@@ -113,7 +111,4 @@ sub rglob {
   glob("$dir/*"), map { rglob($_); } grep { -d $_ && $_ ne '.' && $_ ne '..' && $_ ne $dir } glob("$dir/*"); 
 }
 my @docs = grep { -f $_ && $_ ~~ m{\.html$} } rglob('docs');
-open my $fh, '>', './docs/sitemap.txt' or die $!;
-binmode $fh, ':utf8';
-print $fh join("\n", @docs);
-close $fh;
+spurt "./docs/sitemap.txt", join("\n", @docs);
