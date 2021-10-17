@@ -8,7 +8,11 @@ use open qw<:std IO :encoding(UTF-8)>;
 $ENV{PERL_LWP_SSL_VERIFY_HOSTNAME} = 0;
 
 my @articles = grep { -f $_ } glob('articles/*.md');
-my (@titles, @dates, %tags, @links);
+my (@titles, @dates, %tags, @links, %files);
+
+%files = map { $_ => 0 } grep { -f $_ } glob('./docs/*.html'),
+         map { $_ => 0 } grep { -f $_ } glob('./docs/articles/*.html'),
+         map { $_ => 0 } grep { -f $_ } glob('./docs/tags/*.html');
 
 sub article_tmpl { my $s = slurp('templ-article.html', binmode => 'utf8');       $s; }
 sub index_tmpl   { my $s = slurp('templ-index.html', binmode => 'utf8');         $s; }
@@ -27,6 +31,11 @@ sub render {
 }
 sub spurt {
   my ($fn, $data) = @_;
+
+  if ($fn =~ m{\.html$}) {
+    $files{$fn}++;
+  }
+
   open my $fh, '>', $fn or die $!;
   binmode $fh, ':utf8';
   print $fh $data;
@@ -110,5 +119,7 @@ sub rglob {
   my ($dir) = @_;
   glob("$dir/*"), map { rglob($_); } grep { -d $_ && $_ ne '.' && $_ ne '..' && $_ ne $dir } glob("$dir/*"); 
 }
-my @docs = grep { -f $_ && $_ ~~ m{\.html$} } rglob('docs');
+my @docs = grep { -f $_ && $_ =~ m{\.html$} } rglob('docs');
 spurt "./docs/sitemap.txt", join("\n", @docs);
+
+printf "WARNING: unused files:\n%s\n", join("\n", grep { $files{$_} == 0 } sort keys %files);

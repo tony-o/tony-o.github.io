@@ -1,8 +1,8 @@
 <!DOCTYPE html>
 <html lang="en">
   <head>
-    <title>dbks - {{tag}}</title>
-   	<meta name="description" content="Articles about {{tag}}" />
+    <title>dbks - database</title>
+   	<meta name="description" content="Articles about database" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <link href="https://fonts.googleapis.com/css?family=Lora:400,700|Montserrat:300" rel="stylesheet" />
     <link rel="stylesheet" href="/s/style.css" />
@@ -12,10 +12,15 @@
       <a href="/"><img src="/i/dbks.png" /></a> <a href="/"><h1>deathbykeystroke</h1></a>
     </div>
     <div id="articles">
-      <h1>{{tag}}</h1>
+      <h1>database</h1>
       <table>
         <tbody>
-          {{content}}
+          
+          <tr onclick="window.location = '/articles/20190322-whats-in-an-orm-aka-dbxoos.html';">
+            <td class="tag">2019-03-22</td>
+            <td class="title">What's in an ORM, aka DB::Xoos</td>
+          </tr>
+
         </tbody>
       </table>
     </div>
