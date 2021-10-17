@@ -5,15 +5,19 @@ html, body {
   min-height:  100%;
   min-width:   100%;
   font-size:   16pt;
-  font-family: 'Lora', serif;
+  font-family: 'Roboto Slab', serif;
   background:  #E6EFE9;
   color:       #171219;
   margin:      0;
   padding:     0;
 }
 
+img {
+  max-width: 100%;
+}
+
 pre {
-  font-size:   .8em;
+  font-size: .8em;
 }
 
 pre > code {
@@ -29,7 +33,7 @@ pre > code {
 */
 
 h1, h2, h3, h4, h5, h6 {
- font-family:    'Montserrat', sans-serif;
+ font-family:    'Ruda', sans-serif;
  font-weight:    300;
  text-transform: uppercase;
  color:          #6B717E;
