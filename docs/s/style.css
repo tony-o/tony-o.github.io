@@ -59,6 +59,10 @@ body > div#articles {
   padding: 5% 10% 0 10%;
 }
 
+body > div#articles > table > tbody > tr {
+  cursor: pointer;
+}
+
 body > div#footer, 
 body > div#article,
 body > div#articles {
