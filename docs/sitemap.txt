@@ -12,6 +12,8 @@ docs/articles/20190925-rakudo-nightly--faster-ci.html
 docs/articles/20200121-zef--ecosystem.html
 docs/articles/20210116-fezzef---a-raku-ecosystem-and-auth.html
 docs/articles/20210120-faq-zef-ecosystem.html
+docs/articles/20211015-dirty-data-on-postgres---read-uncommitted.html
 docs/tags/database.html
+docs/tags/postgres.html
 docs/tags/programming.html
 docs/tags/rakudo.html

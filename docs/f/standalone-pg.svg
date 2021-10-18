@@ -1,0 +1,838 @@
+<?xml version="1.0" encoding="UTF-8" standalone="no"?>
+<!-- Created with Inkscape (http://www.inkscape.org/) -->
+
+<svg
+   width="111.38958mm"
+   height="193.41042mm"
+   viewBox="0 0 111.38958 193.41042"
+   version="1.1"
+   id="svg2014"
+   inkscape:version="1.1 (c4e8f9e, 2021-05-24)"
+   sodipodi:docname="standalone-pg.svg"
+   xmlns:inkscape="http://www.inkscape.org/namespaces/inkscape"
+   xmlns:sodipodi="http://sodipodi.sourceforge.net/DTD/sodipodi-0.dtd"
+   xmlns="http://www.w3.org/2000/svg"
+   xmlns:svg="http://www.w3.org/2000/svg"
+   xmlns:xhtml="http://www.w3.org/1999/xhtml">
+  <sodipodi:namedview
+     id="namedview2016"
+     pagecolor="#ffffff"
+     bordercolor="#eeeeee"
+     borderopacity="1"
+     inkscape:pageshadow="0"
+     inkscape:pageopacity="1"
+     inkscape:pagecheckerboard="0"
+     inkscape:document-units="mm"
+     showgrid="false"
+     inkscape:zoom="0.44542649"
+     inkscape:cx="-1.1225197"
+     inkscape:cy="345.73606"
+     inkscape:window-width="1293"
+     inkscape:window-height="701"
+     inkscape:window-x="0"
+     inkscape:window-y="0"
+     inkscape:window-maximized="0"
+     inkscape:current-layer="layer1"
+     fit-margin-top="0"
+     fit-margin-left="0"
+     fit-margin-right="0"
+     fit-margin-bottom="0" />
+  <defs
+     id="defs2011" />
+  <g
+     inkscape:label="Layer 1"
+     inkscape:groupmode="layer"
+     id="layer1"
+     transform="translate(-44.69121,-8.4327931)">
+    <path
+       d="M 44.823501,16.502584 V 8.5650846 H 155.9485 v 7.9374994"
+       fill="#ffffff"
+       stroke="#000000"
+       stroke-miterlimit="10"
+       pointer-events="all"
+       id="path439"
+       style="stroke-width:0.264583" />
+    <path
+       d="M 44.823501,16.502584 V 201.71092 H 155.9485 V 16.502584"
+       fill="none"
+       stroke="#000000"
+       stroke-miterlimit="10"
+       pointer-events="none"
+       id="path441"
+       style="stroke-width:0.264583" />
+    <path
+       d="M 44.823501,16.502584 H 155.9485"
+       fill="none"
+       stroke="#000000"
+       stroke-miterlimit="10"
+       pointer-events="none"
+       id="path443"
+       style="stroke-width:0.264583" />
+    <g
+       fill="#000000"
+       font-family="Helvetica"
+       font-weight="bold"
+       pointer-events="none"
+       text-anchor="middle"
+       font-size="20px"
+       id="g447"
+       transform="matrix(0.26458333,0,0,0.26458333,44.823501,8.5650846)">
+      <text
+         x="209.5"
+         y="23.5"
+         id="text445">Standalone Postgres</text>
+    </g>
+    <path
+       d="M 55.406834,16.502584 H 44.823501 v 26.458333 h 10.583333"
+       fill="#ffffff"
+       stroke="#000000"
+       stroke-miterlimit="10"
+       pointer-events="none"
+       id="path449"
+       style="stroke-width:0.264583" />
+    <path
+       d="M 55.406834,16.502584 H 155.9485 V 42.960917 H 55.406834"
+       fill="none"
+       stroke="#000000"
+       stroke-miterlimit="10"
+       pointer-events="none"
+       id="path451"
+       style="stroke-width:0.264583" />
+    <path
+       d="M 55.406834,16.502584 V 42.960917"
+       fill="none"
+       stroke="#000000"
+       stroke-miterlimit="10"
+       pointer-events="none"
+       id="path453"
+       style="stroke-width:0.264583" />
+    <g
+       fill="#000000"
+       font-family="Helvetica"
+       font-weight="bold"
+       pointer-events="none"
+       text-anchor="middle"
+       font-size="20px"
+       transform="matrix(0,-0.26458333,0.26458333,0,28.948501,35.023418)"
+       id="g457">
+      <text
+         x="19.5"
+         y="88.5"
+         id="text455">Time</text>
+    </g>
+    <ellipse
+       cx="81.865166"
+       cy="29.73175"
+       rx="13.229166"
+       ry="7.9375"
+       fill="#ffffff"
+       stroke="#000000"
+       stroke-width="0.529167"
+       pointer-events="none"
+       id="ellipse459" />
+    <g
+       transform="matrix(0.26458333,0,0,0.26458333,44.691209,8.4327929)"
+       id="g465">
+      <switch
+         id="switch463">
+        <foreignObject
+           style="overflow: visible; text-align: left;"
+           pointer-events="none"
+           width="100%"
+           height="100%"
+           requiredFeatures="http://www.w3.org/TR/SVG11/feature#Extensibility">
+          <xhtml:div
+             style="display: flex; align-items: unsafe center; justify-content: unsafe center; width: 98px; height: 1px; padding-top: 80px; margin-left: 91px;">
+            <xhtml:div
+               style="box-sizing: border-box; font-size: 0px; text-align: center;">
+              <xhtml:div
+                 style="display: inline-block; font-size: 20px; font-family: Helvetica; color: rgb(0, 0, 0); line-height: 1.2; pointer-events: none; white-space: normal; overflow-wrap: normal;">
+                <xhtml:font
+                   style="font-size: 12px">Client 1<xhtml:br />
+</xhtml:font>
+              </xhtml:div>
+            </xhtml:div>
+          </xhtml:div>
+        </foreignObject>
+        <text
+           x="140"
+           y="86"
+           fill="#000000"
+           font-family="Helvetica"
+           font-size="20px"
+           text-anchor="middle"
+           id="text461">Client 1</text>
+      </switch>
+    </g>
+    <ellipse
+       cx="129.49017"
+       cy="29.73175"
+       rx="13.229166"
+       ry="7.9375"
+       fill="#ffffff"
+       stroke="#000000"
+       stroke-width="0.529167"
+       pointer-events="none"
+       id="ellipse467" />
+    <g
+       transform="matrix(0.26458333,0,0,0.26458333,44.691209,8.4327929)"
+       id="g473">
+      <switch
+         id="switch471">
+        <foreignObject
+           style="overflow: visible; text-align: left;"
+           pointer-events="none"
+           width="100%"
+           height="100%"
+           requiredFeatures="http://www.w3.org/TR/SVG11/feature#Extensibility">
+          <xhtml:div
+             style="display: flex; align-items: unsafe center; justify-content: unsafe center; width: 98px; height: 1px; padding-top: 80px; margin-left: 271px;">
+            <xhtml:div
+               style="box-sizing: border-box; font-size: 0px; text-align: center;">
+              <xhtml:div
+                 style="display: inline-block; font-size: 20px; font-family: Helvetica; color: rgb(0, 0, 0); line-height: 1.2; pointer-events: none; white-space: normal; overflow-wrap: normal;">
+                <xhtml:font
+                   style="font-size: 12px">Client 2<xhtml:br />
+</xhtml:font>
+              </xhtml:div>
+            </xhtml:div>
+          </xhtml:div>
+        </foreignObject>
+        <text
+           x="320"
+           y="86"
+           fill="#000000"
+           font-family="Helvetica"
+           font-size="20px"
+           text-anchor="middle"
+           id="text469">Client 2</text>
+      </switch>
+    </g>
+    <path
+       d="M 55.406834,42.960917 H 44.823501 v 26.458334 h 10.583333"
+       fill="#ffffff"
+       stroke="#000000"
+       stroke-miterlimit="10"
+       pointer-events="none"
+       id="path475"
+       style="stroke-width:0.264583" />
+    <path
+       d="M 55.406834,42.960917 H 155.9485 V 69.419251 H 55.406834"
+       fill="none"
+       stroke="#000000"
+       stroke-miterlimit="10"
+       pointer-events="none"
+       id="path477"
+       style="stroke-width:0.264583" />
+    <path
+       d="M 55.406834,42.960917 V 69.419251"
+       fill="none"
+       stroke="#000000"
+       stroke-miterlimit="10"
+       pointer-events="none"
+       id="path479"
+       style="stroke-width:0.264583" />
+    <g
+       fill="#000000"
+       font-family="Helvetica"
+       font-weight="bold"
+       pointer-events="none"
+       text-anchor="middle"
+       font-size="20px"
+       transform="matrix(0,-0.26458333,0.26458333,0,2.4901682,61.481751)"
+       id="g483">
+      <text
+         x="19.5"
+         y="188.5"
+         id="text481">00:00</text>
+    </g>
+    <rect
+       x="60.698502"
+       y="48.252583"
+       width="42.333332"
+       height="15.875"
+       rx="1.8520833"
+       ry="1.8520833"
+       fill="#ffffff"
+       stroke="#000000"
+       stroke-width="0.529167"
+       pointer-events="none"
+       id="rect485" />
+    <g
+       transform="matrix(0.26458333,0,0,0.26458333,44.691209,8.4327929)"
+       id="g491">
+      <switch
+         id="switch489">
+        <foreignObject
+           style="overflow: visible; text-align: left;"
+           pointer-events="none"
+           width="100%"
+           height="100%"
+           requiredFeatures="http://www.w3.org/TR/SVG11/feature#Extensibility">
+          <xhtml:div
+             style="display: flex; align-items: unsafe center; justify-content: unsafe center; width: 158px; height: 1px; padding-top: 180px; margin-left: 61px;">
+            <xhtml:div
+               style="box-sizing: border-box; font-size: 0px; text-align: center;">
+              <xhtml:div
+                 style="display: inline-block; font-size: 12px; font-family: Helvetica; color: rgb(0, 0, 0); line-height: 1.2; pointer-events: none; white-space: normal; overflow-wrap: normal;">Locking Transaction Begins</xhtml:div>
+            </xhtml:div>
+          </xhtml:div>
+        </foreignObject>
+        <text
+           x="140"
+           y="184"
+           fill="#000000"
+           font-family="Helvetica"
+           font-size="12px"
+           text-anchor="middle"
+           id="text487">Locking Transaction Begins</text>
+      </switch>
+    </g>
+    <path
+       d="m 81.865167,37.669251 v 8.897937"
+       fill="none"
+       stroke="#000000"
+       stroke-miterlimit="10"
+       pointer-events="none"
+       id="path493"
+       style="stroke-width:0.264583" />
+    <path
+       d="m 81.865167,47.956251 -0.926041,-1.852084 0.926041,0.463021 0.926042,-0.463021 z"
+       fill="#000000"
+       stroke="#000000"
+       stroke-miterlimit="10"
+       pointer-events="none"
+       id="path495"
+       style="stroke-width:0.264583" />
+    <path
+       d="M 55.406834,95.877584 H 44.823501 v 26.458336 h 10.583333"
+       fill="#ffffff"
+       stroke="#000000"
+       stroke-miterlimit="10"
+       pointer-events="none"
+       id="path497"
+       style="stroke-width:0.264583" />
+    <path
+       d="M 55.406834,95.877584 H 155.9485 V 122.33592 H 55.406834"
+       fill="none"
+       stroke="#000000"
+       stroke-miterlimit="10"
+       pointer-events="none"
+       id="path499"
+       style="stroke-width:0.264583" />
+    <path
+       d="M 55.406834,95.877584 V 122.33592"
+       fill="none"
+       stroke="#000000"
+       stroke-miterlimit="10"
+       pointer-events="none"
+       id="path501"
+       style="stroke-width:0.264583" />
+    <g
+       fill="#000000"
+       font-family="Helvetica"
+       font-weight="bold"
+       pointer-events="none"
+       text-anchor="middle"
+       font-size="20px"
+       transform="matrix(0,-0.26458333,0.26458333,0,-50.426498,114.39842)"
+       id="g505">
+      <text
+         x="19.5"
+         y="388.5"
+         id="text503">00:45</text>
+    </g>
+    <rect
+       x="60.698502"
+       y="101.16925"
+       width="42.333332"
+       height="15.875"
+       rx="1.8520833"
+       ry="1.8520833"
+       fill="#ffffff"
+       stroke="#000000"
+       stroke-width="0.529167"
+       pointer-events="none"
+       id="rect507" />
+    <g
+       transform="matrix(0.26458333,0,0,0.26458333,44.691209,8.4327929)"
+       id="g513">
+      <switch
+         id="switch511">
+        <foreignObject
+           style="overflow: visible; text-align: left;"
+           pointer-events="none"
+           width="100%"
+           height="100%"
+           requiredFeatures="http://www.w3.org/TR/SVG11/feature#Extensibility">
+          <xhtml:div
+             style="display: flex; align-items: unsafe center; justify-content: unsafe center; width: 158px; height: 1px; padding-top: 380px; margin-left: 61px;">
+            <xhtml:div
+               style="box-sizing: border-box; font-size: 0px; text-align: center;">
+              <xhtml:div
+                 style="display: inline-block; font-size: 12px; font-family: Helvetica; color: rgb(0, 0, 0); line-height: 1.2; pointer-events: none; white-space: normal; overflow-wrap: normal;">Updates to Table</xhtml:div>
+            </xhtml:div>
+          </xhtml:div>
+        </foreignObject>
+        <text
+           x="140"
+           y="384"
+           fill="#000000"
+           font-family="Helvetica"
+           font-size="12px"
+           text-anchor="middle"
+           id="text509">Updates to Table</text>
+      </switch>
+    </g>
+    <path
+       d="m 81.865167,64.127584 v 35.35627"
+       fill="none"
+       stroke="#000000"
+       stroke-miterlimit="10"
+       pointer-events="none"
+       id="path515"
+       style="stroke-width:0.264583" />
+    <path
+       d="m 81.865167,100.87292 -0.926041,-1.852087 0.926041,0.463021 0.926042,-0.463021 z"
+       fill="#000000"
+       stroke="#000000"
+       stroke-miterlimit="10"
+       pointer-events="none"
+       id="path517"
+       style="stroke-width:0.264583" />
+    <path
+       d="M 55.406834,122.33592 H 44.823501 v 26.45833 h 10.583333"
+       fill="#ffffff"
+       stroke="#000000"
+       stroke-miterlimit="10"
+       pointer-events="none"
+       id="path519"
+       style="stroke-width:0.264583" />
+    <path
+       d="M 55.406834,122.33592 H 155.9485 v 26.45833 H 55.406834"
+       fill="none"
+       stroke="#000000"
+       stroke-miterlimit="10"
+       pointer-events="none"
+       id="path521"
+       style="stroke-width:0.264583" />
+    <path
+       d="m 55.406834,122.33592 v 26.45833"
+       fill="none"
+       stroke="#000000"
+       stroke-miterlimit="10"
+       pointer-events="none"
+       id="path523"
+       style="stroke-width:0.264583" />
+    <g
+       fill="#000000"
+       font-family="Helvetica"
+       font-weight="bold"
+       pointer-events="none"
+       text-anchor="middle"
+       font-size="20px"
+       transform="matrix(0,-0.26458333,0.26458333,0,-76.884831,140.85675)"
+       id="g527">
+      <text
+         x="19.5"
+         y="488.5"
+         id="text525">01:30</text>
+    </g>
+    <rect
+       x="60.698502"
+       y="127.62759"
+       width="42.333332"
+       height="15.875"
+       rx="1.8520833"
+       ry="1.8520833"
+       fill="#ffffff"
+       stroke="#000000"
+       stroke-width="0.529167"
+       pointer-events="none"
+       id="rect529" />
+    <g
+       transform="matrix(0.26458333,0,0,0.26458333,44.691209,8.4327929)"
+       id="g535">
+      <switch
+         id="switch533">
+        <foreignObject
+           style="overflow: visible; text-align: left;"
+           pointer-events="none"
+           width="100%"
+           height="100%"
+           requiredFeatures="http://www.w3.org/TR/SVG11/feature#Extensibility">
+          <xhtml:div
+             style="display: flex; align-items: unsafe center; justify-content: unsafe center; width: 158px; height: 1px; padding-top: 480px; margin-left: 61px;">
+            <xhtml:div
+               style="box-sizing: border-box; font-size: 0px; text-align: center;">
+              <xhtml:div
+                 style="display: inline-block; font-size: 12px; font-family: Helvetica; color: rgb(0, 0, 0); line-height: 1.2; pointer-events: none; white-space: normal; overflow-wrap: normal;">Locking Transaction Ends</xhtml:div>
+            </xhtml:div>
+          </xhtml:div>
+        </foreignObject>
+        <text
+           x="140"
+           y="484"
+           fill="#000000"
+           font-family="Helvetica"
+           font-size="12px"
+           text-anchor="middle"
+           id="text531">Locking Transaction Ends</text>
+      </switch>
+    </g>
+    <path
+       d="m 81.865167,117.04425 v 8.89794"
+       fill="none"
+       stroke="#000000"
+       stroke-miterlimit="10"
+       pointer-events="none"
+       id="path537"
+       style="stroke-width:0.264583" />
+    <path
+       d="m 81.865167,127.33125 -0.926041,-1.85208 0.926041,0.46302 0.926042,-0.46302 z"
+       fill="#000000"
+       stroke="#000000"
+       stroke-miterlimit="10"
+       pointer-events="none"
+       id="path539"
+       style="stroke-width:0.264583" />
+    <path
+       d="M 55.406834,148.79425 H 44.823501 v 26.45833 h 10.583333"
+       fill="#ffffff"
+       stroke="#000000"
+       stroke-miterlimit="10"
+       pointer-events="none"
+       id="path541"
+       style="stroke-width:0.264583" />
+    <path
+       d="M 55.406834,148.79425 H 155.9485 v 26.45833 H 55.406834"
+       fill="none"
+       stroke="#000000"
+       stroke-miterlimit="10"
+       pointer-events="none"
+       id="path543"
+       style="stroke-width:0.264583" />
+    <path
+       d="m 55.406834,148.79425 v 26.45833"
+       fill="none"
+       stroke="#000000"
+       stroke-miterlimit="10"
+       pointer-events="none"
+       id="path545"
+       style="stroke-width:0.264583" />
+    <g
+       fill="#000000"
+       font-family="Helvetica"
+       font-weight="bold"
+       pointer-events="none"
+       text-anchor="middle"
+       font-size="20px"
+       transform="matrix(0,-0.26458333,0.26458333,0,-103.34316,167.31508)"
+       id="g549">
+      <text
+         x="19.5"
+         y="588.5"
+         id="text547">01:31</text>
+    </g>
+    <rect
+       x="108.3235"
+       y="154.08592"
+       width="42.333332"
+       height="15.875"
+       rx="1.8520833"
+       ry="1.8520833"
+       fill="#ffffff"
+       stroke="#000000"
+       stroke-width="0.529167"
+       pointer-events="none"
+       id="rect551" />
+    <g
+       transform="matrix(0.26458333,0,0,0.26458333,44.691209,8.4327929)"
+       id="g557">
+      <switch
+         id="switch555">
+        <foreignObject
+           style="overflow: visible; text-align: left;"
+           pointer-events="none"
+           width="100%"
+           height="100%"
+           requiredFeatures="http://www.w3.org/TR/SVG11/feature#Extensibility">
+          <xhtml:div
+             style="display: flex; align-items: unsafe center; justify-content: unsafe center; width: 158px; height: 1px; padding-top: 580px; margin-left: 241px;">
+            <xhtml:div
+               style="box-sizing: border-box; font-size: 0px; text-align: center;">
+              <xhtml:div
+                 style="display: inline-block; font-size: 12px; font-family: Helvetica; color: rgb(0, 0, 0); line-height: 1.2; pointer-events: none; white-space: normal; overflow-wrap: normal;">Read Returns Data</xhtml:div>
+            </xhtml:div>
+          </xhtml:div>
+        </foreignObject>
+        <text
+           x="320"
+           y="584"
+           fill="#000000"
+           font-family="Helvetica"
+           font-size="12px"
+           text-anchor="middle"
+           id="text553">Read Returns Data</text>
+      </switch>
+    </g>
+    <path
+       d="m 76.734896,154.08592 h 10.260542 c 4.471458,0 8.098896,3.55335 8.098896,7.9375 0,4.38414 -3.627438,7.9375 -8.098896,7.9375 H 76.734896 c -4.471458,0 -8.098895,-3.55336 -8.098895,-7.9375 0,-4.38415 3.627437,-7.9375 8.098895,-7.9375 z"
+       fill="#ffffff"
+       stroke="#000000"
+       stroke-width="0.529167"
+       stroke-miterlimit="10"
+       pointer-events="none"
+       id="path559" />
+    <g
+       transform="matrix(0.26458333,0,0,0.26458333,44.691209,8.4327929)"
+       id="g565">
+      <switch
+         id="switch563">
+        <foreignObject
+           style="overflow: visible; text-align: left;"
+           pointer-events="none"
+           width="100%"
+           height="100%"
+           requiredFeatures="http://www.w3.org/TR/SVG11/feature#Extensibility">
+          <xhtml:div
+             style="display: flex; align-items: unsafe center; justify-content: unsafe center; width: 98px; height: 1px; padding-top: 580px; margin-left: 91px;">
+            <xhtml:div
+               style="box-sizing: border-box; font-size: 0px; text-align: center;">
+              <xhtml:div
+                 style="display: inline-block; font-size: 12px; font-family: Helvetica; color: rgb(0, 0, 0); line-height: 1.2; pointer-events: none; white-space: normal; overflow-wrap: normal;">Request Complete</xhtml:div>
+            </xhtml:div>
+          </xhtml:div>
+        </foreignObject>
+        <text
+           x="140"
+           y="584"
+           fill="#000000"
+           font-family="Helvetica"
+           font-size="12px"
+           text-anchor="middle"
+           id="text561">Request Complete</text>
+      </switch>
+    </g>
+    <path
+       d="M 129.49017,90.585917 V 152.40052"
+       fill="none"
+       stroke="#000000"
+       stroke-miterlimit="10"
+       pointer-events="none"
+       id="path567"
+       style="stroke-width:0.264583" />
+    <path
+       d="m 129.49017,153.78958 -0.92605,-1.85208 0.92605,0.46302 0.92604,-0.46302 z"
+       fill="#000000"
+       stroke="#000000"
+       stroke-miterlimit="10"
+       pointer-events="none"
+       id="path569"
+       style="stroke-width:0.264583" />
+    <path
+       d="M 55.406834,69.419251 H 44.823501 v 26.458333 h 10.583333"
+       fill="#ffffff"
+       stroke="#000000"
+       stroke-miterlimit="10"
+       pointer-events="none"
+       id="path571"
+       style="stroke-width:0.264583" />
+    <path
+       d="M 55.406834,69.419251 H 155.9485 V 95.877584 H 55.406834"
+       fill="none"
+       stroke="#000000"
+       stroke-miterlimit="10"
+       pointer-events="none"
+       id="path573"
+       style="stroke-width:0.264583" />
+    <path
+       d="M 55.406834,69.419251 V 95.877584"
+       fill="none"
+       stroke="#000000"
+       stroke-miterlimit="10"
+       pointer-events="none"
+       id="path575"
+       style="stroke-width:0.264583" />
+    <g
+       fill="#000000"
+       font-family="Helvetica"
+       font-weight="bold"
+       pointer-events="none"
+       text-anchor="middle"
+       font-size="20px"
+       transform="matrix(0,-0.26458333,0.26458333,0,-23.968165,87.940084)"
+       id="g579">
+      <text
+         x="19.5"
+         y="288.5"
+         id="text577">00:01</text>
+    </g>
+    <rect
+       x="108.3235"
+       y="74.710915"
+       width="42.333332"
+       height="15.875"
+       rx="1.8520833"
+       ry="1.8520833"
+       fill="#ffffff"
+       stroke="#000000"
+       stroke-width="0.529167"
+       pointer-events="none"
+       id="rect581" />
+    <g
+       transform="matrix(0.26458333,0,0,0.26458333,44.691209,8.4327929)"
+       id="g587">
+      <switch
+         id="switch585">
+        <foreignObject
+           style="overflow: visible; text-align: left;"
+           pointer-events="none"
+           width="100%"
+           height="100%"
+           requiredFeatures="http://www.w3.org/TR/SVG11/feature#Extensibility">
+          <xhtml:div
+             style="display: flex; align-items: unsafe center; justify-content: unsafe center; width: 158px; height: 1px; padding-top: 280px; margin-left: 241px;">
+            <xhtml:div
+               style="box-sizing: border-box; font-size: 0px; text-align: center;">
+              <xhtml:div
+                 style="display: inline-block; font-size: 12px; font-family: Helvetica; color: rgb(0, 0, 0); line-height: 1.2; pointer-events: none; white-space: normal; overflow-wrap: normal;">Read from Table</xhtml:div>
+            </xhtml:div>
+          </xhtml:div>
+        </foreignObject>
+        <text
+           x="320"
+           y="284"
+           fill="#000000"
+           font-family="Helvetica"
+           font-size="12px"
+           text-anchor="middle"
+           id="text583">Read from Table</text>
+      </switch>
+    </g>
+    <path
+       d="m 129.49017,37.669251 v 35.35627"
+       fill="none"
+       stroke="#000000"
+       stroke-miterlimit="10"
+       pointer-events="none"
+       id="path589"
+       style="stroke-width:0.264583" />
+    <path
+       d="m 129.49017,74.414584 -0.92605,-1.852084 0.92605,0.463021 0.92604,-0.463021 z"
+       fill="#000000"
+       stroke="#000000"
+       stroke-miterlimit="10"
+       pointer-events="none"
+       id="path591"
+       style="stroke-width:0.264583" />
+    <path
+       d="m 81.865167,143.50258 v 8.89794"
+       fill="none"
+       stroke="#000000"
+       stroke-miterlimit="10"
+       pointer-events="none"
+       id="path593"
+       style="stroke-width:0.264583" />
+    <path
+       d="m 81.865167,153.78958 -0.926041,-1.85208 0.926041,0.46302 0.926042,-0.46302 z"
+       fill="#000000"
+       stroke="#000000"
+       stroke-miterlimit="10"
+       pointer-events="none"
+       id="path595"
+       style="stroke-width:0.264583" />
+    <path
+       d="M 55.406834,175.25258 H 44.823501 v 26.45834 h 10.583333"
+       fill="#ffffff"
+       stroke="#000000"
+       stroke-miterlimit="10"
+       pointer-events="none"
+       id="path597"
+       style="stroke-width:0.264583" />
+    <path
+       d="M 55.406834,175.25258 H 155.9485 v 26.45834 H 55.406834"
+       fill="none"
+       stroke="#000000"
+       stroke-miterlimit="10"
+       pointer-events="none"
+       id="path599"
+       style="stroke-width:0.264583" />
+    <path
+       d="m 55.406834,175.25258 v 26.45834"
+       fill="none"
+       stroke="#000000"
+       stroke-miterlimit="10"
+       pointer-events="none"
+       id="path601"
+       style="stroke-width:0.264583" />
+    <g
+       fill="#000000"
+       font-family="Helvetica"
+       font-weight="bold"
+       pointer-events="none"
+       text-anchor="middle"
+       font-size="20px"
+       transform="matrix(0,-0.26458333,0.26458333,0,-129.8015,193.77342)"
+       id="g605">
+      <text
+         x="19.5"
+         y="688.5"
+         id="text603">01:32</text>
+    </g>
+    <path
+       d="m 124.3599,183.19008 h 10.26054 c 4.47146,0 8.09889,3.55336 8.09889,7.9375 0,4.38415 -3.62743,7.9375 -8.09889,7.9375 H 124.3599 c -4.47146,0 -8.0989,-3.55335 -8.0989,-7.9375 0,-4.38414 3.62744,-7.9375 8.0989,-7.9375 z"
+       fill="#ffffff"
+       stroke="#000000"
+       stroke-width="0.529167"
+       stroke-miterlimit="10"
+       pointer-events="none"
+       id="path607" />
+    <g
+       transform="matrix(0.26458333,0,0,0.26458333,44.691209,8.4327929)"
+       id="g613">
+      <switch
+         id="switch611">
+        <foreignObject
+           style="overflow: visible; text-align: left;"
+           pointer-events="none"
+           width="100%"
+           height="100%"
+           requiredFeatures="http://www.w3.org/TR/SVG11/feature#Extensibility">
+          <xhtml:div
+             style="display: flex; align-items: unsafe center; justify-content: unsafe center; width: 98px; height: 1px; padding-top: 690px; margin-left: 271px;">
+            <xhtml:div
+               style="box-sizing: border-box; font-size: 0px; text-align: center;">
+              <xhtml:div
+                 style="display: inline-block; font-size: 12px; font-family: Helvetica; color: rgb(0, 0, 0); line-height: 1.2; pointer-events: none; white-space: normal; overflow-wrap: normal;">Request Complete</xhtml:div>
+            </xhtml:div>
+          </xhtml:div>
+        </foreignObject>
+        <text
+           x="320"
+           y="694"
+           fill="#000000"
+           font-family="Helvetica"
+           font-size="12px"
+           text-anchor="middle"
+           id="text609">Request Complete</text>
+      </switch>
+    </g>
+    <path
+       d="m 129.49017,169.96092 v 11.54377"
+       fill="none"
+       stroke="#000000"
+       stroke-miterlimit="10"
+       pointer-events="none"
+       id="path615"
+       style="stroke-width:0.264583" />
+    <path
+       d="m 129.49017,182.89375 -0.92605,-1.85208 0.92605,0.46302 0.92604,-0.46302 z"
+       fill="#000000"
+       stroke="#000000"
+       stroke-miterlimit="10"
+       pointer-events="none"
+       id="path617"
+       style="stroke-width:0.264583" />
+  </g>
+</svg>

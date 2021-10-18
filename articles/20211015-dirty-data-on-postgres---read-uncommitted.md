@@ -178,8 +178,18 @@ Now when you run your test above, Client 2 will block until you `END WORK;`.
 
 If you'd like to check this out as a repo all of the files for building can be found on [github](https://github.com/tony-o/tony-o.github.io/tree/master/scratch/pgpool)
 
-## What
+## What Exactly Did We Do?
+
+Well, we made dirty data available to consumers who don't require _exactly_ correct data at read time.  This can be something as simple as we're just showing a user some data that we know to be true at the time of request. Here's a couple of charts so we can see exactly what's going on.
+
+![Standalone Postgres](/f/standalone-pg.svg)
+
+From this chart you can see the time that the action happens on the left and how much time has elapsed through the process.  You'll notice that Client 2 becomes blocked for the entirety of the lock created by Client 1.  This creates a pretty poor user experience if they have to wait 45 seconds just to view their own profile data while you run a migration.
+
+Conversely, this is how PGPool-II would handle this situation.
+
+![PGPool-II](/f/pgpool-ii.svg)
+
+From this you can see that PGPool is actually routing Client 2's read request to the replicated secondary and avoiding the lock on the primary postgres server.  In doing so you're potentially giving the client data that is going to be different a second from now but you're also avoiding making your user wait until a long running table lock completes.
 
 From here you can move ahead to testing, proposing, and building out better configurations for all of these but this should get you started towards making your dreams come true or at least making them readable while you update them.
-
-
