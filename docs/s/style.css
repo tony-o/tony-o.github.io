@@ -12,17 +12,10 @@ html, body {
   padding:     0;
 }
 
-img {
-  max-width: 100%;
-}
-
-pre {
-  font-size: .8em;
-}
-
-pre > code {
-  overflow-x: scroll;
-}
+code { background: rgba(255,255,255,.8); }
+img { max-width: 100%; }
+pre { font-size: .8em; }
+pre > code { overflow-x: scroll; }
 
 /* colors
 // slate gray  #6B717E
