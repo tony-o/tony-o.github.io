@@ -6,7 +6,7 @@ Since the beginning of time when humans demanded computers make leisure more lei
 It's not prevalent and it likely won't be. My feeling is that speech programming likely has the same problems.
 
 Information density is the biggest problem facing alternatives to typed or written languages. If you use the Lexical Density (LD) metrics for plain language writing versus speaking you
-find that most spoken language is about 40% efficient while written languages are closer to 60% [need ref]. The method behind LD is that you remove filler words ("the", "an", etc) and 
+find that most spoken language is about 40% efficient while written languages are closer to 60% [^fn1]. The method behind LD is that you remove filler words ("the", "an", etc) and 
 analyze the text as a ratio of what's left to the total words. Up to the start of this sentence this article's LD is 55%.  That means half of it is merely fluff for your reading pleasure.
 
 ### Speech
@@ -83,7 +83,7 @@ This ignores, of course, the expansion from math to code to language of simple t
 
 #### Come Again?
 
-The final point here is that nearly all languages in the world, no matter how dense, approach about 39 bits per second[^fn1]. The lower density languages like Japanese tend to speak faster resulting in
+The final point here is that nearly all languages in the world, no matter how dense, approach about 39 bits per second[^fn2]. The lower density languages like Japanese tend to speak faster resulting in
 a similar amount of information being conveyed by a denser language such as English.
 
 Having a computer read back your code so you can interact with and gain context of what you might've been thinking a year ago seems more error-prone than just groking your code. Even humans interacting
@@ -158,5 +158,6 @@ Similarly, visual programming has a similar problem where visualizing abstractio
 Perhaps in the next article we can explore running LD against programming languages and either support or pull the rug out from these ideas. Something like LD analysis for programming
 languages to support or pull the legs out from under this assertion.
 
-[^fn1]: TY - JOUR T1 - Across-Language Perspective on Speech Information Rate A1 - Pellegrino, François A1 - Coupé, Christophe A1 - Marsico, Egidio JF - Language VL - 87 IS - 3 SP - 539 EP - 558 PY - 2011 PB - Linguistic Society of America SN - 1535-0665 UR - https://muse.jhu.edu/article/449938 N1 - Volume 87, Number 3, September 2011 ER -
+[^fn1]: Erik Castello (2008). Text Complexity and Reading Comprehension Tests. Peter Lang.
+[^fn2]: Coupé, C., Oh, Y. M., Dediu, D., & Pellegrino, F. (2019). Different languages, similar encoding efficiency: Comparable information rates across the human communicative niche. Science Advances, 5(9). 
 

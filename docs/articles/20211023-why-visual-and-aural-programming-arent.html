@@ -21,7 +21,7 @@
       <br/>
 
       <p>Since the beginning of time when humans demanded computers make leisure more leisurely, they started trying different techniques to make visual programming become <em>a thing</em>. It's not prevalent and it likely won't be. My feeling is that speech programming likely has the same problems.</p>
-<p>Information density is the biggest problem facing alternatives to typed or written languages. If you use the Lexical Density (LD) metrics for plain language writing versus speaking you find that most spoken language is about 40% efficient while written languages are closer to 60% [need ref]. The method behind LD is that you remove filler words ("the", "an", etc) and analyze the text as a ratio of what's left to the total words. Up to the start of this sentence this article's LD is 55%. That means half of it is merely fluff for your reading pleasure.</p>
+<p>Information density is the biggest problem facing alternatives to typed or written languages. If you use the Lexical Density (LD) metrics for plain language writing versus speaking you find that most spoken language is about 40% efficient while written languages are closer to 60% <a href="#fn1" class="footnote-ref" id="fnref1" role="doc-noteref"><sup>1</sup></a>. The method behind LD is that you remove filler words ("the", "an", etc) and analyze the text as a ratio of what's left to the total words. Up to the start of this sentence this article's LD is 55%. That means half of it is merely fluff for your reading pleasure.</p>
 <h3 id="speech">Speech</h3>
 <p>Okay, a 20% deficit is what we're facing to bridge speech to text but this doesn't quite paint the entire picture and ignores that it's a 33% increase over its alternative. The language you need to tell a computer what to do needs to change and the developer's language needs to increase in precision as the problem becomes more complex. As a thought experiment let's walk through how you'd tell a computer to implement Levenshtein distance in plain English. The algorithm generates a number representing how far apart two words are so let's compare <code>hello</code> and <code>world</code>.</p>
 <p>The algorithm in pseudo code:</p>
@@ -61,7 +61,7 @@
           1 + min( lev(tail(a), b), lev(a, tail(b)), lev(tail(a), tail(b)) )</code></pre>
 <p>This ignores, of course, the expansion from math to code to language of simple things like: <code>a³ = a ** 3 = a cubed</code>.</p>
 <h4 id="come-again">Come Again?</h4>
-<p>The final point here is that nearly all languages in the world, no matter how dense, approach about 39 bits per second<a href="#fn1" class="footnote-ref" id="fnref1" role="doc-noteref"><sup>1</sup></a>. The lower density languages like Japanese tend to speak faster resulting in a similar amount of information being conveyed by a denser language such as English.</p>
+<p>The final point here is that nearly all languages in the world, no matter how dense, approach about 39 bits per second<a href="#fn2" class="footnote-ref" id="fnref2" role="doc-noteref"><sup>2</sup></a>. The lower density languages like Japanese tend to speak faster resulting in a similar amount of information being conveyed by a denser language such as English.</p>
 <p>Having a computer read back your code so you can interact with and gain context of what you might've been thinking a year ago seems more error-prone than just groking your code. Even humans interacting in real life tend to miscommunicate for a wide variety of reasons sometimes through neither person's fault. Even though we speak the same language we don't <em>always</em> do it similarly.</p>
 <h3 id="visual-programming">Visual Programming</h3>
 <p>Visual programming becomes really strange when you consider that the things a computer is <em>really</em> good at. First, though, let's take a look at what a visual data representations look like. There are plenty to choose from so we'll look at someone who's top of class and also happens to have created the coolest chart in all history, Charles Minard.</p>
@@ -102,7 +102,8 @@
 <section class="footnotes" role="doc-endnotes">
 <hr />
 <ol>
-<li id="fn1" role="doc-endnote"><p>TY - JOUR T1 - Across-Language Perspective on Speech Information Rate A1 - Pellegrino, François A1 - Coupé, Christophe A1 - Marsico, Egidio JF - Language VL - 87 IS - 3 SP - 539 EP - 558 PY - 2011 PB - Linguistic Society of America SN - 1535-0665 UR - https://muse.jhu.edu/article/449938 N1 - Volume 87, Number 3, September 2011 ER -<a href="#fnref1" class="footnote-back" role="doc-backlink">↩︎</a></p></li>
+<li id="fn1" role="doc-endnote"><p>Erik Castello (2008). Text Complexity and Reading Comprehension Tests. Peter Lang.<a href="#fnref1" class="footnote-back" role="doc-backlink">↩︎</a></p></li>
+<li id="fn2" role="doc-endnote"><p>Coupé, C., Oh, Y. M., Dediu, D., &amp; Pellegrino, F. (2019). Different languages, similar encoding efficiency: Comparable information rates across the human communicative niche. Science Advances, 5(9).<a href="#fnref2" class="footnote-back" role="doc-backlink">↩︎</a></p></li>
 </ol>
 </section>
 
