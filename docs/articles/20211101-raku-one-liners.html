@@ -1,0 +1,67 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <title>dbks - Raku One Liners</title>
+   	<meta name="description" content="Raku One Liners" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta content="text/html;charset=utf-8" http-equiv="Content-Type" />
+    <meta content="utf-8" http-equiv="encoding" />
+    <link rel="stylesheet" href="//cdnjs.cloudflare.com/ajax/libs/highlight.js/11.2.0/styles/github.min.css" />
+    <link rel="stylesheet" href="/s/style.css" />
+  </head>
+  <body>
+    <div id="title">
+      <a href="/"><img alt="dbks logo" src="/i/dbks.png" /></a> <a href="/"><h1>deathbykeystroke</h1></a>
+    </div>
+    <div id="article">
+      <h1>Raku One Liners</h1>
+      <h6>// date:  2021-11-01</h6>
+      <h6>// filed: <a href="/tags/rakudo.html">rakudo</a></h6>
+      <h6>// <a href="https://deathbykeystroke.com/articles/20211101-raku-one-liners.html">perma</a></h6>
+      <br/>
+
+      <p>This page will get updated once in a while</p>
+<h3 id="array-elements-in-another-array">Array elements in another array</h3>
+<div class="sourceCode" id="cb1"><pre class="sourceCode raku"><code class="sourceCode raku"><span id="cb1-1"><a href="#cb1-1" aria-hidden="true" tabindex="-1"></a><span class="kw">say</span> <span class="kw">[&amp;&amp;]</span> <span class="kw">([||]</span> <span class="va">$_</span> ∈ <span class="kw">(</span><span class="dv">1</span><span class="kw">,</span><span class="dv">2</span><span class="kw">,</span><span class="dv">3</span><span class="kw">)</span> <span class="cf">for</span> <span class="kw">(</span><span class="dv">1</span><span class="kw">,</span> <span class="dv">2</span><span class="kw">))</span>;</span></code></pre></div>
+
+
+    </div>
+    <div id="footer">
+      <h6>// social twitter:<a href="https://twitter.com/oynoto">@oynoto</a>, patreon:<a href="https://www.patreon.com/oynot">@oynot</a>, github:<a href="https://github.com/tony-o">tony-o</a></h6>
+    </div>
+    <script src="//cdnjs.cloudflare.com/ajax/libs/highlight.js/11.2.0/highlight.min.js"></script>
+    <script>
+      (function(){
+        languages = {}
+        pres      = document.getElementsByTagName("pre");
+        for(i = 0; i < hljs.listLanguages().length; i++){
+          languages['language-' + hljs.listLanguages()[i]] = 1;
+        }
+        for(i = 0; i < pres.length; i++){
+          pre = pres[i];
+          cn  = 'language-plaintext';
+          ls  = (pre.getAttribute("class") || 'plaintext').split(' ');
+          for(j = 0; j < ls.length; j++){
+            if(languages['language-' + ls[j]]){
+              cn = 'language-' + ls[j];
+              break;
+            }
+          }
+          codes = pre.getElementsByTagName("code")
+          for(j = 0; j < codes.length; j++){
+            codes[j].setAttribute("class", (codes[j].getAttribute("class") + " hljs " + cn).trim())
+          }
+        }
+        hljs.highlightAll();
+      })();
+    </script>
+    <script async src="https://www.googletagmanager.com/gtag/js?id=G-FKJQZPJ2XK"></script>
+    <script>
+      window.dataLayer = window.dataLayer || [];
+      function gtag(){dataLayer.push(arguments);}
+      gtag('js', new Date());
+      gtag('config', 'G-FKJQZPJ2XK');
+    </script>
+
+  </body>
+</html>
