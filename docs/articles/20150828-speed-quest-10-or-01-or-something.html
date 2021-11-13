@@ -29,23 +29,23 @@
 <p>I'll run 30 iterations of each, 3 in instances where I don't want to wait 4 hours for this to happen.</p>
 <h3 id="built-in-to-json">Built-in <code>to-json</code></h3>
 <h4 id="benchmark-code">Benchmark code</h4>
-<div class="sourceCode" id="cb1"><pre class="sourceCode perl"><code class="sourceCode perl"><span id="cb1-1"><a href="#cb1-1" aria-hidden="true" tabindex="-1"></a><span class="fu">use</span> Bench;</span>
-<span id="cb1-2"><a href="#cb1-2" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb1-3"><a href="#cb1-3" aria-hidden="true" tabindex="-1"></a><span class="kw">my</span> <span class="dt">$json</span> = from-json(<span class="ot">&#39;</span><span class="ss">projects.json</span><span class="ot">&#39;</span>.IO.slurp);</span>
-<span id="cb1-4"><a href="#cb1-4" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb1-5"><a href="#cb1-5" aria-hidden="true" tabindex="-1"></a>Bench.new.timethis(<span class="dv">3</span>, <span class="kw">sub </span>{ to-json(<span class="dt">$json</span>); });</span></code></pre></div>
+<div class="sourceCode" id="cb1"><pre class="sourceCode perl"><code class="sourceCode perl"><a class="sourceLine" id="cb1-1" title="1"><span class="fu">use</span> Bench;</a>
+<a class="sourceLine" id="cb1-2" title="2"></a>
+<a class="sourceLine" id="cb1-3" title="3"><span class="kw">my</span> <span class="dt">$json</span> = from-json(<span class="kw">&#39;</span><span class="st">projects.json</span><span class="kw">&#39;</span>.IO.slurp);</a>
+<a class="sourceLine" id="cb1-4" title="4"></a>
+<a class="sourceLine" id="cb1-5" title="5">Bench.new.timethis(<span class="dv">3</span>, <span class="kw">sub </span>{ to-json(<span class="dt">$json</span>); });</a></code></pre></div>
 <h4 id="results">Results</h4>
 <pre><code>  built-in: 297.9738 wallclock secs @ 0.0101/s (n=3)
                         (warning: too few iterations for a reliable count)</code></pre>
 <p>That's painfully slow. I couldn't wait longer than <code>n=3</code> before I lost interest.</p>
 <h3 id="jsonfast">JSON::Fast</h3>
 <h4 id="benchmark-code-1">Benchmark code</h4>
-<div class="sourceCode" id="cb3"><pre class="sourceCode perl"><code class="sourceCode perl"><span id="cb3-1"><a href="#cb3-1" aria-hidden="true" tabindex="-1"></a><span class="fu">use</span> Bench;</span>
-<span id="cb3-2"><a href="#cb3-2" aria-hidden="true" tabindex="-1"></a><span class="fu">use</span> <span class="fu">JSON::Fast</span>;</span>
-<span id="cb3-3"><a href="#cb3-3" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb3-4"><a href="#cb3-4" aria-hidden="true" tabindex="-1"></a><span class="kw">my</span> <span class="dt">$json</span> = from-json(<span class="ot">&#39;</span><span class="ss">projects.json</span><span class="ot">&#39;</span>.IO.slurp);</span>
-<span id="cb3-5"><a href="#cb3-5" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb3-6"><a href="#cb3-6" aria-hidden="true" tabindex="-1"></a>Bench.new.timethis(<span class="dv">3</span>, <span class="kw">sub </span>{ to-json(<span class="dt">$json</span>); });</span></code></pre></div>
+<div class="sourceCode" id="cb3"><pre class="sourceCode perl"><code class="sourceCode perl"><a class="sourceLine" id="cb3-1" title="1"><span class="fu">use</span> Bench;</a>
+<a class="sourceLine" id="cb3-2" title="2"><span class="fu">use</span> <span class="fu">JSON::Fast</span>;</a>
+<a class="sourceLine" id="cb3-3" title="3"></a>
+<a class="sourceLine" id="cb3-4" title="4"><span class="kw">my</span> <span class="dt">$json</span> = from-json(<span class="kw">&#39;</span><span class="st">projects.json</span><span class="kw">&#39;</span>.IO.slurp);</a>
+<a class="sourceLine" id="cb3-5" title="5"></a>
+<a class="sourceLine" id="cb3-6" title="6">Bench.new.timethis(<span class="dv">3</span>, <span class="kw">sub </span>{ to-json(<span class="dt">$json</span>); });</a></code></pre></div>
 <h4 id="results-1">Results</h4>
 <pre><code> json-fast: 295.2473 wallclock secs @ 0.0102/s (n=3)
                         (warning: too few iterations for a reliable count)</code></pre>
@@ -55,38 +55,38 @@
 <h2 id="what-i-wrote">What I wrote</h2>
 <p>I ended up writing a very simplistic recursive method as a comparative speed test. It turned out to be super fast on the first try (at least compared to <code>built-in</code> and <code>J:F</code>).</p>
 <p>Here is the code from the initial commit</p>
-<div class="sourceCode" id="cb5"><pre class="sourceCode perl"><code class="sourceCode perl"><span id="cb5-1"><a href="#cb5-1" aria-hidden="true" tabindex="-1"></a><span class="kw">sub </span><span class="fu">to</span>-json(<span class="dt">$obj</span>, Bool :<span class="dt">$pretty</span>? = True, Int :<span class="dt">$level</span>? = <span class="dv">0</span>, Int :<span class="dt">$spacing</span>? = <span class="dv">2</span>) is export {</span>
-<span id="cb5-2"><a href="#cb5-2" aria-hidden="true" tabindex="-1"></a>  CATCH { <span class="kw">default</span> { .<span class="fu">say</span>; } }</span>
-<span id="cb5-3"><a href="#cb5-3" aria-hidden="true" tabindex="-1"></a>  <span class="kw">return</span> <span class="ot">&quot;</span><span class="st">{</span><span class="dt">$obj</span><span class="st">}</span><span class="ot">&quot;</span>     <span class="kw">if</span> <span class="dt">$obj</span> ~~ Int || <span class="dt">$obj</span> ~~ Rat;</span>
-<span id="cb5-4"><a href="#cb5-4" aria-hidden="true" tabindex="-1"></a>  <span class="kw">return</span> <span class="ot">&quot;</span><span class="st">\&quot;{</span><span class="dt">$obj</span><span class="st">.subst(/&#39;</span><span class="ot">&quot;&#39;</span><span class="ss">/, </span><span class="ot">&#39;</span>\\<span class="ot">&quot;</span><span class="st">&#39;, :g)}\&quot;</span><span class="ot">&quot;</span> <span class="kw">if</span> <span class="dt">$obj</span> ~~ Str;</span>
-<span id="cb5-5"><a href="#cb5-5" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb5-6"><a href="#cb5-6" aria-hidden="true" tabindex="-1"></a>  <span class="kw">my</span> Str  <span class="dt">$out</span> = <span class="ot">&#39;&#39;</span>;</span>
-<span id="cb5-7"><a href="#cb5-7" aria-hidden="true" tabindex="-1"></a>  <span class="kw">my</span> Int  <span class="dt">$lvl</span> = <span class="dt">$level</span>;</span>
-<span id="cb5-8"><a href="#cb5-8" aria-hidden="true" tabindex="-1"></a>  <span class="kw">my</span> Bool <span class="dt">$arr</span> = <span class="dt">$obj</span> ~~ Array;</span>
-<span id="cb5-9"><a href="#cb5-9" aria-hidden="true" tabindex="-1"></a>  <span class="kw">my</span> <span class="dt">$spacer</span>   = <span class="kw">sub </span>{</span>
-<span id="cb5-10"><a href="#cb5-10" aria-hidden="true" tabindex="-1"></a>    <span class="dt">$out</span> ~= <span class="ot">&quot;</span><span class="ch">\n</span><span class="ot">&quot;</span> ~ (<span class="ot">&#39;</span><span class="ss"> </span><span class="ot">&#39;</span> x <span class="dt">$lvl</span>*<span class="dt">$spacing</span>) <span class="kw">if</span> <span class="dt">$pretty</span>;</span>
-<span id="cb5-11"><a href="#cb5-11" aria-hidden="true" tabindex="-1"></a>  };</span>
-<span id="cb5-12"><a href="#cb5-12" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb5-13"><a href="#cb5-13" aria-hidden="true" tabindex="-1"></a>  <span class="dt">$out</span> ~= <span class="dt">$arr</span> ?? <span class="ot">&#39;</span><span class="ss">[</span><span class="ot">&#39;</span> !! <span class="ot">&#39;</span><span class="ss">{</span><span class="ot">&#39;</span>;</span>
-<span id="cb5-14"><a href="#cb5-14" aria-hidden="true" tabindex="-1"></a>  <span class="dt">$lvl</span>++;</span>
-<span id="cb5-15"><a href="#cb5-15" aria-hidden="true" tabindex="-1"></a>  <span class="dt">$spacer</span>();</span>
-<span id="cb5-16"><a href="#cb5-16" aria-hidden="true" tabindex="-1"></a>  <span class="kw">if</span> <span class="dt">$arr</span> {</span>
-<span id="cb5-17"><a href="#cb5-17" aria-hidden="true" tabindex="-1"></a>    <span class="kw">for</span> <span class="dt">@</span>(<span class="dt">$obj</span>) -&gt; <span class="dt">$i</span> {</span>
-<span id="cb5-18"><a href="#cb5-18" aria-hidden="true" tabindex="-1"></a>      <span class="dt">$out</span> ~= to-json(<span class="dt">$i</span>, :level(<span class="dt">$level</span>+<span class="dv">1</span>), :<span class="dt">$spacing</span>, :<span class="dt">$pretty</span>) ~ <span class="ot">&#39;</span><span class="ss">,</span><span class="ot">&#39;</span>;</span>
-<span id="cb5-19"><a href="#cb5-19" aria-hidden="true" tabindex="-1"></a>      <span class="dt">$spacer</span>();</span>
-<span id="cb5-20"><a href="#cb5-20" aria-hidden="true" tabindex="-1"></a>    }</span>
-<span id="cb5-21"><a href="#cb5-21" aria-hidden="true" tabindex="-1"></a>  } <span class="kw">else</span> {</span>
-<span id="cb5-22"><a href="#cb5-22" aria-hidden="true" tabindex="-1"></a>    <span class="kw">for</span> <span class="dt">$obj</span>.<span class="fu">keys</span> -&gt; <span class="dt">$key</span> {</span>
-<span id="cb5-23"><a href="#cb5-23" aria-hidden="true" tabindex="-1"></a>      <span class="dt">$out</span> ~= <span class="ot">&quot;</span><span class="st">\&quot;{</span><span class="dt">$key</span><span class="st">.subst(/&#39;</span><span class="ot">&quot;&#39;</span><span class="ss">/, </span><span class="ot">&#39;</span>\\<span class="ot">&quot;</span><span class="st">&#39;, :g)}\&quot;: </span><span class="ot">&quot;</span> ~ to-json(<span class="dt">$obj</span>{<span class="dt">$key</span>}, :level(<span class="dt">$level</span>+<span class="dv">1</span>), :<span class="dt">$spacing</span>, :<span class="dt">$pretty</span>) ~ <span class="ot">&#39;</span><span class="ss">,</span><span class="ot">&#39;</span>;</span>
-<span id="cb5-24"><a href="#cb5-24" aria-hidden="true" tabindex="-1"></a>      <span class="dt">$spacer</span>();</span>
-<span id="cb5-25"><a href="#cb5-25" aria-hidden="true" tabindex="-1"></a>    }</span>
-<span id="cb5-26"><a href="#cb5-26" aria-hidden="true" tabindex="-1"></a>  }</span>
-<span id="cb5-27"><a href="#cb5-27" aria-hidden="true" tabindex="-1"></a>  <span class="dt">$out</span> .=subst(<span class="ot">/&#39;,&#39; </span><span class="bn">\s</span><span class="ch">*</span><span class="ot"> </span><span class="ch">$</span><span class="ot">/</span>, <span class="ot">&#39;&#39;</span>);</span>
-<span id="cb5-28"><a href="#cb5-28" aria-hidden="true" tabindex="-1"></a>  <span class="dt">$lvl</span>--;</span>
-<span id="cb5-29"><a href="#cb5-29" aria-hidden="true" tabindex="-1"></a>  <span class="dt">$spacer</span>();</span>
-<span id="cb5-30"><a href="#cb5-30" aria-hidden="true" tabindex="-1"></a>  <span class="dt">$out</span> ~= <span class="dt">$arr</span> ?? <span class="ot">&#39;</span><span class="ss">]</span><span class="ot">&#39;</span> !! <span class="ot">&#39;</span><span class="ss">}</span><span class="ot">&#39;</span>;</span>
-<span id="cb5-31"><a href="#cb5-31" aria-hidden="true" tabindex="-1"></a>  <span class="kw">return</span> <span class="dt">$out</span>;</span>
-<span id="cb5-32"><a href="#cb5-32" aria-hidden="true" tabindex="-1"></a>}</span></code></pre></div>
+<div class="sourceCode" id="cb5"><pre class="sourceCode perl"><code class="sourceCode perl"><a class="sourceLine" id="cb5-1" title="1"><span class="kw">sub </span><span class="fu">to</span>-json(<span class="dt">$obj</span>, Bool :<span class="dt">$pretty</span>? = True, Int :<span class="dt">$level</span>? = <span class="dv">0</span>, Int :<span class="dt">$spacing</span>? = <span class="dv">2</span>) is export {</a>
+<a class="sourceLine" id="cb5-2" title="2">  CATCH { <span class="kw">default</span> { .say; } }</a>
+<a class="sourceLine" id="cb5-3" title="3">  <span class="kw">return</span> <span class="kw">&quot;</span><span class="st">{</span><span class="dt">$obj</span><span class="st">}</span><span class="kw">&quot;</span>     <span class="kw">if</span> <span class="dt">$obj</span> ~~ Int || <span class="dt">$obj</span> ~~ Rat;</a>
+<a class="sourceLine" id="cb5-4" title="4">  <span class="kw">return</span> <span class="kw">&quot;</span><span class="st">\&quot;{</span><span class="dt">$obj</span><span class="st">.subst(/&#39;</span><span class="kw">&quot;&#39;</span><span class="st">/, </span><span class="kw">&#39;</span>\\<span class="kw">&quot;</span><span class="st">&#39;, :g)}\&quot;</span><span class="kw">&quot;</span> <span class="kw">if</span> <span class="dt">$obj</span> ~~ Str;</a>
+<a class="sourceLine" id="cb5-5" title="5"></a>
+<a class="sourceLine" id="cb5-6" title="6">  <span class="kw">my</span> Str  <span class="dt">$out</span> = <span class="kw">&#39;&#39;</span>;</a>
+<a class="sourceLine" id="cb5-7" title="7">  <span class="kw">my</span> Int  <span class="dt">$lvl</span> = <span class="dt">$level</span>;</a>
+<a class="sourceLine" id="cb5-8" title="8">  <span class="kw">my</span> Bool <span class="dt">$arr</span> = <span class="dt">$obj</span> ~~ Array;</a>
+<a class="sourceLine" id="cb5-9" title="9">  <span class="kw">my</span> <span class="dt">$spacer</span>   = <span class="kw">sub </span>{</a>
+<a class="sourceLine" id="cb5-10" title="10">    <span class="dt">$out</span> ~= <span class="kw">&quot;</span><span class="ch">\n</span><span class="kw">&quot;</span> ~ (<span class="kw">&#39;</span><span class="st"> </span><span class="kw">&#39;</span> x <span class="dt">$lvl</span>*<span class="dt">$spacing</span>) <span class="kw">if</span> <span class="dt">$pretty</span>;</a>
+<a class="sourceLine" id="cb5-11" title="11">  };</a>
+<a class="sourceLine" id="cb5-12" title="12"></a>
+<a class="sourceLine" id="cb5-13" title="13">  <span class="dt">$out</span> ~= <span class="dt">$arr</span> ?? <span class="kw">&#39;</span><span class="st">[</span><span class="kw">&#39;</span> !! <span class="kw">&#39;</span><span class="st">{</span><span class="kw">&#39;</span>;</a>
+<a class="sourceLine" id="cb5-14" title="14">  <span class="dt">$lvl</span>++;</a>
+<a class="sourceLine" id="cb5-15" title="15">  <span class="dt">$spacer</span>();</a>
+<a class="sourceLine" id="cb5-16" title="16">  <span class="kw">if</span> <span class="dt">$arr</span> {</a>
+<a class="sourceLine" id="cb5-17" title="17">    <span class="kw">for</span> <span class="dt">@</span>(<span class="dt">$obj</span>) -&gt; <span class="dt">$i</span> {</a>
+<a class="sourceLine" id="cb5-18" title="18">      <span class="dt">$out</span> ~= to-json(<span class="dt">$i</span>, :level(<span class="dt">$level</span>+<span class="dv">1</span>), :<span class="dt">$spacing</span>, :<span class="dt">$pretty</span>) ~ <span class="kw">&#39;</span><span class="st">,</span><span class="kw">&#39;</span>;</a>
+<a class="sourceLine" id="cb5-19" title="19">      <span class="dt">$spacer</span>();</a>
+<a class="sourceLine" id="cb5-20" title="20">    }</a>
+<a class="sourceLine" id="cb5-21" title="21">  } <span class="kw">else</span> {</a>
+<a class="sourceLine" id="cb5-22" title="22">    <span class="kw">for</span> <span class="dt">$obj</span>.<span class="fu">keys</span> -&gt; <span class="dt">$key</span> {</a>
+<a class="sourceLine" id="cb5-23" title="23">      <span class="dt">$out</span> ~= <span class="kw">&quot;</span><span class="st">\&quot;{</span><span class="dt">$key</span><span class="st">.subst(/&#39;</span><span class="kw">&quot;&#39;</span><span class="st">/, </span><span class="kw">&#39;</span>\\<span class="kw">&quot;</span><span class="st">&#39;, :g)}\&quot;: </span><span class="kw">&quot;</span> ~ to-json(<span class="dt">$obj</span>{<span class="dt">$key</span>}, :level(<span class="dt">$level</span>+<span class="dv">1</span>), :<span class="dt">$spacing</span>, :<span class="dt">$pretty</span>) ~ <span class="kw">&#39;</span><span class="st">,</span><span class="kw">&#39;</span>;</a>
+<a class="sourceLine" id="cb5-24" title="24">      <span class="dt">$spacer</span>();</a>
+<a class="sourceLine" id="cb5-25" title="25">    }</a>
+<a class="sourceLine" id="cb5-26" title="26">  }</a>
+<a class="sourceLine" id="cb5-27" title="27">  <span class="dt">$out</span> .=subst(<span class="kw">/</span><span class="ot">&#39;,&#39; </span><span class="bn">\s</span><span class="ch">*</span><span class="ot"> </span><span class="ch">$</span><span class="kw">/</span>, <span class="kw">&#39;&#39;</span>);</a>
+<a class="sourceLine" id="cb5-28" title="28">  <span class="dt">$lvl</span>--;</a>
+<a class="sourceLine" id="cb5-29" title="29">  <span class="dt">$spacer</span>();</a>
+<a class="sourceLine" id="cb5-30" title="30">  <span class="dt">$out</span> ~= <span class="dt">$arr</span> ?? <span class="kw">&#39;</span><span class="st">]</span><span class="kw">&#39;</span> !! <span class="kw">&#39;</span><span class="st">}</span><span class="kw">&#39;</span>;</a>
+<a class="sourceLine" id="cb5-31" title="31">  <span class="kw">return</span> <span class="dt">$out</span>;</a>
+<a class="sourceLine" id="cb5-32" title="32">}</a></code></pre></div>
 <p>Yea, there are a few bugs that were discovered since and have been fixed. But the benchmark results of that were:</p>
 <pre><code>json-faster: 5.9204 wallclock secs @ 0.5067/s (n=3)
                     (warning: too few iterations for a reliable count)</code></pre>
@@ -100,7 +100,9 @@
       <h6>// social twitter:<a href="https://twitter.com/oynoto">@oynoto</a>, patreon:<a href="https://www.patreon.com/oynot">@oynot</a>, github:<a href="https://github.com/tony-o">tony-o</a></h6>
     </div>
     <script src="//cdnjs.cloudflare.com/ajax/libs/highlight.js/11.2.0/highlight.min.js"></script>
+    <script src="/s/hljs-raku.js"></script>
     <script>
+      hljs.registerLanguage("raku", hljs_raku);
       (function(){
         languages = {}
         pres      = document.getElementsByTagName("pre");

@@ -27,97 +27,97 @@
 <h3 id="setup-a-postgres-containers">Setup a Postgres Containers</h3>
 <p>For this proof of concept we need a postgres primary and secondary. The primary will provide us with a writeable system of record. It will still respond to read queries but it is the only writeable connection for this exercise.</p>
 <p>We're going to use <code>docker-compose</code>, here's the file:</p>
-<div class="sourceCode" id="cb1"><pre class="sourceCode yaml"><code class="sourceCode yaml"><span id="cb1-1"><a href="#cb1-1" aria-hidden="true" tabindex="-1"></a><span class="fu">version</span><span class="kw">:</span><span class="at"> </span><span class="st">&quot;3.9&quot;</span></span>
-<span id="cb1-2"><a href="#cb1-2" aria-hidden="true" tabindex="-1"></a><span class="fu">services</span><span class="kw">:</span></span>
-<span id="cb1-3"><a href="#cb1-3" aria-hidden="true" tabindex="-1"></a><span class="at">  </span><span class="fu">db-primary</span><span class="kw">:</span></span>
-<span id="cb1-4"><a href="#cb1-4" aria-hidden="true" tabindex="-1"></a><span class="at">    </span><span class="fu">build</span><span class="kw">:</span></span>
-<span id="cb1-5"><a href="#cb1-5" aria-hidden="true" tabindex="-1"></a><span class="at">      </span><span class="fu">dockerfile</span><span class="kw">:</span><span class="at"> </span><span class="st">&#39;psql.dockerfile&#39;</span></span>
-<span id="cb1-6"><a href="#cb1-6" aria-hidden="true" tabindex="-1"></a><span class="at">      </span><span class="fu">context</span><span class="kw">:</span><span class="at"> </span><span class="st">&#39;.&#39;</span></span>
-<span id="cb1-7"><a href="#cb1-7" aria-hidden="true" tabindex="-1"></a><span class="at">    </span><span class="fu">container_name</span><span class="kw">:</span><span class="at"> psql-primary</span></span>
-<span id="cb1-8"><a href="#cb1-8" aria-hidden="true" tabindex="-1"></a><span class="at">    </span><span class="fu">restart</span><span class="kw">:</span><span class="at"> always</span></span>
-<span id="cb1-9"><a href="#cb1-9" aria-hidden="true" tabindex="-1"></a><span class="at">    </span><span class="fu">volumes</span><span class="kw">:</span></span>
-<span id="cb1-10"><a href="#cb1-10" aria-hidden="true" tabindex="-1"></a><span class="at">      </span><span class="kw">-</span><span class="at"> </span><span class="st">&quot;data-primary:/var/lib/postgresql/data&quot;</span></span>
-<span id="cb1-11"><a href="#cb1-11" aria-hidden="true" tabindex="-1"></a><span class="at">    </span><span class="fu">networks</span><span class="kw">:</span></span>
-<span id="cb1-12"><a href="#cb1-12" aria-hidden="true" tabindex="-1"></a><span class="at">      </span><span class="fu">test_net</span><span class="kw">:</span></span>
-<span id="cb1-13"><a href="#cb1-13" aria-hidden="true" tabindex="-1"></a><span class="at">        </span><span class="fu">ipv4_address</span><span class="kw">:</span><span class="at"> </span><span class="st">&#39;172.16.1.200&#39;</span></span>
-<span id="cb1-14"><a href="#cb1-14" aria-hidden="true" tabindex="-1"></a><span class="at">        </span><span class="fu">aliases</span><span class="kw">:</span></span>
-<span id="cb1-15"><a href="#cb1-15" aria-hidden="true" tabindex="-1"></a><span class="at">          </span><span class="kw">-</span><span class="at"> postgres.primary</span></span>
-<span id="cb1-16"><a href="#cb1-16" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb1-17"><a href="#cb1-17" aria-hidden="true" tabindex="-1"></a><span class="at">  </span><span class="fu">db-secondary</span><span class="kw">:</span></span>
-<span id="cb1-18"><a href="#cb1-18" aria-hidden="true" tabindex="-1"></a><span class="at">    </span><span class="fu">build</span><span class="kw">:</span></span>
-<span id="cb1-19"><a href="#cb1-19" aria-hidden="true" tabindex="-1"></a><span class="at">      </span><span class="fu">dockerfile</span><span class="kw">:</span><span class="at"> </span><span class="st">&#39;psql.dockerfile&#39;</span></span>
-<span id="cb1-20"><a href="#cb1-20" aria-hidden="true" tabindex="-1"></a><span class="at">      </span><span class="fu">context</span><span class="kw">:</span><span class="at"> </span><span class="st">&#39;.&#39;</span></span>
-<span id="cb1-21"><a href="#cb1-21" aria-hidden="true" tabindex="-1"></a><span class="at">      </span><span class="fu">args</span><span class="kw">:</span></span>
-<span id="cb1-22"><a href="#cb1-22" aria-hidden="true" tabindex="-1"></a><span class="at">        </span><span class="kw">-</span><span class="at"> SECONDARY=true</span></span>
-<span id="cb1-23"><a href="#cb1-23" aria-hidden="true" tabindex="-1"></a><span class="at">    </span><span class="fu">container_name</span><span class="kw">:</span><span class="at"> psql-secondary</span></span>
-<span id="cb1-24"><a href="#cb1-24" aria-hidden="true" tabindex="-1"></a><span class="at">    </span><span class="fu">restart</span><span class="kw">:</span><span class="at"> always</span></span>
-<span id="cb1-25"><a href="#cb1-25" aria-hidden="true" tabindex="-1"></a><span class="at">    </span><span class="fu">volumes</span><span class="kw">:</span></span>
-<span id="cb1-26"><a href="#cb1-26" aria-hidden="true" tabindex="-1"></a><span class="at">      </span><span class="kw">-</span><span class="at"> </span><span class="st">&quot;data-secondary:/var/lib/postgresql/data&quot;</span></span>
-<span id="cb1-27"><a href="#cb1-27" aria-hidden="true" tabindex="-1"></a><span class="at">    </span><span class="fu">networks</span><span class="kw">:</span></span>
-<span id="cb1-28"><a href="#cb1-28" aria-hidden="true" tabindex="-1"></a><span class="at">      </span><span class="fu">test_net</span><span class="kw">:</span></span>
-<span id="cb1-29"><a href="#cb1-29" aria-hidden="true" tabindex="-1"></a><span class="at">        </span><span class="fu">ipv4_address</span><span class="kw">:</span><span class="at"> </span><span class="st">&#39;172.16.1.201&#39;</span></span>
-<span id="cb1-30"><a href="#cb1-30" aria-hidden="true" tabindex="-1"></a><span class="at">        </span><span class="fu">aliases</span><span class="kw">:</span></span>
-<span id="cb1-31"><a href="#cb1-31" aria-hidden="true" tabindex="-1"></a><span class="at">          </span><span class="kw">-</span><span class="at"> postgres.secondary</span></span>
-<span id="cb1-32"><a href="#cb1-32" aria-hidden="true" tabindex="-1"></a><span class="at">    </span><span class="fu">environment</span><span class="kw">:</span></span>
-<span id="cb1-33"><a href="#cb1-33" aria-hidden="true" tabindex="-1"></a><span class="at">      </span><span class="fu">PRIMARY_CONNINFO</span><span class="kw">:</span><span class="at"> </span><span class="st">&quot;psql://172.16.1.200:5432/&quot;</span></span>
-<span id="cb1-34"><a href="#cb1-34" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb1-35"><a href="#cb1-35" aria-hidden="true" tabindex="-1"></a><span class="fu">networks</span><span class="kw">:</span></span>
-<span id="cb1-36"><a href="#cb1-36" aria-hidden="true" tabindex="-1"></a><span class="at">  </span><span class="fu">test_net</span><span class="kw">:</span></span>
-<span id="cb1-37"><a href="#cb1-37" aria-hidden="true" tabindex="-1"></a><span class="at">    </span><span class="fu">ipam</span><span class="kw">:</span></span>
-<span id="cb1-38"><a href="#cb1-38" aria-hidden="true" tabindex="-1"></a><span class="at">      </span><span class="fu">driver</span><span class="kw">:</span><span class="at"> default</span></span>
-<span id="cb1-39"><a href="#cb1-39" aria-hidden="true" tabindex="-1"></a><span class="at">      </span><span class="fu">config</span><span class="kw">:</span></span>
-<span id="cb1-40"><a href="#cb1-40" aria-hidden="true" tabindex="-1"></a><span class="at">      </span><span class="kw">-</span><span class="at"> </span><span class="fu">subnet</span><span class="kw">:</span><span class="at"> </span><span class="st">&quot;172.16.1.0/24&quot;</span></span>
-<span id="cb1-41"><a href="#cb1-41" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb1-42"><a href="#cb1-42" aria-hidden="true" tabindex="-1"></a><span class="fu">volumes</span><span class="kw">:</span></span>
-<span id="cb1-43"><a href="#cb1-43" aria-hidden="true" tabindex="-1"></a><span class="at">  </span><span class="fu">data-secondary</span><span class="kw">:</span></span>
-<span id="cb1-44"><a href="#cb1-44" aria-hidden="true" tabindex="-1"></a><span class="at">  </span><span class="fu">data-primary</span><span class="kw">:</span></span></code></pre></div>
+<div class="sourceCode" id="cb1"><pre class="sourceCode yaml"><code class="sourceCode yaml"><a class="sourceLine" id="cb1-1" title="1"><span class="fu">version:</span><span class="at"> </span><span class="st">&quot;3.9&quot;</span></a>
+<a class="sourceLine" id="cb1-2" title="2"><span class="fu">services:</span></a>
+<a class="sourceLine" id="cb1-3" title="3">  <span class="fu">db-primary:</span></a>
+<a class="sourceLine" id="cb1-4" title="4">    <span class="fu">build:</span></a>
+<a class="sourceLine" id="cb1-5" title="5">      <span class="fu">dockerfile:</span><span class="at"> </span><span class="st">&#39;psql.dockerfile&#39;</span></a>
+<a class="sourceLine" id="cb1-6" title="6">      <span class="fu">context:</span><span class="at"> </span><span class="st">&#39;.&#39;</span></a>
+<a class="sourceLine" id="cb1-7" title="7">    <span class="fu">container_name:</span><span class="at"> psql-primary</span></a>
+<a class="sourceLine" id="cb1-8" title="8">    <span class="fu">restart:</span><span class="at"> always</span></a>
+<a class="sourceLine" id="cb1-9" title="9">    <span class="fu">volumes:</span></a>
+<a class="sourceLine" id="cb1-10" title="10">      <span class="kw">-</span> <span class="st">&quot;data-primary:/var/lib/postgresql/data&quot;</span></a>
+<a class="sourceLine" id="cb1-11" title="11">    <span class="fu">networks:</span></a>
+<a class="sourceLine" id="cb1-12" title="12">      <span class="fu">test_net:</span></a>
+<a class="sourceLine" id="cb1-13" title="13">        <span class="fu">ipv4_address:</span><span class="at"> </span><span class="st">&#39;172.16.1.200&#39;</span></a>
+<a class="sourceLine" id="cb1-14" title="14">        <span class="fu">aliases:</span></a>
+<a class="sourceLine" id="cb1-15" title="15">          <span class="kw">-</span> postgres.primary</a>
+<a class="sourceLine" id="cb1-16" title="16"></a>
+<a class="sourceLine" id="cb1-17" title="17">  <span class="fu">db-secondary:</span></a>
+<a class="sourceLine" id="cb1-18" title="18">    <span class="fu">build:</span></a>
+<a class="sourceLine" id="cb1-19" title="19">      <span class="fu">dockerfile:</span><span class="at"> </span><span class="st">&#39;psql.dockerfile&#39;</span></a>
+<a class="sourceLine" id="cb1-20" title="20">      <span class="fu">context:</span><span class="at"> </span><span class="st">&#39;.&#39;</span></a>
+<a class="sourceLine" id="cb1-21" title="21">      <span class="fu">args:</span></a>
+<a class="sourceLine" id="cb1-22" title="22">        <span class="kw">-</span> SECONDARY=true</a>
+<a class="sourceLine" id="cb1-23" title="23">    <span class="fu">container_name:</span><span class="at"> psql-secondary</span></a>
+<a class="sourceLine" id="cb1-24" title="24">    <span class="fu">restart:</span><span class="at"> always</span></a>
+<a class="sourceLine" id="cb1-25" title="25">    <span class="fu">volumes:</span></a>
+<a class="sourceLine" id="cb1-26" title="26">      <span class="kw">-</span> <span class="st">&quot;data-secondary:/var/lib/postgresql/data&quot;</span></a>
+<a class="sourceLine" id="cb1-27" title="27">    <span class="fu">networks:</span></a>
+<a class="sourceLine" id="cb1-28" title="28">      <span class="fu">test_net:</span></a>
+<a class="sourceLine" id="cb1-29" title="29">        <span class="fu">ipv4_address:</span><span class="at"> </span><span class="st">&#39;172.16.1.201&#39;</span></a>
+<a class="sourceLine" id="cb1-30" title="30">        <span class="fu">aliases:</span></a>
+<a class="sourceLine" id="cb1-31" title="31">          <span class="kw">-</span> postgres.secondary</a>
+<a class="sourceLine" id="cb1-32" title="32">    <span class="fu">environment:</span></a>
+<a class="sourceLine" id="cb1-33" title="33">      <span class="fu">PRIMARY_CONNINFO:</span><span class="at"> </span><span class="st">&quot;psql://172.16.1.200:5432/&quot;</span></a>
+<a class="sourceLine" id="cb1-34" title="34"></a>
+<a class="sourceLine" id="cb1-35" title="35"><span class="fu">networks:</span></a>
+<a class="sourceLine" id="cb1-36" title="36">  <span class="fu">test_net:</span></a>
+<a class="sourceLine" id="cb1-37" title="37">    <span class="fu">ipam:</span></a>
+<a class="sourceLine" id="cb1-38" title="38">      <span class="fu">driver:</span><span class="at"> default</span></a>
+<a class="sourceLine" id="cb1-39" title="39">      <span class="fu">config:</span></a>
+<a class="sourceLine" id="cb1-40" title="40">      <span class="kw">-</span> <span class="fu">subnet:</span><span class="at"> </span><span class="st">&quot;172.16.1.0/24&quot;</span></a>
+<a class="sourceLine" id="cb1-41" title="41"></a>
+<a class="sourceLine" id="cb1-42" title="42"><span class="fu">volumes:</span></a>
+<a class="sourceLine" id="cb1-43" title="43">  <span class="fu">data-secondary:</span></a>
+<a class="sourceLine" id="cb1-44" title="44">  <span class="fu">data-primary:</span></a></code></pre></div>
 <p>For more information about docker-compose, check that out <a href="https://docs.docker.com/compose/">here</a>.</p>
 <p>The important thing to note here is the <code>environment</code> and <code>build.args</code> keys in the file. Both of these are controlling the image and container in such a way that it runs as either the primary (write/read) or as a secondary (read-only).</p>
 <p>The <code>psql.dockerfile</code> boils down to this:</p>
-<div class="sourceCode" id="cb2"><pre class="sourceCode yaml"><code class="sourceCode yaml"><span id="cb2-1"><a href="#cb2-1" aria-hidden="true" tabindex="-1"></a><span class="at">FROM postgres:14</span></span>
-<span id="cb2-2"><a href="#cb2-2" aria-hidden="true" tabindex="-1"></a><span class="at">COPY postgres.defaults.conf /tmp/</span></span>
-<span id="cb2-3"><a href="#cb2-3" aria-hidden="true" tabindex="-1"></a><span class="at">ARG SECONDARY</span></span>
-<span id="cb2-4"><a href="#cb2-4" aria-hidden="true" tabindex="-1"></a><span class="at">ENV SECONDARY $SECONDARY</span></span>
-<span id="cb2-5"><a href="#cb2-5" aria-hidden="true" tabindex="-1"></a><span class="at">RUN su postgres -c initdb \</span></span>
-<span id="cb2-6"><a href="#cb2-6" aria-hidden="true" tabindex="-1"></a><span class="at"> </span><span class="ot">&amp;&amp;</span><span class="at"> su postgres -c &#39;pg_ctl -D /var/lib/postgresql/data start&#39; \</span></span>
-<span id="cb2-7"><a href="#cb2-7" aria-hidden="true" tabindex="-1"></a><span class="at"> </span><span class="ot">&amp;&amp;</span><span class="at"> su postgres -c &#39;psql -c &quot;CREATE USER replicator WITH REPLICATION ENCRYPTED PASSWORD &#39;&quot;&#39;test&#39;&quot;&#39;;&quot;&#39; \</span></span>
-<span id="cb2-8"><a href="#cb2-8" aria-hidden="true" tabindex="-1"></a><span class="at"> </span><span class="ot">&amp;&amp;</span><span class="at"> su postgres -c &#39;pg_ctl -D /var/lib/postgresql/data stop&#39; \</span></span>
-<span id="cb2-9"><a href="#cb2-9" aria-hidden="true" tabindex="-1"></a><span class="at"> </span><span class="ot">&amp;&amp;</span><span class="at"> cp /tmp/postgres.defaults.conf /var/lib/postgresql/data/postgres.conf \</span></span>
-<span id="cb2-10"><a href="#cb2-10" aria-hidden="true" tabindex="-1"></a><span class="at"> </span><span class="ot">&amp;&amp;</span><span class="at"> if test &quot;${SECONDARY}&quot; = &#39;true&#39;; then \</span></span>
-<span id="cb2-11"><a href="#cb2-11" aria-hidden="true" tabindex="-1"></a><span class="at">      echo &#39;hot_standby = on&#39; &gt;&gt; &#39;/var/lib/postgresql/data/postgresql.conf&#39;; \</span></span>
-<span id="cb2-12"><a href="#cb2-12" aria-hidden="true" tabindex="-1"></a><span class="at">      echo &#39;primary_conninfo = &#39;&quot;&#39;user=replicator password=test channel_binding=prefer host=172.16.1.200 port=5432 sslmode=prefer sslcompression=0 ssl_min_protocol_version=TLSv1.2 gssencmode=prefer krbsrvname=postgres target_session_attrs=any&#39;&quot; &gt;&gt; &#39;/var/lib/postgresql/data/postgresql.conf&#39;; \</span></span>
-<span id="cb2-13"><a href="#cb2-13" aria-hidden="true" tabindex="-1"></a><span class="at">      touch /var/lib/postgresql/data/standby.signal; \</span></span>
-<span id="cb2-14"><a href="#cb2-14" aria-hidden="true" tabindex="-1"></a><span class="at">    else \</span></span>
-<span id="cb2-15"><a href="#cb2-15" aria-hidden="true" tabindex="-1"></a><span class="at">      echo &quot;host replication replicator 172.16.1.201/32 trust&quot; &gt;&gt; &#39;/var/lib/postgresql/data/pg_hba.conf&#39;; \</span></span>
-<span id="cb2-16"><a href="#cb2-16" aria-hidden="true" tabindex="-1"></a><span class="at">      echo &quot;host all postgres 172.16.1.100/24 trust&quot; &gt;&gt; &#39;/var/lib/postgresql/data/pg_hba.conf&#39;; \</span></span>
-<span id="cb2-17"><a href="#cb2-17" aria-hidden="true" tabindex="-1"></a><span class="at">    fi</span></span>
-<span id="cb2-18"><a href="#cb2-18" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb2-19"><a href="#cb2-19" aria-hidden="true" tabindex="-1"></a><span class="at">CMD [&quot;bash&quot;, &quot;-c&quot;, &quot;if [[ $SECONDARY = &#39;true&#39; ]]; then rm -Rf /var/lib/postgresql/data/*; su postgres -c &#39;pg_basebackup -h 172.16.1.200 -U replicator -p 5432 -D /var/lib/postgresql/data -Fp -Xs -P -R&#39;; fi; su postgres -c &#39;postgres -D /var/lib/postgresql/data&#39;&quot;]</span></span></code></pre></div>
+<div class="sourceCode" id="cb2"><pre class="sourceCode yaml"><code class="sourceCode yaml"><a class="sourceLine" id="cb2-1" title="1">FROM postgres:14</a>
+<a class="sourceLine" id="cb2-2" title="2">COPY postgres.defaults.conf /tmp/</a>
+<a class="sourceLine" id="cb2-3" title="3">ARG SECONDARY</a>
+<a class="sourceLine" id="cb2-4" title="4">ENV SECONDARY $SECONDARY</a>
+<a class="sourceLine" id="cb2-5" title="5">RUN su postgres -c initdb \</a>
+<a class="sourceLine" id="cb2-6" title="6"> <span class="dt">&amp;&amp;</span> su postgres -c <span class="st">&#39;pg_ctl -D /var/lib/postgresql/data start&#39;</span> \</a>
+<a class="sourceLine" id="cb2-7" title="7"> <span class="dt">&amp;&amp;</span> su postgres -c <span class="st">&#39;psql -c &quot;CREATE USER replicator WITH REPLICATION ENCRYPTED PASSWORD &#39;&quot;&#39;test&#39;&quot;&#39;;&quot;&#39;</span> \</a>
+<a class="sourceLine" id="cb2-8" title="8"> <span class="dt">&amp;&amp;</span> su postgres -c <span class="st">&#39;pg_ctl -D /var/lib/postgresql/data stop&#39;</span> \</a>
+<a class="sourceLine" id="cb2-9" title="9"> <span class="dt">&amp;&amp;</span> cp /tmp/postgres.defaults.conf /var/lib/postgresql/data/postgres.conf \</a>
+<a class="sourceLine" id="cb2-10" title="10"> <span class="dt">&amp;&amp;</span> if test <span class="st">&quot;${SECONDARY}&quot;</span> = <span class="st">&#39;true&#39;</span>; then \</a>
+<a class="sourceLine" id="cb2-11" title="11">      echo <span class="st">&#39;hot_standby = on&#39;</span> &gt;&gt; <span class="st">&#39;/var/lib/postgresql/data/postgresql.conf&#39;</span>; \</a>
+<a class="sourceLine" id="cb2-12" title="12">      echo <span class="st">&#39;primary_conninfo = &#39;&quot;&#39;user=replicator password=test channel_binding=prefer host=172.16.1.200 port=5432 sslmode=prefer sslcompression=0 ssl_min_protocol_version=TLSv1.2 gssencmode=prefer krbsrvname=postgres target_session_attrs=any&#39;&quot;</span> &gt;&gt; <span class="st">&#39;/var/lib/postgresql/data/postgresql.conf&#39;</span>; \</a>
+<a class="sourceLine" id="cb2-13" title="13">      touch /var/lib/postgresql/data/standby.signal; \</a>
+<a class="sourceLine" id="cb2-14" title="14">    else \</a>
+<a class="sourceLine" id="cb2-15" title="15">      echo <span class="st">&quot;host replication replicator 172.16.1.201/32 trust&quot;</span> &gt;&gt; <span class="st">&#39;/var/lib/postgresql/data/pg_hba.conf&#39;</span>; \</a>
+<a class="sourceLine" id="cb2-16" title="16">      echo <span class="st">&quot;host all postgres 172.16.1.100/24 trust&quot;</span> &gt;&gt; <span class="st">&#39;/var/lib/postgresql/data/pg_hba.conf&#39;</span>; \</a>
+<a class="sourceLine" id="cb2-17" title="17">    fi</a>
+<a class="sourceLine" id="cb2-18" title="18"></a>
+<a class="sourceLine" id="cb2-19" title="19">CMD <span class="kw">[</span><span class="st">&quot;bash&quot;</span><span class="kw">,</span> <span class="st">&quot;-c&quot;</span><span class="kw">,</span> <span class="st">&quot;if [[ $SECONDARY = &#39;true&#39; ]]; then rm -Rf /var/lib/postgresql/data/*; su postgres -c &#39;pg_basebackup -h 172.16.1.200 -U replicator -p 5432 -D /var/lib/postgresql/data -Fp -Xs -P -R&#39;; fi; su postgres -c &#39;postgres -D /var/lib/postgresql/data&#39;&quot;</span><span class="kw">]</span></a></code></pre></div>
 <p>If you're using this tutorial for production then do a little more research and use individual config files rather than mangling them with bash as we're doing here. This isn't a secure way of allowing replication.</p>
 <p>Now, if you run <code>docker-compose up</code> you should see the primary start and the secondary eventually start. Don't be worried about the secondary failing a few times during startup, this may happen because the primary may take a few minutes to start accepting connections.</p>
 <h2 id="now-build-the-dog-in-our-corn-dog">Now Build the Dog in Our Corn Dog</h2>
 <p>This is how we're going to allow users to get a dirty read from the secondary while the primary is updating. Let's add pgpool-II. You can read about it more in depth <a href="https://www.pgpool.net/mediawiki/index.php/Main_Page">here</a>. We're going to add the following service to our compose file:</p>
-<div class="sourceCode" id="cb3"><pre class="sourceCode yaml"><code class="sourceCode yaml"><span id="cb3-1"><a href="#cb3-1" aria-hidden="true" tabindex="-1"></a><span class="at">  </span><span class="fu">pgpool</span><span class="kw">:</span></span>
-<span id="cb3-2"><a href="#cb3-2" aria-hidden="true" tabindex="-1"></a><span class="at">    </span><span class="fu">build</span><span class="kw">:</span></span>
-<span id="cb3-3"><a href="#cb3-3" aria-hidden="true" tabindex="-1"></a><span class="at">      </span><span class="fu">dockerfile</span><span class="kw">:</span><span class="at"> </span><span class="st">&#39;pgpool.dockerfile&#39;</span></span>
-<span id="cb3-4"><a href="#cb3-4" aria-hidden="true" tabindex="-1"></a><span class="at">      </span><span class="fu">context</span><span class="kw">:</span><span class="at"> </span><span class="st">&#39;.&#39;</span></span>
-<span id="cb3-5"><a href="#cb3-5" aria-hidden="true" tabindex="-1"></a><span class="at">    </span><span class="fu">container_name</span><span class="kw">:</span><span class="at"> </span><span class="st">&#39;pgpool&#39;</span></span>
-<span id="cb3-6"><a href="#cb3-6" aria-hidden="true" tabindex="-1"></a><span class="at">    </span><span class="fu">restart</span><span class="kw">:</span><span class="at"> always</span></span>
-<span id="cb3-7"><a href="#cb3-7" aria-hidden="true" tabindex="-1"></a><span class="at">    </span><span class="fu">networks</span><span class="kw">:</span></span>
-<span id="cb3-8"><a href="#cb3-8" aria-hidden="true" tabindex="-1"></a><span class="at">      </span><span class="fu">test_net</span><span class="kw">:</span></span>
-<span id="cb3-9"><a href="#cb3-9" aria-hidden="true" tabindex="-1"></a><span class="at">        </span><span class="fu">ipv4_address</span><span class="kw">:</span><span class="at"> </span><span class="st">&#39;172.16.1.100&#39;</span></span>
-<span id="cb3-10"><a href="#cb3-10" aria-hidden="true" tabindex="-1"></a><span class="at">        </span><span class="fu">aliases</span><span class="kw">:</span></span>
-<span id="cb3-11"><a href="#cb3-11" aria-hidden="true" tabindex="-1"></a><span class="at">          </span><span class="kw">-</span><span class="at"> pgpool</span></span>
-<span id="cb3-12"><a href="#cb3-12" aria-hidden="true" tabindex="-1"></a><span class="at">    </span><span class="fu">ports</span><span class="kw">:</span></span>
-<span id="cb3-13"><a href="#cb3-13" aria-hidden="true" tabindex="-1"></a><span class="at">      </span><span class="kw">-</span><span class="at"> </span><span class="st">&quot;5432:5432&quot;</span></span></code></pre></div>
+<div class="sourceCode" id="cb3"><pre class="sourceCode yaml"><code class="sourceCode yaml"><a class="sourceLine" id="cb3-1" title="1">  <span class="fu">pgpool:</span></a>
+<a class="sourceLine" id="cb3-2" title="2">    <span class="fu">build:</span></a>
+<a class="sourceLine" id="cb3-3" title="3">      <span class="fu">dockerfile:</span><span class="at"> </span><span class="st">&#39;pgpool.dockerfile&#39;</span></a>
+<a class="sourceLine" id="cb3-4" title="4">      <span class="fu">context:</span><span class="at"> </span><span class="st">&#39;.&#39;</span></a>
+<a class="sourceLine" id="cb3-5" title="5">    <span class="fu">container_name:</span><span class="at"> </span><span class="st">&#39;pgpool&#39;</span></a>
+<a class="sourceLine" id="cb3-6" title="6">    <span class="fu">restart:</span><span class="at"> always</span></a>
+<a class="sourceLine" id="cb3-7" title="7">    <span class="fu">networks:</span></a>
+<a class="sourceLine" id="cb3-8" title="8">      <span class="fu">test_net:</span></a>
+<a class="sourceLine" id="cb3-9" title="9">        <span class="fu">ipv4_address:</span><span class="at"> </span><span class="st">&#39;172.16.1.100&#39;</span></a>
+<a class="sourceLine" id="cb3-10" title="10">        <span class="fu">aliases:</span></a>
+<a class="sourceLine" id="cb3-11" title="11">          <span class="kw">-</span> pgpool</a>
+<a class="sourceLine" id="cb3-12" title="12">    <span class="fu">ports:</span></a>
+<a class="sourceLine" id="cb3-13" title="13">      <span class="kw">-</span> <span class="st">&quot;5432:5432&quot;</span></a></code></pre></div>
 <p>With the <code>pgpool.dockerfile</code> containing:</p>
-<div class="sourceCode" id="cb4"><pre class="sourceCode yaml"><code class="sourceCode yaml"><span id="cb4-1"><a href="#cb4-1" aria-hidden="true" tabindex="-1"></a><span class="at">FROM alpine:3.13.6</span></span>
-<span id="cb4-2"><a href="#cb4-2" aria-hidden="true" tabindex="-1"></a><span class="at">COPY pgpool.conf /etc/pgpool/pgpool.conf</span></span>
-<span id="cb4-3"><a href="#cb4-3" aria-hidden="true" tabindex="-1"></a><span class="at">RUN apk update \</span></span>
-<span id="cb4-4"><a href="#cb4-4" aria-hidden="true" tabindex="-1"></a><span class="at"> </span><span class="ot">&amp;&amp;</span><span class="at"> apk add pgpool \</span></span>
-<span id="cb4-5"><a href="#cb4-5" aria-hidden="true" tabindex="-1"></a><span class="at"> </span><span class="ot">&amp;&amp;</span><span class="at"> mkdir /var/run/pgpool</span></span>
-<span id="cb4-6"><a href="#cb4-6" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb4-7"><a href="#cb4-7" aria-hidden="true" tabindex="-1"></a><span class="at">CMD [&quot;pgpool&quot;, &quot;-n&quot;]</span></span></code></pre></div>
+<div class="sourceCode" id="cb4"><pre class="sourceCode yaml"><code class="sourceCode yaml"><a class="sourceLine" id="cb4-1" title="1">FROM alpine:3.13.6</a>
+<a class="sourceLine" id="cb4-2" title="2">COPY pgpool.conf /etc/pgpool/pgpool.conf</a>
+<a class="sourceLine" id="cb4-3" title="3">RUN apk update \</a>
+<a class="sourceLine" id="cb4-4" title="4"> <span class="dt">&amp;&amp;</span> apk add pgpool \</a>
+<a class="sourceLine" id="cb4-5" title="5"> <span class="dt">&amp;&amp;</span> mkdir /var/run/pgpool</a>
+<a class="sourceLine" id="cb4-6" title="6"></a>
+<a class="sourceLine" id="cb4-7" title="7">CMD <span class="kw">[</span><span class="st">&quot;pgpool&quot;</span><span class="kw">,</span> <span class="st">&quot;-n&quot;</span><span class="kw">]</span></a></code></pre></div>
 <p>In a <code>pgpool.conf</code> make sure you have these important bits along with other config info (a full sample can be found <a href="/f/pgpool.sample.conf">here</a>).</p>
 <pre><code> # - Backend Connection Settings -
  backend_hostname0 = &#39;172.16.1.200&#39; #primary
@@ -134,31 +134,31 @@
 <p>Now we're all set.</p>
 <p>You can now query from postgres while something locks the table, you can test this by running <code>docker-compose up</code>, connecting your sql client and doing the following:</p>
 <p>Client 1:</p>
-<div class="sourceCode" id="cb6"><pre class="sourceCode sql"><code class="sourceCode sql"><span id="cb6-1"><a href="#cb6-1" aria-hidden="true" tabindex="-1"></a><span class="kw">CREATE</span> <span class="kw">TABLE</span> test_lock (t text);</span>
-<span id="cb6-2"><a href="#cb6-2" aria-hidden="true" tabindex="-1"></a><span class="kw">INSERT</span> <span class="kw">INTO</span> test_lock (t) <span class="kw">VALUES</span> (<span class="st">&#39;this is only a test&#39;</span>);</span>
-<span id="cb6-3"><a href="#cb6-3" aria-hidden="true" tabindex="-1"></a><span class="cf">BEGIN</span> <span class="kw">WORK</span>;</span>
-<span id="cb6-4"><a href="#cb6-4" aria-hidden="true" tabindex="-1"></a><span class="kw">LOCK</span> test_lock <span class="kw">IN</span> <span class="kw">EXCLUSIVE</span> <span class="kw">MODE</span>;</span>
-<span id="cb6-5"><a href="#cb6-5" aria-hidden="true" tabindex="-1"></a><span class="co">-- leave this transaction open while you run in your second window</span></span></code></pre></div>
+<div class="sourceCode" id="cb6"><pre class="sourceCode sql"><code class="sourceCode sql"><a class="sourceLine" id="cb6-1" title="1"><span class="kw">CREATE</span> <span class="kw">TABLE</span> test_lock (t text);</a>
+<a class="sourceLine" id="cb6-2" title="2"><span class="kw">INSERT</span> <span class="kw">INTO</span> test_lock (t) <span class="kw">VALUES</span> (<span class="st">&#39;this is only a test&#39;</span>);</a>
+<a class="sourceLine" id="cb6-3" title="3"><span class="cf">BEGIN</span> <span class="kw">WORK</span>;</a>
+<a class="sourceLine" id="cb6-4" title="4"><span class="kw">LOCK</span> test_lock <span class="kw">IN</span> <span class="kw">EXCLUSIVE</span> <span class="kw">MODE</span>;</a>
+<a class="sourceLine" id="cb6-5" title="5"><span class="co">-- leave this transaction open while you run in your second window</span></a></code></pre></div>
 <p>Client 2:</p>
-<div class="sourceCode" id="cb7"><pre class="sourceCode sql"><code class="sourceCode sql"><span id="cb7-1"><a href="#cb7-1" aria-hidden="true" tabindex="-1"></a><span class="kw">SELECT</span> <span class="op">*</span> <span class="kw">FROM</span> test_lock;</span>
-<span id="cb7-2"><a href="#cb7-2" aria-hidden="true" tabindex="-1"></a><span class="co">--    test</span></span>
-<span id="cb7-3"><a href="#cb7-3" aria-hidden="true" tabindex="-1"></a><span class="co">-- ----------</span></span>
-<span id="cb7-4"><a href="#cb7-4" aria-hidden="true" tabindex="-1"></a><span class="co">--  test str</span></span>
-<span id="cb7-5"><a href="#cb7-5" aria-hidden="true" tabindex="-1"></a>(<span class="dv">1</span> <span class="kw">row</span>)</span></code></pre></div>
+<div class="sourceCode" id="cb7"><pre class="sourceCode sql"><code class="sourceCode sql"><a class="sourceLine" id="cb7-1" title="1"><span class="kw">SELECT</span> <span class="op">*</span> <span class="kw">FROM</span> test_lock;</a>
+<a class="sourceLine" id="cb7-2" title="2"><span class="co">--    test</span></a>
+<a class="sourceLine" id="cb7-3" title="3"><span class="co">-- ----------</span></a>
+<a class="sourceLine" id="cb7-4" title="4"><span class="co">--  test str</span></a>
+<a class="sourceLine" id="cb7-5" title="5">(<span class="dv">1</span> <span class="kw">row</span>)</a></code></pre></div>
 <p>Now you can issue the <code>END WORK;</code> in Client 1 to remove the lock</p>
 <p>Now, let's verify that our pgpool is <em>really</em> working and that it's actually allowing us to run queries.</p>
-<div class="sourceCode" id="cb8"><pre class="sourceCode bash"><code class="sourceCode bash"><span id="cb8-1"><a href="#cb8-1" aria-hidden="true" tabindex="-1"></a><span class="ex">docker-compose</span> up pgpool pg-primary</span></code></pre></div>
+<div class="sourceCode" id="cb8"><pre class="sourceCode bash"><code class="sourceCode bash"><a class="sourceLine" id="cb8-1" title="1"><span class="ex">docker-compose</span> up pgpool pg-primary</a></code></pre></div>
 <p>Now when you run your test above, Client 2 will block until you <code>END WORK;</code>.</p>
 <p>If you'd like to check this out as a repo all of the files for building can be found on <a href="https://github.com/tony-o/tony-o.github.io/tree/master/scratch/pgpool">github</a></p>
 <h2 id="what-exactly-did-we-do">What Exactly Did We Do?</h2>
 <p>Well, we made dirty data available to consumers who don't require <em>exactly</em> correct data at read time. This can be something as simple as we're just showing a user some data that we know to be true at the time of request. Here's a couple of charts so we can see exactly what's going on.</p>
 <figure>
-<img src="/f/standalone-pg.svg" alt="Standalone Postgres" /><figcaption aria-hidden="true">Standalone Postgres</figcaption>
+<img src="/f/standalone-pg.svg" alt="Standalone Postgres" /><figcaption>Standalone Postgres</figcaption>
 </figure>
 <p>From this chart you can see the time that the action happens on the left and how much time has elapsed through the process. You'll notice that Client 2 becomes blocked for the entirety of the lock created by Client 1. This creates a pretty poor user experience if they have to wait 45 seconds just to view their own profile data while you run a migration.</p>
 <p>Conversely, this is how PGPool-II would handle this situation.</p>
 <figure>
-<img src="/f/pgpool-ii.svg" alt="PGPool-II" /><figcaption aria-hidden="true">PGPool-II</figcaption>
+<img src="/f/pgpool-ii.svg" alt="PGPool-II" /><figcaption>PGPool-II</figcaption>
 </figure>
 <p>From this you can see that PGPool is actually routing Client 2's read request to the replicated secondary and avoiding the lock on the primary postgres server. In doing so you're potentially giving the client data that is going to be different a second from now but you're also avoiding making your user wait until a long running table lock completes.</p>
 <p>From here you can move ahead to testing, proposing, and building out better configurations for all of these but this should get you started towards making your dreams come true or at least making them readable while you update them.</p>
@@ -169,7 +169,9 @@
       <h6>// social twitter:<a href="https://twitter.com/oynoto">@oynoto</a>, patreon:<a href="https://www.patreon.com/oynot">@oynot</a>, github:<a href="https://github.com/tony-o">tony-o</a></h6>
     </div>
     <script src="//cdnjs.cloudflare.com/ajax/libs/highlight.js/11.2.0/highlight.min.js"></script>
+    <script src="/s/hljs-raku.js"></script>
     <script>
+      hljs.registerLanguage("raku", hljs_raku);
       (function(){
         languages = {}
         pres      = document.getElementsByTagName("pre");
