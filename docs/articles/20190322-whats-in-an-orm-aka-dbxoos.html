@@ -40,7 +40,7 @@
 <p><code>zef install DB::Xoos YAML::Parser::LibYAML</code></p>
 <p>SQLite3, we'll create the following ERD.</p>
 <figure>
-<img src="/i/erd.png" alt="Database-ER-Diagram" /><figcaption>Database-ER-Diagram</figcaption>
+<img src="/i/erd.png" alt="Database-ER-Diagram" /><figcaption aria-hidden="true">Database-ER-Diagram</figcaption>
 </figure>
 <pre><code>example$ sqlite3 xoos.sqlite3
 SQLite version 3.19.3 2017-06-27 16:48:08
@@ -65,76 +65,76 @@ sqlite&gt; .quit</code></pre>
 <p>We'll develop two of the models, one with standard perl6 and one using YAML, the rest of ERD can be implemented as a practice <em>or</em> the entire project can be downloaded at the end of the article.</p>
 <h5 id="appmodelbook">App::Model::Book</h5>
 <p>In our path we're going to use the prefix of <code>App</code> for our models and rows. If you haven't already and you're following along, then create the directory <code>lib/App/Model</code> and then edit the file <code>lib/App/Model/Book.pm6</code>.</p>
-<div class="sourceCode" id="cb2"><pre class="sourceCode perl"><code class="sourceCode perl"><a class="sourceLine" id="cb2-1" title="1"><span class="fu">use</span> <span class="fu">DB::Xoos</span>::<span class="fu">Model</span>;</a>
-<a class="sourceLine" id="cb2-2" title="2">unit class <span class="fu">App::Model</span>::<span class="fu">Book</span> does <span class="fu">DB::Xoos</span>::<span class="fu">Model</span>[<span class="kw">&#39;</span><span class="st">books</span><span class="kw">&#39;</span>];</a>
-<a class="sourceLine" id="cb2-3" title="3"></a>
-<a class="sourceLine" id="cb2-4" title="4"><span class="kw">qw&lt;</span>...&gt;</a></code></pre></div>
+<div class="sourceCode" id="cb2"><pre class="sourceCode perl"><code class="sourceCode perl"><span id="cb2-1"><a href="#cb2-1" aria-hidden="true" tabindex="-1"></a><span class="fu">use</span> <span class="fu">DB::Xoos</span>::<span class="fu">Model</span>;</span>
+<span id="cb2-2"><a href="#cb2-2" aria-hidden="true" tabindex="-1"></a>unit class <span class="fu">App::Model</span>::<span class="fu">Book</span> does <span class="fu">DB::Xoos</span>::<span class="fu">Model</span>[<span class="ot">&#39;</span><span class="ss">books</span><span class="ot">&#39;</span>];</span>
+<span id="cb2-3"><a href="#cb2-3" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb2-4"><a href="#cb2-4" aria-hidden="true" tabindex="-1"></a><span class="ot">qw&lt;</span>...<span class="ot">&gt;</span></span></code></pre></div>
 <p>Here we are simply defining our class and telling DB::Xoos to use the table <code>books</code> as our source of data for this model. Next we'll let the ORM know what columns are available.</p>
-<div class="sourceCode" id="cb3"><pre class="sourceCode perl"><code class="sourceCode perl"><a class="sourceLine" id="cb3-1" title="1">has <span class="dt">@</span>.columns = [</a>
-<a class="sourceLine" id="cb3-2" title="2">  book_id =&gt; {</a>
-<a class="sourceLine" id="cb3-3" title="3">   type           =&gt; <span class="kw">&#39;</span><span class="st">integer</span><span class="kw">&#39;</span>,</a>
-<a class="sourceLine" id="cb3-4" title="4">   is-primary-key =&gt; True,</a>
-<a class="sourceLine" id="cb3-5" title="5">   auto-increment =&gt; True,</a>
-<a class="sourceLine" id="cb3-6" title="6">  },</a>
-<a class="sourceLine" id="cb3-7" title="7">  title =&gt; {</a>
-<a class="sourceLine" id="cb3-8" title="8">    type     =&gt; <span class="kw">&#39;</span><span class="st">varchar</span><span class="kw">&#39;</span>,</a>
-<a class="sourceLine" id="cb3-9" title="9">    nullable =&gt; False,</a>
-<a class="sourceLine" id="cb3-10" title="10">    <span class="fu">length</span>   =&gt; <span class="kw">&#39;</span><span class="st">64</span><span class="kw">&#39;</span>,</a>
-<a class="sourceLine" id="cb3-11" title="11">  },</a>
-<a class="sourceLine" id="cb3-12" title="12">  author_id =&gt; {</a>
-<a class="sourceLine" id="cb3-13" title="13">    type   =&gt; <span class="kw">&#39;</span><span class="st">varchar</span><span class="kw">&#39;</span>,</a>
-<a class="sourceLine" id="cb3-14" title="14">    nullable =&gt; False,</a>
-<a class="sourceLine" id="cb3-15" title="15">    <span class="fu">length</span> =&gt; <span class="kw">&#39;</span><span class="st">64</span><span class="kw">&#39;</span>,</a>
-<a class="sourceLine" id="cb3-16" title="16">  },</a>
-<a class="sourceLine" id="cb3-17" title="17">  date_published =&gt; {</a>
-<a class="sourceLine" id="cb3-18" title="18">    type   =&gt; <span class="kw">&#39;</span><span class="st">date</span><span class="kw">&#39;</span>,</a>
-<a class="sourceLine" id="cb3-19" title="19">  },</a>
-<a class="sourceLine" id="cb3-20" title="20">  price =&gt; {</a>
-<a class="sourceLine" id="cb3-21" title="21">    type   =&gt; <span class="kw">&#39;</span><span class="st">float</span><span class="kw">&#39;</span>,</a>
-<a class="sourceLine" id="cb3-22" title="22">  },</a>
-<a class="sourceLine" id="cb3-23" title="23">];</a></code></pre></div>
+<div class="sourceCode" id="cb3"><pre class="sourceCode perl"><code class="sourceCode perl"><span id="cb3-1"><a href="#cb3-1" aria-hidden="true" tabindex="-1"></a>has <span class="dt">@</span>.columns = [</span>
+<span id="cb3-2"><a href="#cb3-2" aria-hidden="true" tabindex="-1"></a>  book_id =&gt; {</span>
+<span id="cb3-3"><a href="#cb3-3" aria-hidden="true" tabindex="-1"></a>   type           =&gt; <span class="ot">&#39;</span><span class="ss">integer</span><span class="ot">&#39;</span>,</span>
+<span id="cb3-4"><a href="#cb3-4" aria-hidden="true" tabindex="-1"></a>   is<span class="ot">-p</span>rimary<span class="ot">-k</span>ey =&gt; True,</span>
+<span id="cb3-5"><a href="#cb3-5" aria-hidden="true" tabindex="-1"></a>   auto-increment =&gt; True,</span>
+<span id="cb3-6"><a href="#cb3-6" aria-hidden="true" tabindex="-1"></a>  },</span>
+<span id="cb3-7"><a href="#cb3-7" aria-hidden="true" tabindex="-1"></a>  title =&gt; {</span>
+<span id="cb3-8"><a href="#cb3-8" aria-hidden="true" tabindex="-1"></a>    type     =&gt; <span class="ot">&#39;</span><span class="ss">varchar</span><span class="ot">&#39;</span>,</span>
+<span id="cb3-9"><a href="#cb3-9" aria-hidden="true" tabindex="-1"></a>    nullable =&gt; False,</span>
+<span id="cb3-10"><a href="#cb3-10" aria-hidden="true" tabindex="-1"></a>    <span class="fu">length</span>   =&gt; <span class="ot">&#39;</span><span class="ss">64</span><span class="ot">&#39;</span>,</span>
+<span id="cb3-11"><a href="#cb3-11" aria-hidden="true" tabindex="-1"></a>  },</span>
+<span id="cb3-12"><a href="#cb3-12" aria-hidden="true" tabindex="-1"></a>  author_id =&gt; {</span>
+<span id="cb3-13"><a href="#cb3-13" aria-hidden="true" tabindex="-1"></a>    type   =&gt; <span class="ot">&#39;</span><span class="ss">varchar</span><span class="ot">&#39;</span>,</span>
+<span id="cb3-14"><a href="#cb3-14" aria-hidden="true" tabindex="-1"></a>    nullable =&gt; False,</span>
+<span id="cb3-15"><a href="#cb3-15" aria-hidden="true" tabindex="-1"></a>    <span class="fu">length</span> =&gt; <span class="ot">&#39;</span><span class="ss">64</span><span class="ot">&#39;</span>,</span>
+<span id="cb3-16"><a href="#cb3-16" aria-hidden="true" tabindex="-1"></a>  },</span>
+<span id="cb3-17"><a href="#cb3-17" aria-hidden="true" tabindex="-1"></a>  date_published =&gt; {</span>
+<span id="cb3-18"><a href="#cb3-18" aria-hidden="true" tabindex="-1"></a>    type   =&gt; <span class="ot">&#39;</span><span class="ss">date</span><span class="ot">&#39;</span>,</span>
+<span id="cb3-19"><a href="#cb3-19" aria-hidden="true" tabindex="-1"></a>  },</span>
+<span id="cb3-20"><a href="#cb3-20" aria-hidden="true" tabindex="-1"></a>  price =&gt; {</span>
+<span id="cb3-21"><a href="#cb3-21" aria-hidden="true" tabindex="-1"></a>    type   =&gt; <span class="ot">&#39;</span><span class="ss">float</span><span class="ot">&#39;</span>,</span>
+<span id="cb3-22"><a href="#cb3-22" aria-hidden="true" tabindex="-1"></a>  },</span>
+<span id="cb3-23"><a href="#cb3-23" aria-hidden="true" tabindex="-1"></a>];</span></code></pre></div>
 <p>Fairly straight forward. Using <code>is-primary-key</code> on multiple columns will allow you to key off of multiple columns, creating a compounded key.</p>
-<div class="sourceCode" id="cb4"><pre class="sourceCode perl"><code class="sourceCode perl"><a class="sourceLine" id="cb4-1" title="1">has <span class="dt">@</span>.relations = [</a>
-<a class="sourceLine" id="cb4-2" title="2">  authors =&gt; {</a>
-<a class="sourceLine" id="cb4-3" title="3">    :has-one,</a>
-<a class="sourceLine" id="cb4-4" title="4">    :model&lt;Author&gt;,</a>
-<a class="sourceLine" id="cb4-5" title="5">    :relate(author_id =&gt; <span class="kw">&#39;</span><span class="st">author_id</span><span class="kw">&#39;</span>),</a>
-<a class="sourceLine" id="cb4-6" title="6">  },</a>
-<a class="sourceLine" id="cb4-7" title="7">  order_details =&gt; {</a>
-<a class="sourceLine" id="cb4-8" title="8">    :has-many,</a>
-<a class="sourceLine" id="cb4-9" title="9">    :model&lt;OrderDetails&gt;,</a>
-<a class="sourceLine" id="cb4-10" title="10">    :relate(book_id =&gt; <span class="kw">&#39;</span><span class="st">book_id</span><span class="kw">&#39;</span>),</a>
-<a class="sourceLine" id="cb4-11" title="11">  },</a>
-<a class="sourceLine" id="cb4-12" title="12">];</a></code></pre></div>
+<div class="sourceCode" id="cb4"><pre class="sourceCode perl"><code class="sourceCode perl"><span id="cb4-1"><a href="#cb4-1" aria-hidden="true" tabindex="-1"></a>has <span class="dt">@</span>.relations = [</span>
+<span id="cb4-2"><a href="#cb4-2" aria-hidden="true" tabindex="-1"></a>  authors =&gt; {</span>
+<span id="cb4-3"><a href="#cb4-3" aria-hidden="true" tabindex="-1"></a>    :has<span class="ot">-o</span>ne,</span>
+<span id="cb4-4"><a href="#cb4-4" aria-hidden="true" tabindex="-1"></a>    :model&lt;Author&gt;,</span>
+<span id="cb4-5"><a href="#cb4-5" aria-hidden="true" tabindex="-1"></a>    :relate(author_id =&gt; <span class="ot">&#39;</span><span class="ss">author_id</span><span class="ot">&#39;</span>),</span>
+<span id="cb4-6"><a href="#cb4-6" aria-hidden="true" tabindex="-1"></a>  },</span>
+<span id="cb4-7"><a href="#cb4-7" aria-hidden="true" tabindex="-1"></a>  order_details =&gt; {</span>
+<span id="cb4-8"><a href="#cb4-8" aria-hidden="true" tabindex="-1"></a>    :has-many,</span>
+<span id="cb4-9"><a href="#cb4-9" aria-hidden="true" tabindex="-1"></a>    :model&lt;OrderDetails&gt;,</span>
+<span id="cb4-10"><a href="#cb4-10" aria-hidden="true" tabindex="-1"></a>    :relate(book_id =&gt; <span class="ot">&#39;</span><span class="ss">book_id</span><span class="ot">&#39;</span>),</span>
+<span id="cb4-11"><a href="#cb4-11" aria-hidden="true" tabindex="-1"></a>  },</span>
+<span id="cb4-12"><a href="#cb4-12" aria-hidden="true" tabindex="-1"></a>];</span></code></pre></div>
 <p>Here we're defining the relationships that models have with other models. We have a 1:N with <code>:has-many</code> and a 1:1 with <code>:has-one</code>.</p>
 <p>After that our model is defined and if we have no <code>row</code> methods we would like to implement then we're done.</p>
 <h5 id="appmodelorderdetail">App::Model::OrderDetail</h5>
 <p>If you haven't already and you're following along, then create and edit the file <code>models/orderdetail.yaml</code>.</p>
-<div class="sourceCode" id="cb5"><pre class="sourceCode yaml"><code class="sourceCode yaml"><a class="sourceLine" id="cb5-1" title="1"><span class="fu">table:</span><span class="at"> order_details</span></a>
-<a class="sourceLine" id="cb5-2" title="2"><span class="fu">name:</span><span class="at"> OrderDetail</span></a>
-<a class="sourceLine" id="cb5-3" title="3"><span class="fu">columns:</span></a>
-<a class="sourceLine" id="cb5-4" title="4">  <span class="fu">order_detail_id:</span></a>
-<a class="sourceLine" id="cb5-5" title="5">    <span class="fu">type:</span><span class="at"> integer</span></a>
-<a class="sourceLine" id="cb5-6" title="6">    <span class="fu">nullable:</span><span class="at"> </span><span class="ch">false</span></a>
-<a class="sourceLine" id="cb5-7" title="7">    <span class="fu">is-primary-key:</span><span class="at"> </span><span class="ch">true</span></a>
-<a class="sourceLine" id="cb5-8" title="8">    <span class="fu">auto-increment:</span><span class="at"> </span><span class="ch">true</span></a>
-<a class="sourceLine" id="cb5-9" title="9">  <span class="fu">order_id:</span></a>
-<a class="sourceLine" id="cb5-10" title="10">    <span class="fu">type:</span><span class="at"> integer</span></a>
-<a class="sourceLine" id="cb5-11" title="11">    <span class="fu">nullable:</span><span class="at"> </span><span class="ch">false</span></a>
-<a class="sourceLine" id="cb5-12" title="12">  <span class="fu">book_id:</span></a>
-<a class="sourceLine" id="cb5-13" title="13">    <span class="fu">type:</span><span class="at"> integer</span></a>
-<a class="sourceLine" id="cb5-14" title="14">    <span class="fu">nullable:</span><span class="at"> </span><span class="ch">false</span></a>
-<a class="sourceLine" id="cb5-15" title="15"><span class="fu">relations:</span></a>
-<a class="sourceLine" id="cb5-16" title="16">  <span class="fu">book:</span></a>
-<a class="sourceLine" id="cb5-17" title="17">    <span class="fu">has-one:</span><span class="at"> </span><span class="ch">true</span></a>
-<a class="sourceLine" id="cb5-18" title="18">    <span class="fu">model:</span><span class="at"> Book</span></a>
-<a class="sourceLine" id="cb5-19" title="19">    <span class="fu">relate:</span></a>
-<a class="sourceLine" id="cb5-20" title="20">      <span class="fu">book_id:</span><span class="at"> book_id</span></a>
-<a class="sourceLine" id="cb5-21" title="21">  <span class="fu">order:</span></a>
-<a class="sourceLine" id="cb5-22" title="22">    <span class="fu">has-one:</span><span class="at"> </span><span class="ch">true</span></a>
-<a class="sourceLine" id="cb5-23" title="23">    <span class="fu">model:</span><span class="at"> Order</span></a>
-<a class="sourceLine" id="cb5-24" title="24">    <span class="fu">relate:</span></a>
-<a class="sourceLine" id="cb5-25" title="25">      <span class="fu">order_id:</span><span class="at"> order_id</span></a></code></pre></div>
+<div class="sourceCode" id="cb5"><pre class="sourceCode yaml"><code class="sourceCode yaml"><span id="cb5-1"><a href="#cb5-1" aria-hidden="true" tabindex="-1"></a><span class="fu">table</span><span class="kw">:</span><span class="at"> order_details</span></span>
+<span id="cb5-2"><a href="#cb5-2" aria-hidden="true" tabindex="-1"></a><span class="fu">name</span><span class="kw">:</span><span class="at"> OrderDetail</span></span>
+<span id="cb5-3"><a href="#cb5-3" aria-hidden="true" tabindex="-1"></a><span class="fu">columns</span><span class="kw">:</span></span>
+<span id="cb5-4"><a href="#cb5-4" aria-hidden="true" tabindex="-1"></a><span class="at">  </span><span class="fu">order_detail_id</span><span class="kw">:</span></span>
+<span id="cb5-5"><a href="#cb5-5" aria-hidden="true" tabindex="-1"></a><span class="at">    </span><span class="fu">type</span><span class="kw">:</span><span class="at"> integer</span></span>
+<span id="cb5-6"><a href="#cb5-6" aria-hidden="true" tabindex="-1"></a><span class="at">    </span><span class="fu">nullable</span><span class="kw">:</span><span class="at"> </span><span class="ch">false</span></span>
+<span id="cb5-7"><a href="#cb5-7" aria-hidden="true" tabindex="-1"></a><span class="at">    </span><span class="fu">is-primary-key</span><span class="kw">:</span><span class="at"> </span><span class="ch">true</span></span>
+<span id="cb5-8"><a href="#cb5-8" aria-hidden="true" tabindex="-1"></a><span class="at">    </span><span class="fu">auto-increment</span><span class="kw">:</span><span class="at"> </span><span class="ch">true</span></span>
+<span id="cb5-9"><a href="#cb5-9" aria-hidden="true" tabindex="-1"></a><span class="at">  </span><span class="fu">order_id</span><span class="kw">:</span></span>
+<span id="cb5-10"><a href="#cb5-10" aria-hidden="true" tabindex="-1"></a><span class="at">    </span><span class="fu">type</span><span class="kw">:</span><span class="at"> integer</span></span>
+<span id="cb5-11"><a href="#cb5-11" aria-hidden="true" tabindex="-1"></a><span class="at">    </span><span class="fu">nullable</span><span class="kw">:</span><span class="at"> </span><span class="ch">false</span></span>
+<span id="cb5-12"><a href="#cb5-12" aria-hidden="true" tabindex="-1"></a><span class="at">  </span><span class="fu">book_id</span><span class="kw">:</span></span>
+<span id="cb5-13"><a href="#cb5-13" aria-hidden="true" tabindex="-1"></a><span class="at">    </span><span class="fu">type</span><span class="kw">:</span><span class="at"> integer</span></span>
+<span id="cb5-14"><a href="#cb5-14" aria-hidden="true" tabindex="-1"></a><span class="at">    </span><span class="fu">nullable</span><span class="kw">:</span><span class="at"> </span><span class="ch">false</span></span>
+<span id="cb5-15"><a href="#cb5-15" aria-hidden="true" tabindex="-1"></a><span class="fu">relations</span><span class="kw">:</span></span>
+<span id="cb5-16"><a href="#cb5-16" aria-hidden="true" tabindex="-1"></a><span class="at">  </span><span class="fu">book</span><span class="kw">:</span></span>
+<span id="cb5-17"><a href="#cb5-17" aria-hidden="true" tabindex="-1"></a><span class="at">    </span><span class="fu">has-one</span><span class="kw">:</span><span class="at"> </span><span class="ch">true</span></span>
+<span id="cb5-18"><a href="#cb5-18" aria-hidden="true" tabindex="-1"></a><span class="at">    </span><span class="fu">model</span><span class="kw">:</span><span class="at"> Book</span></span>
+<span id="cb5-19"><a href="#cb5-19" aria-hidden="true" tabindex="-1"></a><span class="at">    </span><span class="fu">relate</span><span class="kw">:</span></span>
+<span id="cb5-20"><a href="#cb5-20" aria-hidden="true" tabindex="-1"></a><span class="at">      </span><span class="fu">book_id</span><span class="kw">:</span><span class="at"> book_id</span></span>
+<span id="cb5-21"><a href="#cb5-21" aria-hidden="true" tabindex="-1"></a><span class="at">  </span><span class="fu">order</span><span class="kw">:</span></span>
+<span id="cb5-22"><a href="#cb5-22" aria-hidden="true" tabindex="-1"></a><span class="at">    </span><span class="fu">has-one</span><span class="kw">:</span><span class="at"> </span><span class="ch">true</span></span>
+<span id="cb5-23"><a href="#cb5-23" aria-hidden="true" tabindex="-1"></a><span class="at">    </span><span class="fu">model</span><span class="kw">:</span><span class="at"> Order</span></span>
+<span id="cb5-24"><a href="#cb5-24" aria-hidden="true" tabindex="-1"></a><span class="at">    </span><span class="fu">relate</span><span class="kw">:</span></span>
+<span id="cb5-25"><a href="#cb5-25" aria-hidden="true" tabindex="-1"></a><span class="at">      </span><span class="fu">order_id</span><span class="kw">:</span><span class="at"> order_id</span></span></code></pre></div>
 <p>As you can see this is essentially doing what we did above without necessitating the explicit creation of the entire class.</p>
 <p><em>Note: using yaml doesn't preclude you from putting model methods in a class App::Model::OrderDetail but it can make your model class methods look cleaner!</em></p>
 <h5 id="appmodel">App::Model::*</h5>
@@ -143,16 +143,16 @@ sqlite&gt; .quit</code></pre>
 <h3 id="example-usage">Example Usage</h3>
 <h4 id="first-orm-usage">First ORM usage</h4>
 <p>We'll list what models we have available to us from ORM, this script is called <code>show-models</code>. All of the following examples will assume you've done the same code up to and including the <code>.connect</code> and will be omitted for brevity.</p>
-<div class="sourceCode" id="cb6"><pre class="sourceCode perl"><code class="sourceCode perl"><a class="sourceLine" id="cb6-1" title="1"><span class="fu">use</span> <span class="fu">DB::Xoos</span>::<span class="fu">SQLite</span>;</a>
-<a class="sourceLine" id="cb6-2" title="2"></a>
-<a class="sourceLine" id="cb6-3" title="3"><span class="kw">my</span> <span class="dt">$xoos</span> = <span class="fu">DB::Xoos</span>::<span class="fu">SQLite</span>.new;</a>
-<a class="sourceLine" id="cb6-4" title="4"></a>
-<a class="sourceLine" id="cb6-5" title="5"><span class="dt">$xoos</span>.<span class="fu">connect</span>(<span class="kw">&#39;</span><span class="st">sqlite://xoos.sqlite3</span><span class="kw">&#39;</span>, :options({</a>
-<a class="sourceLine" id="cb6-6" title="6">    :prefix&lt;App&gt;,               <span class="co"># loads classes from App::Model::*</span></a>
-<a class="sourceLine" id="cb6-7" title="7">    model-dirs =&gt; [<span class="kw">qw&lt;</span>models&gt;], # for our yaml column definitions</a>
-<a class="sourceLine" id="cb6-8" title="8">}));</a>
-<a class="sourceLine" id="cb6-9" title="9"></a>
-<a class="sourceLine" id="cb6-10" title="10">&quot;Successfully loaded models:\n  {$xoos.loaded-models.join(&quot;\n  &quot;)}&quot;.say;</a></code></pre></div>
+<div class="sourceCode" id="cb6"><pre class="sourceCode perl"><code class="sourceCode perl"><span id="cb6-1"><a href="#cb6-1" aria-hidden="true" tabindex="-1"></a><span class="fu">use</span> <span class="fu">DB::Xoos</span>::<span class="fu">SQLite</span>;</span>
+<span id="cb6-2"><a href="#cb6-2" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb6-3"><a href="#cb6-3" aria-hidden="true" tabindex="-1"></a><span class="kw">my</span> <span class="dt">$xoos</span> = <span class="fu">DB::Xoos</span>::<span class="fu">SQLite</span>.new;</span>
+<span id="cb6-4"><a href="#cb6-4" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb6-5"><a href="#cb6-5" aria-hidden="true" tabindex="-1"></a><span class="dt">$xoos</span>.<span class="fu">connect</span>(<span class="ot">&#39;</span><span class="ss">sqlite://xoos.sqlite3</span><span class="ot">&#39;</span>, :options({</span>
+<span id="cb6-6"><a href="#cb6-6" aria-hidden="true" tabindex="-1"></a>    :prefix&lt;App&gt;,               <span class="co"># loads classes from App::Model::*</span></span>
+<span id="cb6-7"><a href="#cb6-7" aria-hidden="true" tabindex="-1"></a>    model<span class="ot">-d</span>irs =&gt; [<span class="ot">qw&lt;</span>models<span class="ot">&gt;</span>], <span class="co"># for our yaml column definitions</span></span>
+<span id="cb6-8"><a href="#cb6-8" aria-hidden="true" tabindex="-1"></a>}));</span>
+<span id="cb6-9"><a href="#cb6-9" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb6-10"><a href="#cb6-10" aria-hidden="true" tabindex="-1"></a><span class="ot">&quot;</span><span class="st">Successfully loaded models:</span><span class="ch">\n</span><span class="st">  {</span><span class="dt">$xoos</span><span class="st">.loaded-models.join(</span><span class="ot">&quot;</span>\n  <span class="ot">&quot;</span><span class="st">)}</span><span class="ot">&quot;</span>.<span class="fu">say</span>;</span></code></pre></div>
 <p>This script should output something like:</p>
 <pre><code>Successfully loaded models:
   Customer
@@ -163,85 +163,85 @@ sqlite&gt; .quit</code></pre>
 <p>While not entirely useful, it does let us know that everything loaded well. Now let's fill up our tables.</p>
 <h4 id="loading-data-into-tables-from-csv">Loading data into tables from CSV</h4>
 <p>This script will use <code>Text::CSV</code> and load data from <code>data/books.csv</code> and generate other made up data. This is a truncated version because it's mostly long and repititous for our use. Generating customers, orders, and order details is left to the user or, again, you can find a full script in the file at the end of the article.</p>
-<div class="sourceCode" id="cb8"><pre class="sourceCode perl"><code class="sourceCode perl"><a class="sourceLine" id="cb8-1" title="1"><span class="kw">qw&lt;</span>snipped setup for Xoos&gt;;</a>
-<a class="sourceLine" id="cb8-2" title="2">use Text::CSV;</a>
-<a class="sourceLine" id="cb8-3" title="3"></a>
-<a class="sourceLine" id="cb8-4" title="4">my @rows    = csv(:in(&#39;data/books.csv&#39;));</a>
-<a class="sourceLine" id="cb8-5" title="5"></a>
-<a class="sourceLine" id="cb8-6" title="6">my $book = $xoos.model(&#39;Book&#39;);</a>
-<a class="sourceLine" id="cb8-7" title="7">my $auth = $xoos.model(&#39;Author&#39;);</a>
-<a class="sourceLine" id="cb8-8" title="8"></a>
-<a class="sourceLine" id="cb8-9" title="9"># generate book and author data from csv</a>
-<a class="sourceLine" id="cb8-10" title="10">for @rows[1..*] -&gt; $row {</a>
-<a class="sourceLine" id="cb8-11" title="11"></a>
-<a class="sourceLine" id="cb8-12" title="12">  # determine whether an author by that name exists, this isn&#39;t</a>
-<a class="sourceLine" id="cb8-13" title="13">  # robust as there may be many authors by the same name</a>
-<a class="sourceLine" id="cb8-14" title="14">  my $author = $auth.search({</a>
-<a class="sourceLine" id="cb8-15" title="15">    name =&gt; $row[1] eq &#39;&#39; ?? &#39;unknown&#39; !! $row[1];</a>
-<a class="sourceLine" id="cb8-16" title="16">  });</a>
-<a class="sourceLine" id="cb8-17" title="17"></a>
-<a class="sourceLine" id="cb8-18" title="18">  # if an author was found, use it</a>
-<a class="sourceLine" id="cb8-19" title="19">  if $author.count {</a>
-<a class="sourceLine" id="cb8-20" title="20">    $author .=first;</a>
-<a class="sourceLine" id="cb8-21" title="21">  } else {</a>
-<a class="sourceLine" id="cb8-22" title="22">    $author = $auth.new-row;</a>
-<a class="sourceLine" id="cb8-23" title="23">    $author.name($row[1] eq &#39;&#39; ?? &#39;unknown&#39; !! $row[1]);</a>
-<a class="sourceLine" id="cb8-24" title="24">    $author.update;</a>
-<a class="sourceLine" id="cb8-25" title="25">  }</a>
-<a class="sourceLine" id="cb8-26" title="26"></a>
-<a class="sourceLine" id="cb8-27" title="27">  # create our book and generate a random price</a>
-<a class="sourceLine" id="cb8-28" title="28">  $book.new-row({</a>
-<a class="sourceLine" id="cb8-29" title="29">    author_id =&gt; $author.author_id,</a>
-<a class="sourceLine" id="cb8-30" title="30">    title     =&gt; $row[0],</a>
-<a class="sourceLine" id="cb8-31" title="31">    price     =&gt; (299 .. 5000).pick(1)[0] / 100,</a>
-<a class="sourceLine" id="cb8-32" title="32">  }).update;</a>
-<a class="sourceLine" id="cb8-33" title="33">}</a></code></pre></div>
+<div class="sourceCode" id="cb8"><pre class="sourceCode perl"><code class="sourceCode perl"><span id="cb8-1"><a href="#cb8-1" aria-hidden="true" tabindex="-1"></a><span class="ot">qw&lt;</span>snipped setup for Xoos<span class="ot">&gt;</span>;</span>
+<span id="cb8-2"><a href="#cb8-2" aria-hidden="true" tabindex="-1"></a><span class="fu">use</span> <span class="fu">Text::CSV</span>;</span>
+<span id="cb8-3"><a href="#cb8-3" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb8-4"><a href="#cb8-4" aria-hidden="true" tabindex="-1"></a><span class="kw">my</span> <span class="dt">@rows</span>    = csv(:in(<span class="ot">&#39;</span><span class="ss">data/books.csv</span><span class="ot">&#39;</span>));</span>
+<span id="cb8-5"><a href="#cb8-5" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb8-6"><a href="#cb8-6" aria-hidden="true" tabindex="-1"></a><span class="kw">my</span> <span class="dt">$book</span> = <span class="dt">$xoos</span>.model(<span class="ot">&#39;</span><span class="ss">Book</span><span class="ot">&#39;</span>);</span>
+<span id="cb8-7"><a href="#cb8-7" aria-hidden="true" tabindex="-1"></a><span class="kw">my</span> <span class="dt">$auth</span> = <span class="dt">$xoos</span>.model(<span class="ot">&#39;</span><span class="ss">Author</span><span class="ot">&#39;</span>);</span>
+<span id="cb8-8"><a href="#cb8-8" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb8-9"><a href="#cb8-9" aria-hidden="true" tabindex="-1"></a><span class="co"># generate book and author data from csv</span></span>
+<span id="cb8-10"><a href="#cb8-10" aria-hidden="true" tabindex="-1"></a><span class="kw">for</span> <span class="dt">@rows</span>[<span class="dv">1</span>..<span class="ot">*</span>] -&gt; <span class="dt">$row</span> {</span>
+<span id="cb8-11"><a href="#cb8-11" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb8-12"><a href="#cb8-12" aria-hidden="true" tabindex="-1"></a>  <span class="co"># determine whether an author by that name exists, this isn&#39;t</span></span>
+<span id="cb8-13"><a href="#cb8-13" aria-hidden="true" tabindex="-1"></a>  <span class="co"># robust as there may be many authors by the same name</span></span>
+<span id="cb8-14"><a href="#cb8-14" aria-hidden="true" tabindex="-1"></a>  <span class="kw">my</span> <span class="dt">$author</span> = <span class="dt">$auth</span>.search({</span>
+<span id="cb8-15"><a href="#cb8-15" aria-hidden="true" tabindex="-1"></a>    name =&gt; <span class="dt">$row</span>[<span class="dv">1</span>] <span class="ot">eq</span> <span class="ot">&#39;&#39;</span> ?? <span class="ot">&#39;</span><span class="ss">unknown</span><span class="ot">&#39;</span> !! <span class="dt">$row</span>[<span class="dv">1</span>];</span>
+<span id="cb8-16"><a href="#cb8-16" aria-hidden="true" tabindex="-1"></a>  });</span>
+<span id="cb8-17"><a href="#cb8-17" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb8-18"><a href="#cb8-18" aria-hidden="true" tabindex="-1"></a>  <span class="co"># if an author was found, use it</span></span>
+<span id="cb8-19"><a href="#cb8-19" aria-hidden="true" tabindex="-1"></a>  <span class="kw">if</span> <span class="dt">$author</span>.count {</span>
+<span id="cb8-20"><a href="#cb8-20" aria-hidden="true" tabindex="-1"></a>    <span class="dt">$author</span> .=first;</span>
+<span id="cb8-21"><a href="#cb8-21" aria-hidden="true" tabindex="-1"></a>  } <span class="kw">else</span> {</span>
+<span id="cb8-22"><a href="#cb8-22" aria-hidden="true" tabindex="-1"></a>    <span class="dt">$author</span> = <span class="dt">$auth</span>.new<span class="ot">-r</span>ow;</span>
+<span id="cb8-23"><a href="#cb8-23" aria-hidden="true" tabindex="-1"></a>    <span class="dt">$author</span>.name(<span class="dt">$row</span>[<span class="dv">1</span>] <span class="ot">eq</span> <span class="ot">&#39;&#39;</span> ?? <span class="ot">&#39;</span><span class="ss">unknown</span><span class="ot">&#39;</span> !! <span class="dt">$row</span>[<span class="dv">1</span>]);</span>
+<span id="cb8-24"><a href="#cb8-24" aria-hidden="true" tabindex="-1"></a>    <span class="dt">$author</span>.update;</span>
+<span id="cb8-25"><a href="#cb8-25" aria-hidden="true" tabindex="-1"></a>  }</span>
+<span id="cb8-26"><a href="#cb8-26" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb8-27"><a href="#cb8-27" aria-hidden="true" tabindex="-1"></a>  <span class="co"># create our book and generate a random price</span></span>
+<span id="cb8-28"><a href="#cb8-28" aria-hidden="true" tabindex="-1"></a>  <span class="dt">$book</span>.new<span class="ot">-r</span>ow({</span>
+<span id="cb8-29"><a href="#cb8-29" aria-hidden="true" tabindex="-1"></a>    author_id =&gt; <span class="dt">$author</span>.author_id,</span>
+<span id="cb8-30"><a href="#cb8-30" aria-hidden="true" tabindex="-1"></a>    title     =&gt; <span class="dt">$row</span>[<span class="dv">0</span>],</span>
+<span id="cb8-31"><a href="#cb8-31" aria-hidden="true" tabindex="-1"></a>    price     =&gt; (<span class="dv">299</span> .. <span class="dv">5000</span>).pick(<span class="dv">1</span>)[<span class="dv">0</span>] / <span class="dv">100</span>,</span>
+<span id="cb8-32"><a href="#cb8-32" aria-hidden="true" tabindex="-1"></a>  }).update;</span>
+<span id="cb8-33"><a href="#cb8-33" aria-hidden="true" tabindex="-1"></a>}</span></code></pre></div>
 <h4 id="viewing-or-finding-customer-information">Viewing or finding customer information</h4>
 <p>In this example we'll be using a relationship on customer to get the number of orders and how many items each order contained. The script <em>also</em> uses a convenience method built upon the <code>App::Row::Customer</code> to show how many total items they've ordered.</p>
-<div class="sourceCode" id="cb9"><pre class="sourceCode perl"><code class="sourceCode perl"><a class="sourceLine" id="cb9-1" title="1"><span class="fu">use</span> <span class="fu">DB::Xoos</span>::<span class="fu">SQLite</span>;</a>
-<a class="sourceLine" id="cb9-2" title="2"><span class="kw">my</span> <span class="fu">DB::Xoos</span>::<span class="fu">SQLite</span> <span class="dt">$db</span> .=new;</a>
-<a class="sourceLine" id="cb9-3" title="3"></a>
-<a class="sourceLine" id="cb9-4" title="4"></a>
-<a class="sourceLine" id="cb9-5" title="5">multi MAIN(:<span class="dt">$email</span>?, :<span class="dt">$name</span>, :<span class="dt">$customer</span>-id) {</a>
-<a class="sourceLine" id="cb9-6" title="6"></a>
-<a class="sourceLine" id="cb9-7" title="7">  <span class="dt">$db</span>.<span class="fu">connect</span>(<span class="kw">&#39;</span><span class="st">sqlite://xoos.sqlite3</span><span class="kw">&#39;</span>, :options({</a>
-<a class="sourceLine" id="cb9-8" title="8">    model-dirs =&gt; [<span class="kw">qw&lt;</span>models&gt;],</a>
-<a class="sourceLine" id="cb9-9" title="9">    prefix     =&gt; &#39;App&#39;,</a>
-<a class="sourceLine" id="cb9-10" title="10">  }));</a>
-<a class="sourceLine" id="cb9-11" title="11"></a>
-<a class="sourceLine" id="cb9-12" title="12"></a>
-<a class="sourceLine" id="cb9-13" title="13">  my %search;</a>
-<a class="sourceLine" id="cb9-14" title="14">  my $customers = $db.model(&#39;Customer&#39;);</a>
-<a class="sourceLine" id="cb9-15" title="15"></a>
-<a class="sourceLine" id="cb9-16" title="16">  %search<span class="kw">&lt;</span>customer_id&gt; = <span class="dt">$customer</span>-id <span class="kw">if</span> <span class="dt">$customer</span>-id.<span class="fu">defined</span>;</a>
-<a class="sourceLine" id="cb9-17" title="17">  <span class="dt">%search</span>&lt;name&gt;        = %(</a>
-<a class="sourceLine" id="cb9-18" title="18">    <span class="kw">&#39;</span><span class="st">like</span><span class="kw">&#39;</span> =&gt; <span class="kw">&#39;</span><span class="st">%</span><span class="kw">&#39;</span> ~ <span class="dt">$name</span> ~ <span class="kw">&#39;</span><span class="st">%</span><span class="kw">&#39;</span>,</a>
-<a class="sourceLine" id="cb9-19" title="19">  ) <span class="kw">if</span> <span class="dt">$name</span>.<span class="fu">defined</span>;</a>
-<a class="sourceLine" id="cb9-20" title="20">  <span class="dt">%search</span>&lt;email_address&gt;        = %(</a>
-<a class="sourceLine" id="cb9-21" title="21">    <span class="kw">&#39;</span><span class="st">like</span><span class="kw">&#39;</span> =&gt; <span class="kw">&#39;</span><span class="st">%</span><span class="kw">&#39;</span> ~ <span class="dt">$email</span> ~ <span class="kw">&#39;</span><span class="st">%</span><span class="kw">&#39;</span>,</a>
-<a class="sourceLine" id="cb9-22" title="22">  ) <span class="kw">if</span> <span class="dt">$email</span>.<span class="fu">defined</span>;</a>
-<a class="sourceLine" id="cb9-23" title="23"></a>
-<a class="sourceLine" id="cb9-24" title="24">  <span class="kw">if</span> <span class="dt">%search</span>.<span class="fu">keys</span> {</a>
-<a class="sourceLine" id="cb9-25" title="25">    <span class="dt">$customers</span> .=search(<span class="dt">%search</span>);</a>
-<a class="sourceLine" id="cb9-26" title="26">    say <span class="kw">&quot;</span><span class="st">Searching with params:</span><span class="kw">&quot;</span>;</a>
-<a class="sourceLine" id="cb9-27" title="27">    dd <span class="dt">%search</span>;</a>
-<a class="sourceLine" id="cb9-28" title="28">  }</a>
-<a class="sourceLine" id="cb9-29" title="29">  say <span class="kw">&#39;</span><span class="st">Customer info:</span><span class="kw">&#39;</span>;</a>
-<a class="sourceLine" id="cb9-30" title="30">  <span class="fu">printf</span> <span class="kw">&quot;</span><span class="st">| </span><span class="dt">%-14s</span><span class="st"> | </span><span class="dt">%-17s</span><span class="st"> | </span><span class="dt">%-14s</span><span class="st"> | </span><span class="dt">%-12s</span><span class="st"> | </span><span class="dt">%-14s</span><span class="st"> |</span><span class="ch">\n</span><span class="kw">&quot;</span>, <span class="kw">qw&lt;</span>customer_id email name orders order-items&gt;;</a>
-<a class="sourceLine" id="cb9-31" title="31">  say &#39;x&#39; x 87;</a>
-<a class="sourceLine" id="cb9-32" title="32"></a>
-<a class="sourceLine" id="cb9-33" title="33">  for $customers.all -&gt; $customer {</a>
-<a class="sourceLine" id="cb9-34" title="34">    printf &quot;| %-14s | %-17s | %-14s | %-12s | %-14s |\n&quot;,</a>
-<a class="sourceLine" id="cb9-35" title="35">      $customer.customer_id,</a>
-<a class="sourceLine" id="cb9-36" title="36">      $customer.email_address,</a>
-<a class="sourceLine" id="cb9-37" title="37">      $customer.name,</a>
-<a class="sourceLine" id="cb9-38" title="38">      $customer.orders.count,</a>
-<a class="sourceLine" id="cb9-39" title="39">      $customer.total-order-items; # this uses the row level convenience method in App::Row::Customer</a>
-<a class="sourceLine" id="cb9-40" title="40">  }</a>
-<a class="sourceLine" id="cb9-41" title="41"></a>
-<a class="sourceLine" id="cb9-42" title="42">  say &#39;x&#39; x 87;</a>
-<a class="sourceLine" id="cb9-43" title="43"></a>
-<a class="sourceLine" id="cb9-44" title="44">}</a></code></pre></div>
+<div class="sourceCode" id="cb9"><pre class="sourceCode perl"><code class="sourceCode perl"><span id="cb9-1"><a href="#cb9-1" aria-hidden="true" tabindex="-1"></a><span class="fu">use</span> <span class="fu">DB::Xoos</span>::<span class="fu">SQLite</span>;</span>
+<span id="cb9-2"><a href="#cb9-2" aria-hidden="true" tabindex="-1"></a><span class="kw">my</span> <span class="fu">DB::Xoos</span>::<span class="fu">SQLite</span> <span class="dt">$db</span> .=new;</span>
+<span id="cb9-3"><a href="#cb9-3" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb9-4"><a href="#cb9-4" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb9-5"><a href="#cb9-5" aria-hidden="true" tabindex="-1"></a>multi MAIN(:<span class="dt">$email</span>?, :<span class="dt">$name</span>, :<span class="dt">$customer</span>-id) {</span>
+<span id="cb9-6"><a href="#cb9-6" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb9-7"><a href="#cb9-7" aria-hidden="true" tabindex="-1"></a>  <span class="dt">$db</span>.<span class="fu">connect</span>(<span class="ot">&#39;</span><span class="ss">sqlite://xoos.sqlite3</span><span class="ot">&#39;</span>, :options({</span>
+<span id="cb9-8"><a href="#cb9-8" aria-hidden="true" tabindex="-1"></a>    model<span class="ot">-d</span>irs =&gt; [<span class="ot">qw&lt;</span>models<span class="ot">&gt;</span>],</span>
+<span id="cb9-9"><a href="#cb9-9" aria-hidden="true" tabindex="-1"></a>    prefix     =&gt; <span class="ot">&#39;</span><span class="ss">App</span><span class="ot">&#39;</span>,</span>
+<span id="cb9-10"><a href="#cb9-10" aria-hidden="true" tabindex="-1"></a>  }));</span>
+<span id="cb9-11"><a href="#cb9-11" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb9-12"><a href="#cb9-12" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb9-13"><a href="#cb9-13" aria-hidden="true" tabindex="-1"></a>  <span class="kw">my</span> <span class="dt">%search</span>;</span>
+<span id="cb9-14"><a href="#cb9-14" aria-hidden="true" tabindex="-1"></a>  <span class="kw">my</span> <span class="dt">$customers</span> = <span class="dt">$db</span>.model(<span class="ot">&#39;</span><span class="ss">Customer</span><span class="ot">&#39;</span>);</span>
+<span id="cb9-15"><a href="#cb9-15" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb9-16"><a href="#cb9-16" aria-hidden="true" tabindex="-1"></a>  <span class="dt">%search</span>&lt;customer_id&gt; = <span class="dt">$customer</span>-id <span class="kw">if</span> <span class="dt">$customer</span>-id.<span class="fu">defined</span>;</span>
+<span id="cb9-17"><a href="#cb9-17" aria-hidden="true" tabindex="-1"></a>  <span class="dt">%search</span>&lt;name&gt;        = %(</span>
+<span id="cb9-18"><a href="#cb9-18" aria-hidden="true" tabindex="-1"></a>    <span class="ot">&#39;</span><span class="ss">like</span><span class="ot">&#39;</span> =&gt; <span class="ot">&#39;</span><span class="ss">%</span><span class="ot">&#39;</span> ~ <span class="dt">$name</span> ~ <span class="ot">&#39;</span><span class="ss">%</span><span class="ot">&#39;</span>,</span>
+<span id="cb9-19"><a href="#cb9-19" aria-hidden="true" tabindex="-1"></a>  ) <span class="kw">if</span> <span class="dt">$name</span>.<span class="fu">defined</span>;</span>
+<span id="cb9-20"><a href="#cb9-20" aria-hidden="true" tabindex="-1"></a>  <span class="dt">%search</span>&lt;email_address&gt;        = %(</span>
+<span id="cb9-21"><a href="#cb9-21" aria-hidden="true" tabindex="-1"></a>    <span class="ot">&#39;</span><span class="ss">like</span><span class="ot">&#39;</span> =&gt; <span class="ot">&#39;</span><span class="ss">%</span><span class="ot">&#39;</span> ~ <span class="dt">$email</span> ~ <span class="ot">&#39;</span><span class="ss">%</span><span class="ot">&#39;</span>,</span>
+<span id="cb9-22"><a href="#cb9-22" aria-hidden="true" tabindex="-1"></a>  ) <span class="kw">if</span> <span class="dt">$email</span>.<span class="fu">defined</span>;</span>
+<span id="cb9-23"><a href="#cb9-23" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb9-24"><a href="#cb9-24" aria-hidden="true" tabindex="-1"></a>  <span class="kw">if</span> <span class="dt">%search</span>.<span class="fu">keys</span> {</span>
+<span id="cb9-25"><a href="#cb9-25" aria-hidden="true" tabindex="-1"></a>    <span class="dt">$customers</span> .=search(<span class="dt">%search</span>);</span>
+<span id="cb9-26"><a href="#cb9-26" aria-hidden="true" tabindex="-1"></a>    <span class="fu">say</span> <span class="ot">&quot;</span><span class="st">Searching with params:</span><span class="ot">&quot;</span>;</span>
+<span id="cb9-27"><a href="#cb9-27" aria-hidden="true" tabindex="-1"></a>    dd <span class="dt">%search</span>;</span>
+<span id="cb9-28"><a href="#cb9-28" aria-hidden="true" tabindex="-1"></a>  }</span>
+<span id="cb9-29"><a href="#cb9-29" aria-hidden="true" tabindex="-1"></a>  <span class="fu">say</span> <span class="ot">&#39;</span><span class="ss">Customer info:</span><span class="ot">&#39;</span>;</span>
+<span id="cb9-30"><a href="#cb9-30" aria-hidden="true" tabindex="-1"></a>  <span class="fu">printf</span> <span class="ot">&quot;</span><span class="st">| </span><span class="wa">%-</span><span class="dt">14s</span><span class="st"> | </span><span class="wa">%-</span><span class="dt">17s</span><span class="st"> | </span><span class="wa">%-</span><span class="dt">14s</span><span class="st"> | </span><span class="wa">%-</span><span class="dt">12s</span><span class="st"> | </span><span class="wa">%-</span><span class="dt">14s</span><span class="st"> |</span><span class="ch">\n</span><span class="ot">&quot;</span>, <span class="ot">qw&lt;</span>customer_id email name orders order-items<span class="ot">&gt;</span>;</span>
+<span id="cb9-31"><a href="#cb9-31" aria-hidden="true" tabindex="-1"></a>  <span class="fu">say</span> <span class="ot">&#39;</span><span class="ss">x</span><span class="ot">&#39;</span> x <span class="dv">87</span>;</span>
+<span id="cb9-32"><a href="#cb9-32" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb9-33"><a href="#cb9-33" aria-hidden="true" tabindex="-1"></a>  <span class="kw">for</span> <span class="dt">$customers</span>.all -&gt; <span class="dt">$customer</span> {</span>
+<span id="cb9-34"><a href="#cb9-34" aria-hidden="true" tabindex="-1"></a>    <span class="fu">printf</span> <span class="ot">&quot;</span><span class="st">| </span><span class="wa">%-</span><span class="dt">14s</span><span class="st"> | </span><span class="wa">%-</span><span class="dt">17s</span><span class="st"> | </span><span class="wa">%-</span><span class="dt">14s</span><span class="st"> | </span><span class="wa">%-</span><span class="dt">12s</span><span class="st"> | </span><span class="wa">%-</span><span class="dt">14s</span><span class="st"> |</span><span class="ch">\n</span><span class="ot">&quot;</span>,</span>
+<span id="cb9-35"><a href="#cb9-35" aria-hidden="true" tabindex="-1"></a>      <span class="dt">$customer</span>.customer_id,</span>
+<span id="cb9-36"><a href="#cb9-36" aria-hidden="true" tabindex="-1"></a>      <span class="dt">$customer</span>.email_address,</span>
+<span id="cb9-37"><a href="#cb9-37" aria-hidden="true" tabindex="-1"></a>      <span class="dt">$customer</span>.name,</span>
+<span id="cb9-38"><a href="#cb9-38" aria-hidden="true" tabindex="-1"></a>      <span class="dt">$customer</span>.orders.count,</span>
+<span id="cb9-39"><a href="#cb9-39" aria-hidden="true" tabindex="-1"></a>      <span class="dt">$customer</span>.total<span class="ot">-o</span>rder-items; <span class="co"># this uses the row level convenience method in App::Row::Customer</span></span>
+<span id="cb9-40"><a href="#cb9-40" aria-hidden="true" tabindex="-1"></a>  }</span>
+<span id="cb9-41"><a href="#cb9-41" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb9-42"><a href="#cb9-42" aria-hidden="true" tabindex="-1"></a>  <span class="fu">say</span> <span class="ot">&#39;</span><span class="ss">x</span><span class="ot">&#39;</span> x <span class="dv">87</span>;</span>
+<span id="cb9-43"><a href="#cb9-43" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb9-44"><a href="#cb9-44" aria-hidden="true" tabindex="-1"></a>}</span></code></pre></div>
 <p>If you have questions or would like to see more, exploring this or other topics, please ping me @tony-o in #perl6 on freenode.</p>
 <p>Here is a link to files for this guide <a href="https://github.com/tony-o/perl6-xoos-guide">github repo</a>, <a href="https://github.com/tony-o/perl6-xoos-guide/archive/master.zip">zip file</a></p>
 

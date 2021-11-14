@@ -24,9 +24,9 @@
 <p>You're still following along. You're a sadist, we get it. We're going to jump right into it.</p>
 <p>We're on step 4 of our 5 part plan, remember:</p>
 <ol>
-<li>~~A connection is requested~~</li>
-<li>~~Connection is accepted~~</li>
-<li>~~Client sends an HTTP request~~</li>
+<li>~<sub>A</sub> connection is requested~~</li>
+<li>~<sub>Connection</sub> is accepted~~</li>
+<li>~<sub>Client</sub> sends an HTTP request~~</li>
 <li><strong>Server processes the requests</strong></li>
 <li>Parse cookies (this is middleware, we're not going to do this in the server right now)</li>
 <li>Response handler needs to handle chunked and binary encoding, etc (we'll implement this)</li>
@@ -37,114 +37,114 @@
 <p>Our first order of business is reading data from the connection and detecting the end of headers. If you recall from the last article, we need to process headers and run middleware if the headers are complete. We've detected the end of a chunk of headers in the last article, time to parse.</p>
 <p>The first part of parsing is implementing <code>HTTP::Request</code> so we have something to fill up with URI, method, etc data.</p>
 <p>Here's our starter template for HTTP::Request:</p>
-<div class="sourceCode" id="cb1"><pre class="sourceCode perl"><code class="sourceCode perl"><a class="sourceLine" id="cb1-1" title="1"><span class="fu">use</span> <span class="fu">HTTP::Request</span>;</a>
-<a class="sourceLine" id="cb1-2" title="2"></a>
-<a class="sourceLine" id="cb1-3" title="3">class <span class="fu">HTTP::Server</span>::<span class="fu">Async</span>::<span class="fu">Request</span> does <span class="fu">HTTP::Request</span> {</a>
-<a class="sourceLine" id="cb1-4" title="4">  has Bool <span class="dt">$.complete</span> is rw = False;</a>
-<a class="sourceLine" id="cb1-5" title="5">  has <span class="dt">$.connection</span> is rw;</a>
-<a class="sourceLine" id="cb1-6" title="6">}</a></code></pre></div>
+<div class="sourceCode" id="cb1"><pre class="sourceCode perl"><code class="sourceCode perl"><span id="cb1-1"><a href="#cb1-1" aria-hidden="true" tabindex="-1"></a><span class="fu">use</span> <span class="fu">HTTP::Request</span>;</span>
+<span id="cb1-2"><a href="#cb1-2" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-3"><a href="#cb1-3" aria-hidden="true" tabindex="-1"></a>class <span class="fu">HTTP::Server</span>::<span class="fu">Async</span>::<span class="fu">Request</span> does <span class="fu">HTTP::Request</span> {</span>
+<span id="cb1-4"><a href="#cb1-4" aria-hidden="true" tabindex="-1"></a>  has Bool <span class="wa">$.</span><span class="dt">complete</span> is rw = False;</span>
+<span id="cb1-5"><a href="#cb1-5" aria-hidden="true" tabindex="-1"></a>  has <span class="wa">$.</span><span class="dt">connection</span> is rw;</span>
+<span id="cb1-6"><a href="#cb1-6" aria-hidden="true" tabindex="-1"></a>}</span></code></pre></div>
 <p><code>connection</code> and <code>complete</code> aren't required by HTTP::Request, we're using this internally.</p>
 <p>Now we'll implement the <code>self!parse</code> method we used in the last article. Now we're actually parsing an HTTP request and parsing headers, getting the URI, the method, etc.</p>
-<div class="sourceCode" id="cb2"><pre class="sourceCode perl"><code class="sourceCode perl"><a class="sourceLine" id="cb2-1" title="1">  method !parse(<span class="dt">$data</span> is rw, <span class="dt">$index</span> is rw, <span class="dt">$req</span> is rw, <span class="dt">$connection</span>) {</a>
-<a class="sourceLine" id="cb2-2" title="2">    <span class="dt">$req</span> = Nil <span class="kw">if</span> <span class="dt">$req</span> !~~ Nil &amp;&amp; <span class="dt">$req</span>.^can(<span class="kw">&#39;</span><span class="st">complete</span><span class="kw">&#39;</span>) &amp;&amp; <span class="dt">$req</span>.complete;</a>
-<a class="sourceLine" id="cb2-3" title="3">    <span class="kw">if</span> <span class="dt">$req</span> ~~ Nil || !( <span class="dt">$req</span>.^can(<span class="kw">&#39;</span><span class="st">headers</span><span class="kw">&#39;</span>) &amp;&amp; <span class="dt">$req</span>.headers.<span class="fu">keys</span>.elems ) {</a>
-<a class="sourceLine" id="cb2-4" title="4">      <span class="kw">my</span> <span class="dt">@lines</span>       = Buf.new(<span class="dt">$data</span>[<span class="dv">0</span>..<span class="dt">$index</span>]).decode.lines;</a>
-<a class="sourceLine" id="cb2-5" title="5">      <span class="kw">my</span> (<span class="dt">$m</span>, <span class="dt">$u</span>, <span class="dt">$v</span>) = <span class="dt">@lines</span>.<span class="fu">shift</span>.match(<span class="kw">/</span><span class="ch">^(</span><span class="ot">.</span><span class="ch">+?)</span><span class="bn">\s</span><span class="ch">(</span><span class="ot">.</span><span class="ch">+)</span><span class="bn">\s</span><span class="ch">(</span><span class="ot">HTTP\/.</span><span class="ch">+)$</span><span class="kw">/</span>).list.<span class="fu">map</span>({ .Str });</a>
-<a class="sourceLine" id="cb2-6" title="6">      <span class="kw">my</span> <span class="dt">%h</span>           = <span class="dt">@lines</span>.<span class="fu">map</span>({ .<span class="fu">split</span>(<span class="kw">&#39;</span><span class="st">:</span><span class="kw">&#39;</span>, <span class="dv">2</span>).<span class="fu">map</span>({.trim}) });</a>
-<a class="sourceLine" id="cb2-7" title="7"></a>
-<a class="sourceLine" id="cb2-8" title="8">      <span class="dt">$req</span>    = <span class="fu">HTTP::Server</span>::<span class="fu">Async</span>::<span class="fu">Request</span>.new(</a>
-<a class="sourceLine" id="cb2-9" title="9">                  :method(<span class="dt">$m</span>), </a>
-<a class="sourceLine" id="cb2-10" title="10">                  :uri(<span class="dt">$u</span>), </a>
-<a class="sourceLine" id="cb2-11" title="11">                  :version(<span class="dt">$v</span>), </a>
-<a class="sourceLine" id="cb2-12" title="12">                  :headers(<span class="dt">%h</span>), </a>
-<a class="sourceLine" id="cb2-13" title="13">                  :connection(<span class="dt">$connection</span>),</a>
-<a class="sourceLine" id="cb2-14" title="14">                  :response(<span class="fu">HTTP::Server</span>::<span class="fu">Async</span>::<span class="fu">Response</span>.new(:<span class="dt">$connection</span>)));</a>
-<a class="sourceLine" id="cb2-15" title="15">      <span class="dt">$req</span>.data .=new;</a>
-<a class="sourceLine" id="cb2-16" title="16">      <span class="dt">$index</span> += <span class="dv">4</span>;</a>
-<a class="sourceLine" id="cb2-17" title="17">      <span class="dt">$data</span>   = Buf.new(<span class="dt">$data</span>[<span class="dt">$index</span>+<span class="dv">1</span>..<span class="dt">$data</span>.elems]);</a>
-<a class="sourceLine" id="cb2-18" title="18">      <span class="dt">$index</span>  = <span class="dv">0</span>;</a>
-<a class="sourceLine" id="cb2-19" title="19">      <span class="kw">for</span> <span class="dt">@</span>.middlewares -&gt; <span class="dt">$m</span> {</a>
-<a class="sourceLine" id="cb2-20" title="20">        try {</a>
-<a class="sourceLine" id="cb2-21" title="21">          CATCH {</a>
-<a class="sourceLine" id="cb2-22" title="22">            <span class="kw">default</span> {</a>
-<a class="sourceLine" id="cb2-23" title="23">              .say;</a>
-<a class="sourceLine" id="cb2-24" title="24">            }</a>
-<a class="sourceLine" id="cb2-25" title="25">          }</a>
-<a class="sourceLine" id="cb2-26" title="26">          <span class="kw">my</span> <span class="dt">$r</span> = <span class="dt">$m</span>.(<span class="dt">$req</span>, <span class="dt">$req</span>.response);</a>
-<a class="sourceLine" id="cb2-27" title="27">          <span class="kw">return</span> <span class="kw">if</span> self!rc(<span class="dt">$r</span>);</a>
-<a class="sourceLine" id="cb2-28" title="28">        };</a>
-<a class="sourceLine" id="cb2-29" title="29">      }</a>
-<a class="sourceLine" id="cb2-30" title="30">    }</a></code></pre></div>
+<div class="sourceCode" id="cb2"><pre class="sourceCode perl"><code class="sourceCode perl"><span id="cb2-1"><a href="#cb2-1" aria-hidden="true" tabindex="-1"></a>  method !parse(<span class="dt">$data</span> is rw, <span class="dt">$index</span> is rw, <span class="dt">$req</span> is rw, <span class="dt">$connection</span>) {</span>
+<span id="cb2-2"><a href="#cb2-2" aria-hidden="true" tabindex="-1"></a>    <span class="dt">$req</span> = Nil <span class="kw">if</span> <span class="dt">$req</span> !~~ Nil &amp;&amp; <span class="dt">$req</span>.^can(<span class="ot">&#39;</span><span class="ss">complete</span><span class="ot">&#39;</span>) &amp;&amp; <span class="dt">$req</span>.complete;</span>
+<span id="cb2-3"><a href="#cb2-3" aria-hidden="true" tabindex="-1"></a>    <span class="kw">if</span> <span class="dt">$req</span> ~~ Nil || !( <span class="dt">$req</span>.^can(<span class="ot">&#39;</span><span class="ss">headers</span><span class="ot">&#39;</span>) &amp;&amp; <span class="dt">$req</span>.headers.<span class="fu">keys</span>.elems ) {</span>
+<span id="cb2-4"><a href="#cb2-4" aria-hidden="true" tabindex="-1"></a>      <span class="kw">my</span> <span class="dt">@lines</span>       = Buf.new(<span class="dt">$data</span>[<span class="dv">0</span>..<span class="dt">$index</span>]).decode.lines;</span>
+<span id="cb2-5"><a href="#cb2-5" aria-hidden="true" tabindex="-1"></a>      <span class="kw">my</span> (<span class="dt">$m</span>, <span class="dt">$u</span>, <span class="dt">$v</span>) = <span class="dt">@lines</span>.<span class="fu">shift</span>.match(<span class="ot">/</span><span class="ch">^(</span><span class="ot">.</span><span class="ch">+?)</span><span class="bn">\s</span><span class="ch">(</span><span class="ot">.</span><span class="ch">+)</span><span class="bn">\s</span><span class="ch">(</span><span class="ot">HTTP\/.</span><span class="ch">+)$</span><span class="ot">/</span>).list.<span class="fu">map</span>({ .Str });</span>
+<span id="cb2-6"><a href="#cb2-6" aria-hidden="true" tabindex="-1"></a>      <span class="kw">my</span> <span class="dt">%h</span>           = <span class="dt">@lines</span>.<span class="fu">map</span>({ .<span class="fu">split</span>(<span class="ot">&#39;</span><span class="ss">:</span><span class="ot">&#39;</span>, <span class="dv">2</span>).<span class="fu">map</span>({.trim}) });</span>
+<span id="cb2-7"><a href="#cb2-7" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb2-8"><a href="#cb2-8" aria-hidden="true" tabindex="-1"></a>      <span class="dt">$req</span>    = <span class="fu">HTTP::Server</span>::<span class="fu">Async</span>::<span class="fu">Request</span>.new(</span>
+<span id="cb2-9"><a href="#cb2-9" aria-hidden="true" tabindex="-1"></a>                  :method(<span class="dt">$m</span>), </span>
+<span id="cb2-10"><a href="#cb2-10" aria-hidden="true" tabindex="-1"></a>                  :uri(<span class="dt">$u</span>), </span>
+<span id="cb2-11"><a href="#cb2-11" aria-hidden="true" tabindex="-1"></a>                  :version(<span class="dt">$v</span>), </span>
+<span id="cb2-12"><a href="#cb2-12" aria-hidden="true" tabindex="-1"></a>                  :headers(<span class="dt">%h</span>), </span>
+<span id="cb2-13"><a href="#cb2-13" aria-hidden="true" tabindex="-1"></a>                  :connection(<span class="dt">$connection</span>),</span>
+<span id="cb2-14"><a href="#cb2-14" aria-hidden="true" tabindex="-1"></a>                  :response(<span class="fu">HTTP::Server</span>::<span class="fu">Async</span>::<span class="fu">Response</span>.new(:<span class="dt">$connection</span>)));</span>
+<span id="cb2-15"><a href="#cb2-15" aria-hidden="true" tabindex="-1"></a>      <span class="dt">$req</span>.data .=new;</span>
+<span id="cb2-16"><a href="#cb2-16" aria-hidden="true" tabindex="-1"></a>      <span class="dt">$index</span> += <span class="dv">4</span>;</span>
+<span id="cb2-17"><a href="#cb2-17" aria-hidden="true" tabindex="-1"></a>      <span class="dt">$data</span>   = Buf.new(<span class="dt">$data</span>[<span class="dt">$index</span>+<span class="dv">1</span>..<span class="dt">$data</span>.elems]);</span>
+<span id="cb2-18"><a href="#cb2-18" aria-hidden="true" tabindex="-1"></a>      <span class="dt">$index</span>  = <span class="dv">0</span>;</span>
+<span id="cb2-19"><a href="#cb2-19" aria-hidden="true" tabindex="-1"></a>      <span class="kw">for</span> <span class="dt">@</span>.middlewares -&gt; <span class="dt">$m</span> {</span>
+<span id="cb2-20"><a href="#cb2-20" aria-hidden="true" tabindex="-1"></a>        try {</span>
+<span id="cb2-21"><a href="#cb2-21" aria-hidden="true" tabindex="-1"></a>          CATCH {</span>
+<span id="cb2-22"><a href="#cb2-22" aria-hidden="true" tabindex="-1"></a>            <span class="kw">default</span> {</span>
+<span id="cb2-23"><a href="#cb2-23" aria-hidden="true" tabindex="-1"></a>              .<span class="fu">say</span>;</span>
+<span id="cb2-24"><a href="#cb2-24" aria-hidden="true" tabindex="-1"></a>            }</span>
+<span id="cb2-25"><a href="#cb2-25" aria-hidden="true" tabindex="-1"></a>          }</span>
+<span id="cb2-26"><a href="#cb2-26" aria-hidden="true" tabindex="-1"></a>          <span class="kw">my</span> <span class="dt">$r</span> = <span class="dt">$m</span>.(<span class="dt">$req</span>, <span class="dt">$req</span>.response);</span>
+<span id="cb2-27"><a href="#cb2-27" aria-hidden="true" tabindex="-1"></a>          <span class="kw">return</span> <span class="kw">if</span> self!rc(<span class="dt">$r</span>);</span>
+<span id="cb2-28"><a href="#cb2-28" aria-hidden="true" tabindex="-1"></a>        };</span>
+<span id="cb2-29"><a href="#cb2-29" aria-hidden="true" tabindex="-1"></a>      }</span>
+<span id="cb2-30"><a href="#cb2-30" aria-hidden="true" tabindex="-1"></a>    }</span></code></pre></div>
 <p>In the beginnings of the parse method, we're checking to see if the $req is already created and we're continuing the previous request or if we need a new req/res pair.</p>
 <p>After that, if we need a new req/res pair then we create one. It's important that the response be a part of the request because we want to support pipelining. Pipelining can be read about <a href="https://en.wikipedia.org/wiki/HTTP_pipelining">here</a>.</p>
 <p>After that, if the headers are complete then we run through our middleware with the request and allow them to hijack the request if they want. This is useful for things like <code>websocket</code>s and other types of custom applications.</p>
-<div class="sourceCode" id="cb3"><pre class="sourceCode perl"><code class="sourceCode perl"><a class="sourceLine" id="cb3-1" title="1">    <span class="kw">if</span> <span class="dt">$req</span> !~~ Nil &amp;&amp; <span class="dt">$req</span>.header(<span class="kw">&#39;</span><span class="st">Transfer-Encoding</span><span class="kw">&#39;</span>).<span class="fu">lc</span>.<span class="fu">index</span>(<span class="kw">&#39;</span><span class="st">chunked</span><span class="kw">&#39;</span>) !~~ Nil {</a>
-<a class="sourceLine" id="cb3-2" title="2">      <span class="kw">my</span> (<span class="dt">$i</span>, <span class="dt">$bytes</span>) = <span class="dv">0</span>,;</a>
-<a class="sourceLine" id="cb3-3" title="3">      <span class="kw">my</span> Buf <span class="dt">$rn</span> .=new(<span class="kw">&quot;</span><span class="ch">\r\n</span><span class="kw">&quot;</span>.encode);</a>
-<a class="sourceLine" id="cb3-4" title="4">      <span class="kw">while</span> <span class="dt">$i</span> &lt; <span class="dt">$data</span>.elems {</a>
-<a class="sourceLine" id="cb3-5" title="5">        <span class="dt">$i</span>++ <span class="kw">while</span> <span class="dt">$data</span>[<span class="dt">$i</span>]   != <span class="dt">$rn</span>[<span class="dv">0</span>] &amp;&amp;</a>
-<a class="sourceLine" id="cb3-6" title="6">                   <span class="dt">$data</span>[<span class="dt">$i</span>+<span class="dv">1</span>] != <span class="dt">$rn</span>[<span class="dv">1</span>] &amp;&amp;</a>
-<a class="sourceLine" id="cb3-7" title="7">                   <span class="dt">$i</span> + <span class="dv">1</span> &lt; <span class="dt">$data</span>.elems;</a>
-<a class="sourceLine" id="cb3-8" title="8">        <span class="kw">last</span> <span class="kw">if</span> <span class="dt">$i</span> + <span class="dv">1</span> &gt;= <span class="dt">$data</span>.elems;</a>
-<a class="sourceLine" id="cb3-9" title="9"></a>
-<a class="sourceLine" id="cb3-10" title="10">        <span class="dt">$bytes</span> = :<span class="dv">16</span>(<span class="dt">$data</span>.subbuf(<span class="dv">0</span>,<span class="dt">$i</span>).decode);</a>
-<a class="sourceLine" id="cb3-11" title="11">        <span class="kw">last</span> <span class="kw">if</span> <span class="dt">$data</span>.elems &lt; <span class="dt">$i</span> + <span class="dt">$bytes</span>;</a>
-<a class="sourceLine" id="cb3-12" title="12">        { <span class="dt">$req</span>.complete = True; <span class="kw">last</span>; } <span class="kw">if</span> <span class="dt">$bytes</span> == <span class="dv">0</span>;</a>
-<a class="sourceLine" id="cb3-13" title="13">        <span class="dt">$i</span>+=<span class="dv">2</span>;</a>
-<a class="sourceLine" id="cb3-14" title="14">        <span class="dt">$req</span>.data ~= <span class="dt">$data</span>.subbuf(<span class="dt">$i</span>, <span class="dt">$i</span>+<span class="dt">$bytes</span><span class="dv">-3</span>);</a>
-<a class="sourceLine" id="cb3-15" title="15">        try <span class="dt">$data</span> .=subbuf(<span class="dt">$i</span>+<span class="dt">$bytes</span>+<span class="dv">2</span>);</a>
-<a class="sourceLine" id="cb3-16" title="16">        <span class="dt">$i</span> = <span class="dv">0</span>;</a>
-<a class="sourceLine" id="cb3-17" title="17">      }</a>
-<a class="sourceLine" id="cb3-18" title="18">    } <span class="kw">else</span> {</a>
-<a class="sourceLine" id="cb3-19" title="19">      <span class="kw">my</span> <span class="dt">$req</span>-len = <span class="dt">$req</span>.header(<span class="kw">&#39;</span><span class="st">Content-Length</span><span class="kw">&#39;</span>)[<span class="dv">0</span>] // (<span class="dt">$data</span>.elems - <span class="dt">$index</span>);</a>
-<a class="sourceLine" id="cb3-20" title="20">      <span class="kw">if</span> <span class="dt">$data</span>.elems - <span class="dt">$req</span>-len &gt;= <span class="dv">0</span> {</a>
-<a class="sourceLine" id="cb3-21" title="21">        <span class="dt">$req</span>.data     = Buf.new(<span class="dt">$data</span>[<span class="dv">0</span>..<span class="dt">$req</span>-len]); </a>
-<a class="sourceLine" id="cb3-22" title="22">        <span class="dt">$req</span>.complete = True;</a>
-<a class="sourceLine" id="cb3-23" title="23">        <span class="dt">$data</span> = Buf.new(<span class="dt">$data</span>[<span class="dt">$req</span>-len..<span class="dt">$data</span>.elems]);</a>
-<a class="sourceLine" id="cb3-24" title="24">      }</a>
-<a class="sourceLine" id="cb3-25" title="25">    }</a>
-<a class="sourceLine" id="cb3-26" title="26">    <span class="dt">$.requests</span>.<span class="fu">send</span>(<span class="dt">$req</span>) <span class="kw">if</span> <span class="dt">$req</span>.^can(<span class="kw">&#39;</span><span class="st">complete</span><span class="kw">&#39;</span>) &amp;&amp; <span class="dt">$req</span>.complete;</a>
-<a class="sourceLine" id="cb3-27" title="27">  }</a></code></pre></div>
+<div class="sourceCode" id="cb3"><pre class="sourceCode perl"><code class="sourceCode perl"><span id="cb3-1"><a href="#cb3-1" aria-hidden="true" tabindex="-1"></a>    <span class="kw">if</span> <span class="dt">$req</span> !~~ Nil &amp;&amp; <span class="dt">$req</span>.header(<span class="ot">&#39;</span><span class="ss">Transfer-Encoding</span><span class="ot">&#39;</span>).<span class="fu">lc</span>.<span class="fu">index</span>(<span class="ot">&#39;</span><span class="ss">chunked</span><span class="ot">&#39;</span>) !~~ Nil {</span>
+<span id="cb3-2"><a href="#cb3-2" aria-hidden="true" tabindex="-1"></a>      <span class="kw">my</span> (<span class="dt">$i</span>, <span class="dt">$bytes</span>) = <span class="dv">0</span>,;</span>
+<span id="cb3-3"><a href="#cb3-3" aria-hidden="true" tabindex="-1"></a>      <span class="kw">my</span> Buf <span class="dt">$rn</span> .=new(<span class="ot">&quot;</span><span class="ch">\r\n</span><span class="ot">&quot;</span>.encode);</span>
+<span id="cb3-4"><a href="#cb3-4" aria-hidden="true" tabindex="-1"></a>      <span class="kw">while</span> <span class="dt">$i</span> &lt; <span class="dt">$data</span>.elems {</span>
+<span id="cb3-5"><a href="#cb3-5" aria-hidden="true" tabindex="-1"></a>        <span class="dt">$i</span>++ <span class="kw">while</span> <span class="dt">$data</span>[<span class="dt">$i</span>]   != <span class="dt">$rn</span>[<span class="dv">0</span>] &amp;&amp;</span>
+<span id="cb3-6"><a href="#cb3-6" aria-hidden="true" tabindex="-1"></a>                   <span class="dt">$data</span>[<span class="dt">$i</span>+<span class="dv">1</span>] != <span class="dt">$rn</span>[<span class="dv">1</span>] &amp;&amp;</span>
+<span id="cb3-7"><a href="#cb3-7" aria-hidden="true" tabindex="-1"></a>                   <span class="dt">$i</span> + <span class="dv">1</span> &lt; <span class="dt">$data</span>.elems;</span>
+<span id="cb3-8"><a href="#cb3-8" aria-hidden="true" tabindex="-1"></a>        <span class="kw">last</span> <span class="kw">if</span> <span class="dt">$i</span> + <span class="dv">1</span> &gt;= <span class="dt">$data</span>.elems;</span>
+<span id="cb3-9"><a href="#cb3-9" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb3-10"><a href="#cb3-10" aria-hidden="true" tabindex="-1"></a>        <span class="dt">$bytes</span> = :<span class="dv">16</span>(<span class="dt">$data</span>.subbuf(<span class="dv">0</span>,<span class="dt">$i</span>).decode);</span>
+<span id="cb3-11"><a href="#cb3-11" aria-hidden="true" tabindex="-1"></a>        <span class="kw">last</span> <span class="kw">if</span> <span class="dt">$data</span>.elems &lt; <span class="dt">$i</span> + <span class="dt">$bytes</span>;</span>
+<span id="cb3-12"><a href="#cb3-12" aria-hidden="true" tabindex="-1"></a>        { <span class="dt">$req</span>.complete = True; <span class="kw">last</span>; } <span class="kw">if</span> <span class="dt">$bytes</span> == <span class="dv">0</span>;</span>
+<span id="cb3-13"><a href="#cb3-13" aria-hidden="true" tabindex="-1"></a>        <span class="dt">$i</span>+=<span class="dv">2</span>;</span>
+<span id="cb3-14"><a href="#cb3-14" aria-hidden="true" tabindex="-1"></a>        <span class="dt">$req</span>.data ~= <span class="dt">$data</span>.subbuf(<span class="dt">$i</span>, <span class="dt">$i</span>+<span class="dt">$bytes</span><span class="dv">-3</span>);</span>
+<span id="cb3-15"><a href="#cb3-15" aria-hidden="true" tabindex="-1"></a>        try <span class="dt">$data</span> .=subbuf(<span class="dt">$i</span>+<span class="dt">$bytes</span>+<span class="dv">2</span>);</span>
+<span id="cb3-16"><a href="#cb3-16" aria-hidden="true" tabindex="-1"></a>        <span class="dt">$i</span> = <span class="dv">0</span>;</span>
+<span id="cb3-17"><a href="#cb3-17" aria-hidden="true" tabindex="-1"></a>      }</span>
+<span id="cb3-18"><a href="#cb3-18" aria-hidden="true" tabindex="-1"></a>    } <span class="kw">else</span> {</span>
+<span id="cb3-19"><a href="#cb3-19" aria-hidden="true" tabindex="-1"></a>      <span class="kw">my</span> <span class="dt">$req</span><span class="ot">-l</span>en = <span class="dt">$req</span>.header(<span class="ot">&#39;</span><span class="ss">Content-Length</span><span class="ot">&#39;</span>)[<span class="dv">0</span>] // (<span class="dt">$data</span>.elems - <span class="dt">$index</span>);</span>
+<span id="cb3-20"><a href="#cb3-20" aria-hidden="true" tabindex="-1"></a>      <span class="kw">if</span> <span class="dt">$data</span>.elems - <span class="dt">$req</span><span class="ot">-l</span>en &gt;= <span class="dv">0</span> {</span>
+<span id="cb3-21"><a href="#cb3-21" aria-hidden="true" tabindex="-1"></a>        <span class="dt">$req</span>.data     = Buf.new(<span class="dt">$data</span>[<span class="dv">0</span>..<span class="dt">$req</span><span class="ot">-l</span>en]); </span>
+<span id="cb3-22"><a href="#cb3-22" aria-hidden="true" tabindex="-1"></a>        <span class="dt">$req</span>.complete = True;</span>
+<span id="cb3-23"><a href="#cb3-23" aria-hidden="true" tabindex="-1"></a>        <span class="dt">$data</span> = Buf.new(<span class="dt">$data</span>[<span class="dt">$req</span><span class="ot">-l</span>en..<span class="dt">$data</span>.elems]);</span>
+<span id="cb3-24"><a href="#cb3-24" aria-hidden="true" tabindex="-1"></a>      }</span>
+<span id="cb3-25"><a href="#cb3-25" aria-hidden="true" tabindex="-1"></a>    }</span>
+<span id="cb3-26"><a href="#cb3-26" aria-hidden="true" tabindex="-1"></a>    <span class="wa">$.</span><span class="dt">requests</span>.<span class="fu">send</span>(<span class="dt">$req</span>) <span class="kw">if</span> <span class="dt">$req</span>.^can(<span class="ot">&#39;</span><span class="ss">complete</span><span class="ot">&#39;</span>) &amp;&amp; <span class="dt">$req</span>.complete;</span>
+<span id="cb3-27"><a href="#cb3-27" aria-hidden="true" tabindex="-1"></a>  }</span></code></pre></div>
 <p>Next up we just handle processing chunked encoding or detecting the end of the request and filling in the request body (if needed).</p>
 <p>If the request is complete then we send it off to be handled by the request handlers.</p>
 <p>You may notice that the last line (<code>$.requests</code>) isn't discussed anywhere else in the blog. This application is using a <code>Channel</code> to detect the end of requests. Here is the relevant code</p>
 <h6 id="setting-up-the-channel-as-an-attribute-of-our-server">Setting up the channel as an attribute of our server</h6>
-<div class="sourceCode" id="cb4"><pre class="sourceCode perl"><code class="sourceCode perl"><a class="sourceLine" id="cb4-1" title="1">class <span class="fu">HTTP::Server</span>::<span class="fu">Async</span> does <span class="fu">HTTP::Server</span> {</a>
-<a class="sourceLine" id="cb4-2" title="2">  has Int     <span class="dt">$.port</span>          = <span class="dv">1666</span>;</a>
-<a class="sourceLine" id="cb4-3" title="3">  has Str     <span class="dt">$.ip</span>            = <span class="kw">&#39;</span><span class="st">0.0.0.0</span><span class="kw">&#39;</span>;</a>
-<a class="sourceLine" id="cb4-4" title="4">  has Channel <span class="dt">$.requests</span>     .= new; <span class="co">#added for this blog</span></a></code></pre></div>
+<div class="sourceCode" id="cb4"><pre class="sourceCode perl"><code class="sourceCode perl"><span id="cb4-1"><a href="#cb4-1" aria-hidden="true" tabindex="-1"></a>class <span class="fu">HTTP::Server</span>::<span class="fu">Async</span> does <span class="fu">HTTP::Server</span> {</span>
+<span id="cb4-2"><a href="#cb4-2" aria-hidden="true" tabindex="-1"></a>  has Int     <span class="wa">$.</span><span class="dt">port</span>          = <span class="dv">1666</span>;</span>
+<span id="cb4-3"><a href="#cb4-3" aria-hidden="true" tabindex="-1"></a>  has Str     <span class="wa">$.</span><span class="dt">ip</span>            = <span class="ot">&#39;</span><span class="ss">0.0.0.0</span><span class="ot">&#39;</span>;</span>
+<span id="cb4-4"><a href="#cb4-4" aria-hidden="true" tabindex="-1"></a>  has Channel <span class="wa">$.</span><span class="dt">requests</span>     .= new; <span class="co">#added for this blog</span></span></code></pre></div>
 <h6 id="setting-up-the-handler-to-work-asynchronously-of-the-parser-and-listener">Setting up the handler to work asynchronously of the parser and listener</h6>
-<div class="sourceCode" id="cb5"><pre class="sourceCode perl"><code class="sourceCode perl"><a class="sourceLine" id="cb5-1" title="1">  method !responder {</a>
-<a class="sourceLine" id="cb5-2" title="2">    start {</a>
-<a class="sourceLine" id="cb5-3" title="3">      loop {</a>
-<a class="sourceLine" id="cb5-4" title="4">        CATCH { <span class="kw">default</span> { .say; } }</a>
-<a class="sourceLine" id="cb5-5" title="5">        <span class="kw">my</span> <span class="dt">$req</span> = <span class="dt">$.requests</span>.receive;</a>
-<a class="sourceLine" id="cb5-6" title="6">        <span class="kw">my</span> <span class="dt">$res</span> = <span class="dt">$req</span>.response;</a>
-<a class="sourceLine" id="cb5-7" title="7">        <span class="kw">for</span> <span class="dt">@</span>.handlers -&gt; <span class="dt">$h</span> {</a>
-<a class="sourceLine" id="cb5-8" title="8">          try {</a>
-<a class="sourceLine" id="cb5-9" title="9">            CATCH {</a>
-<a class="sourceLine" id="cb5-10" title="10">              <span class="kw">default</span> {</a>
-<a class="sourceLine" id="cb5-11" title="11">                .say;</a>
-<a class="sourceLine" id="cb5-12" title="12">              }</a>
-<a class="sourceLine" id="cb5-13" title="13">            }</a>
-<a class="sourceLine" id="cb5-14" title="14">            <span class="kw">my</span> <span class="dt">$r</span> = <span class="dt">$h</span>.(<span class="dt">$req</span>, <span class="dt">$res</span>);</a>
-<a class="sourceLine" id="cb5-15" title="15">            <span class="kw">last</span> <span class="kw">if</span> self!rc(<span class="dt">$r</span>);</a>
-<a class="sourceLine" id="cb5-16" title="16">          };</a>
-<a class="sourceLine" id="cb5-17" title="17">        }</a>
-<a class="sourceLine" id="cb5-18" title="18"></a>
-<a class="sourceLine" id="cb5-19" title="19">        <span class="kw">for</span> <span class="dt">@</span>.afters -&gt; <span class="dt">$a</span> {</a>
-<a class="sourceLine" id="cb5-20" title="20">          try {</a>
-<a class="sourceLine" id="cb5-21" title="21">            CATCH {</a>
-<a class="sourceLine" id="cb5-22" title="22">              <span class="kw">default</span> {</a>
-<a class="sourceLine" id="cb5-23" title="23">                .say;</a>
-<a class="sourceLine" id="cb5-24" title="24">              }</a>
-<a class="sourceLine" id="cb5-25" title="25">            }</a>
-<a class="sourceLine" id="cb5-26" title="26">            <span class="dt">$a</span>.(<span class="dt">$req</span>, <span class="dt">$res</span>);</a>
-<a class="sourceLine" id="cb5-27" title="27">          }</a>
-<a class="sourceLine" id="cb5-28" title="28">        }</a>
-<a class="sourceLine" id="cb5-29" title="29">      };</a>
-<a class="sourceLine" id="cb5-30" title="30">    };</a>
-<a class="sourceLine" id="cb5-31" title="31">  }</a></code></pre></div>
+<div class="sourceCode" id="cb5"><pre class="sourceCode perl"><code class="sourceCode perl"><span id="cb5-1"><a href="#cb5-1" aria-hidden="true" tabindex="-1"></a>  method !responder {</span>
+<span id="cb5-2"><a href="#cb5-2" aria-hidden="true" tabindex="-1"></a>    start {</span>
+<span id="cb5-3"><a href="#cb5-3" aria-hidden="true" tabindex="-1"></a>      loop {</span>
+<span id="cb5-4"><a href="#cb5-4" aria-hidden="true" tabindex="-1"></a>        CATCH { <span class="kw">default</span> { .<span class="fu">say</span>; } }</span>
+<span id="cb5-5"><a href="#cb5-5" aria-hidden="true" tabindex="-1"></a>        <span class="kw">my</span> <span class="dt">$req</span> = <span class="wa">$.</span><span class="dt">requests</span>.receive;</span>
+<span id="cb5-6"><a href="#cb5-6" aria-hidden="true" tabindex="-1"></a>        <span class="kw">my</span> <span class="dt">$res</span> = <span class="dt">$req</span>.response;</span>
+<span id="cb5-7"><a href="#cb5-7" aria-hidden="true" tabindex="-1"></a>        <span class="kw">for</span> <span class="dt">@</span>.handlers -&gt; <span class="dt">$h</span> {</span>
+<span id="cb5-8"><a href="#cb5-8" aria-hidden="true" tabindex="-1"></a>          try {</span>
+<span id="cb5-9"><a href="#cb5-9" aria-hidden="true" tabindex="-1"></a>            CATCH {</span>
+<span id="cb5-10"><a href="#cb5-10" aria-hidden="true" tabindex="-1"></a>              <span class="kw">default</span> {</span>
+<span id="cb5-11"><a href="#cb5-11" aria-hidden="true" tabindex="-1"></a>                .<span class="fu">say</span>;</span>
+<span id="cb5-12"><a href="#cb5-12" aria-hidden="true" tabindex="-1"></a>              }</span>
+<span id="cb5-13"><a href="#cb5-13" aria-hidden="true" tabindex="-1"></a>            }</span>
+<span id="cb5-14"><a href="#cb5-14" aria-hidden="true" tabindex="-1"></a>            <span class="kw">my</span> <span class="dt">$r</span> = <span class="dt">$h</span>.(<span class="dt">$req</span>, <span class="dt">$res</span>);</span>
+<span id="cb5-15"><a href="#cb5-15" aria-hidden="true" tabindex="-1"></a>            <span class="kw">last</span> <span class="kw">if</span> self!rc(<span class="dt">$r</span>);</span>
+<span id="cb5-16"><a href="#cb5-16" aria-hidden="true" tabindex="-1"></a>          };</span>
+<span id="cb5-17"><a href="#cb5-17" aria-hidden="true" tabindex="-1"></a>        }</span>
+<span id="cb5-18"><a href="#cb5-18" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb5-19"><a href="#cb5-19" aria-hidden="true" tabindex="-1"></a>        <span class="kw">for</span> <span class="dt">@</span>.afters -&gt; <span class="dt">$a</span> {</span>
+<span id="cb5-20"><a href="#cb5-20" aria-hidden="true" tabindex="-1"></a>          try {</span>
+<span id="cb5-21"><a href="#cb5-21" aria-hidden="true" tabindex="-1"></a>            CATCH {</span>
+<span id="cb5-22"><a href="#cb5-22" aria-hidden="true" tabindex="-1"></a>              <span class="kw">default</span> {</span>
+<span id="cb5-23"><a href="#cb5-23" aria-hidden="true" tabindex="-1"></a>                .<span class="fu">say</span>;</span>
+<span id="cb5-24"><a href="#cb5-24" aria-hidden="true" tabindex="-1"></a>              }</span>
+<span id="cb5-25"><a href="#cb5-25" aria-hidden="true" tabindex="-1"></a>            }</span>
+<span id="cb5-26"><a href="#cb5-26" aria-hidden="true" tabindex="-1"></a>            <span class="dt">$a</span>.(<span class="dt">$req</span>, <span class="dt">$res</span>);</span>
+<span id="cb5-27"><a href="#cb5-27" aria-hidden="true" tabindex="-1"></a>          }</span>
+<span id="cb5-28"><a href="#cb5-28" aria-hidden="true" tabindex="-1"></a>        }</span>
+<span id="cb5-29"><a href="#cb5-29" aria-hidden="true" tabindex="-1"></a>      };</span>
+<span id="cb5-30"><a href="#cb5-30" aria-hidden="true" tabindex="-1"></a>    };</span>
+<span id="cb5-31"><a href="#cb5-31" aria-hidden="true" tabindex="-1"></a>  }</span></code></pre></div>
 <p>Yes, I'm aware that the variable names aren't awesome. Nothing compares the awesomenity of this module. Check out the final code on <a href="https://github.com/tony-o/perl6-http-server-async/">github.com</a>. I crave your stars.</p>
 
 

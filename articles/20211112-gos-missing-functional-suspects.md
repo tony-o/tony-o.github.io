@@ -365,7 +365,7 @@ func FoldrIntInt(fn func(a int, b func() int) int, acc int, is []int) int {
 
 Boom.
 
-Wait just a gosh dang minute.  Why's that `foldr` look so weird? Well, short story is that in Haskell and similarly implemented languages, `foldr` will thunk the _right_ value and only continue if that value is requested and in that way you can prematurely terminate a right fold.  A left fold will not happen as the fold is evaluated _from the left_.  This is a confusing thing if you're not already familiar with it but the basics are that `foldl + [1 2 3] -> (1 + (2 + 3))` and thus cannot short circuit. Conversely, `foldr + [1 2 3] -> (3 + (2 + (1)))` and if you notice the 1 in its own parens then you'll notice that the `+` is only done if the _next_ value is evaluated.  Personally, the left/right thing doesn't make sense to me.  Inside to outside is how I think about the two.
+Wait just a gosh dang minute.  Why's that `foldr` look so weird? Well, short story is that in Haskell and similarly implemented languages, `foldr` will thunk the _right_ value and only continue if that value is requested and in that way you can prematurely terminate a right fold.  A left fold will not happen as the fold is evaluated _from the left_.  This is a confusing thing if you're not already familiar with it but the basics are that `foldl + [1 2 3] -> (1 + (2 + 3))` and thus cannot short circuit. Conversely, `foldr + [1 2 3] -> (3 + (2 + (1)))` and if you notice the 1 in its own parens then you'll notice that the `+` is only done if the _next_ value is evaluated.
 
 Okay, now boom slam.
 
