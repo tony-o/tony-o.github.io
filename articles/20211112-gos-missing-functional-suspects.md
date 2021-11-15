@@ -8,7 +8,7 @@ When you first start learning functional programming you get all kinds of tools 
 
 Go could have macros but it doesn't because there's no precompiler.  Instead of a precompiler they wrote code that does what macros do but you have to run it manually before you run your code rather than just inlining during compilation. So let's write a generator that just spits out a random number and then we'll modify it later so that it gives us what we want function wise.
 
-In your scratch pad project directory toss the following into a file:
+In your scratch pad project directory toss the following into a file (`pkg/generators/functional.go`):
 
 ```go
 //go:build ignore
@@ -52,7 +52,7 @@ func main() {
 }
 ```
 
-What a mouthful. Don't worry, this should make what we're about to do much easier.  This generator will get modified later.  You can test it manually by doing a quick `go run functional.go && go run main_random.go` and you can clean it up by just removing the generated `main_random.go` file.
+What a mouthful. Don't worry, this should make what we're about to do much easier.  This generator will get modified later.  You can test it manually by doing a quick `go run pkg/generators/functional.go && go run main_random.go` and you can clean it up by just removing the generated `main_random.go` file.
 
 I'm going to put this generator in `pkg/generators` directory to refer to later so we have this directory structure for the demo:
 

@@ -49,40 +49,40 @@
 </ol>
 <h3 id="boilerplate">Boilerplate</h3>
 <p>Ensure you have <code>Hiker</code> installed:</p>
-<div class="sourceCode" id="cb1"><pre class="sourceCode bash"><code class="sourceCode bash"><span id="cb1-1"><a href="#cb1-1" aria-hidden="true" tabindex="-1"></a><span class="ex">$</span> zef install Hiker</span>
-<span id="cb1-2"><a href="#cb1-2" aria-hidden="true" tabindex="-1"></a><span class="ex">$</span> rakudobrew rehash <span class="co">#this may be necessary to get the bin to work</span></span></code></pre></div>
+<div class="sourceCode" id="cb1"><pre class="sourceCode bash"><code class="sourceCode bash"><a class="sourceLine" id="cb1-1" title="1">$ <span class="ex">zef</span> install Hiker</a>
+<a class="sourceLine" id="cb1-2" title="2">$ <span class="ex">rakudobrew</span> rehash <span class="co">#this may be necessary to get the bin to work</span></a></code></pre></div>
 <p>Create a new directory where you'd like to create your project's boilerplate and <code>cd</code>. From here we'll initialize some boilerplate and look at the content of the files.</p>
-<div class="sourceCode" id="cb2"><pre class="sourceCode bash"><code class="sourceCode bash"><span id="cb2-1"><a href="#cb2-1" aria-hidden="true" tabindex="-1"></a><span class="ex">somedir$</span> hiker init</span>
-<span id="cb2-2"><a href="#cb2-2" aria-hidden="true" tabindex="-1"></a><span class="ex">==</span><span class="op">&gt;</span> Creating directory controllers</span>
-<span id="cb2-3"><a href="#cb2-3" aria-hidden="true" tabindex="-1"></a><span class="ex">==</span><span class="op">&gt;</span> Creating directory models</span>
-<span id="cb2-4"><a href="#cb2-4" aria-hidden="true" tabindex="-1"></a><span class="ex">==</span><span class="op">&gt;</span> Creating directory templates</span>
-<span id="cb2-5"><a href="#cb2-5" aria-hidden="true" tabindex="-1"></a><span class="ex">==</span><span class="op">&gt;</span> Creating route MyApp::Route1: controllers/Route1.pm6</span>
-<span id="cb2-6"><a href="#cb2-6" aria-hidden="true" tabindex="-1"></a><span class="ex">==</span><span class="op">&gt;</span> Creating route MyApp::Model1: models/Model1.pm6</span>
-<span id="cb2-7"><a href="#cb2-7" aria-hidden="true" tabindex="-1"></a><span class="ex">==</span><span class="op">&gt;</span> Creating template templates/Route1.mustache</span>
-<span id="cb2-8"><a href="#cb2-8" aria-hidden="true" tabindex="-1"></a><span class="ex">==</span><span class="op">&gt;</span> Creating app.pl6</span></code></pre></div>
+<div class="sourceCode" id="cb2"><pre class="sourceCode bash"><code class="sourceCode bash"><a class="sourceLine" id="cb2-1" title="1"><span class="ex">somedir</span>$ hiker init</a>
+<a class="sourceLine" id="cb2-2" title="2">==<span class="op">&gt;</span> <span class="ex">Creating</span> directory controllers</a>
+<a class="sourceLine" id="cb2-3" title="3">==<span class="op">&gt;</span> <span class="ex">Creating</span> directory models</a>
+<a class="sourceLine" id="cb2-4" title="4">==<span class="op">&gt;</span> <span class="ex">Creating</span> directory templates</a>
+<a class="sourceLine" id="cb2-5" title="5">==<span class="op">&gt;</span> <span class="ex">Creating</span> route MyApp::Route1: controllers/Route1.pm6</a>
+<a class="sourceLine" id="cb2-6" title="6">==<span class="op">&gt;</span> <span class="ex">Creating</span> route MyApp::Model1: models/Model1.pm6</a>
+<a class="sourceLine" id="cb2-7" title="7">==<span class="op">&gt;</span> <span class="ex">Creating</span> template templates/Route1.mustache</a>
+<a class="sourceLine" id="cb2-8" title="8">==<span class="op">&gt;</span> <span class="ex">Creating</span> app.pl6</a></code></pre></div>
 <p>Neato burrito. From the output you can see that Hiker created some directories - controllers, models, templates - for us so we can start out organized. In those directories you will find a few files, let's take a look.</p>
 <h3 id="the-model">The Model</h3>
-<div class="sourceCode" id="cb3"><pre class="sourceCode perl"><code class="sourceCode perl"><span id="cb3-1"><a href="#cb3-1" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb3-2"><a href="#cb3-2" aria-hidden="true" tabindex="-1"></a><span class="fu">use</span> <span class="fu">Hiker::Model</span>;</span>
-<span id="cb3-3"><a href="#cb3-3" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb3-4"><a href="#cb3-4" aria-hidden="true" tabindex="-1"></a>class <span class="fu">MyApp::Model1</span> does <span class="fu">Hiker::Model</span> {</span>
-<span id="cb3-5"><a href="#cb3-5" aria-hidden="true" tabindex="-1"></a>  method <span class="fu">bind</span>(<span class="dt">$req</span>, <span class="dt">$res</span>) {</span>
-<span id="cb3-6"><a href="#cb3-6" aria-hidden="true" tabindex="-1"></a>    <span class="dt">$res</span>.data&lt;who&gt; = <span class="ot">&#39;</span><span class="ss">web!</span><span class="ot">&#39;</span>;</span>
-<span id="cb3-7"><a href="#cb3-7" aria-hidden="true" tabindex="-1"></a>  }</span>
-<span id="cb3-8"><a href="#cb3-8" aria-hidden="true" tabindex="-1"></a>}</span></code></pre></div>
+<div class="sourceCode" id="cb3"><pre class="sourceCode perl"><code class="sourceCode perl"><a class="sourceLine" id="cb3-1" title="1"></a>
+<a class="sourceLine" id="cb3-2" title="2"><span class="fu">use</span> <span class="fu">Hiker::Model</span>;</a>
+<a class="sourceLine" id="cb3-3" title="3"></a>
+<a class="sourceLine" id="cb3-4" title="4">class <span class="fu">MyApp::Model1</span> does <span class="fu">Hiker::Model</span> {</a>
+<a class="sourceLine" id="cb3-5" title="5">  method <span class="fu">bind</span>(<span class="dt">$req</span>, <span class="dt">$res</span>) {</a>
+<a class="sourceLine" id="cb3-6" title="6">    <span class="dt">$res</span>.data&lt;who&gt; = <span class="kw">&#39;</span><span class="st">web!</span><span class="kw">&#39;</span>;</a>
+<a class="sourceLine" id="cb3-7" title="7">  }</a>
+<a class="sourceLine" id="cb3-8" title="8">}</a></code></pre></div>
 <p>Pretty straight forward. <code>MyApp::Model1</code> is instantiated during Hiker initialization and <code>.bind</code> is called whenever the controller's corresponding path is requested. As you can see here, this Model just adds to the <code>$res.data</code> hash the key value pair of <code>who =&gt; 'web!'</code>. This data will be available in the Controller as well as available in the template files (if the controller decides to use that).</p>
 <h3 id="the-controller">The Controller</h3>
-<div class="sourceCode" id="cb4"><pre class="sourceCode perl"><code class="sourceCode perl"><span id="cb4-1"><a href="#cb4-1" aria-hidden="true" tabindex="-1"></a><span class="fu">use</span> <span class="fu">Hiker::Route</span>;</span>
-<span id="cb4-2"><a href="#cb4-2" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb4-3"><a href="#cb4-3" aria-hidden="true" tabindex="-1"></a>class <span class="fu">MyApp::Route1</span> does <span class="fu">Hiker::Route</span> {</span>
-<span id="cb4-4"><a href="#cb4-4" aria-hidden="true" tabindex="-1"></a>  has <span class="wa">$.</span><span class="dt">path</span>     = <span class="ot">&#39;</span><span class="ss">/</span><span class="ot">&#39;</span>;</span>
-<span id="cb4-5"><a href="#cb4-5" aria-hidden="true" tabindex="-1"></a>  has <span class="wa">$.</span><span class="dt">template</span> = <span class="ot">&#39;</span><span class="ss">Route1.mustache</span><span class="ot">&#39;</span>;</span>
-<span id="cb4-6"><a href="#cb4-6" aria-hidden="true" tabindex="-1"></a>  has <span class="wa">$.</span><span class="dt">model</span>    = <span class="ot">&#39;</span><span class="ss">MyApp::Model1</span><span class="ot">&#39;</span>;</span>
-<span id="cb4-7"><a href="#cb4-7" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb4-8"><a href="#cb4-8" aria-hidden="true" tabindex="-1"></a>  method handler(<span class="dt">$req</span>, <span class="dt">$res</span>) {</span>
-<span id="cb4-9"><a href="#cb4-9" aria-hidden="true" tabindex="-1"></a>    <span class="dt">$res</span>.headers&lt;Content<span class="ot">-T</span>ype&gt; = <span class="ot">&#39;</span><span class="ss">text/plain</span><span class="ot">&#39;</span>;</span>
-<span id="cb4-10"><a href="#cb4-10" aria-hidden="true" tabindex="-1"></a>  }</span>
-<span id="cb4-11"><a href="#cb4-11" aria-hidden="true" tabindex="-1"></a>}</span></code></pre></div>
+<div class="sourceCode" id="cb4"><pre class="sourceCode perl"><code class="sourceCode perl"><a class="sourceLine" id="cb4-1" title="1"><span class="fu">use</span> <span class="fu">Hiker::Route</span>;</a>
+<a class="sourceLine" id="cb4-2" title="2"></a>
+<a class="sourceLine" id="cb4-3" title="3">class <span class="fu">MyApp::Route1</span> does <span class="fu">Hiker::Route</span> {</a>
+<a class="sourceLine" id="cb4-4" title="4">  has <span class="dt">$.path</span>     = <span class="kw">&#39;</span><span class="st">/</span><span class="kw">&#39;</span>;</a>
+<a class="sourceLine" id="cb4-5" title="5">  has <span class="dt">$.template</span> = <span class="kw">&#39;</span><span class="st">Route1.mustache</span><span class="kw">&#39;</span>;</a>
+<a class="sourceLine" id="cb4-6" title="6">  has <span class="dt">$.model</span>    = <span class="kw">&#39;</span><span class="st">MyApp::Model1</span><span class="kw">&#39;</span>;</a>
+<a class="sourceLine" id="cb4-7" title="7"></a>
+<a class="sourceLine" id="cb4-8" title="8">  method handler(<span class="dt">$req</span>, <span class="dt">$res</span>) {</a>
+<a class="sourceLine" id="cb4-9" title="9">    <span class="dt">$res</span>.headers&lt;Content-Type&gt; = <span class="kw">&#39;</span><span class="st">text/plain</span><span class="kw">&#39;</span>;</a>
+<a class="sourceLine" id="cb4-10" title="10">  }</a>
+<a class="sourceLine" id="cb4-11" title="11">}</a></code></pre></div>
 <p>As you can see above, the <code>Hiker::Route</code> has a lot of information in a small space and it's a class that does a Hiker role called <code>Hiker::Route</code>. This let's our framework know that we should inspect that class for the <code>path, template, model</code> so it can handle those operations for us - <code>path and template</code> are the only required attributes.</p>
 <p>As discussed above, our Route can return a Promise if there is some asynchronous operation that is to be performed. In this case all we're going to do is set the header's to indicated the Content Type and then, automagically, render the template file. Note: if you return a <code>False</code>y value from the handler method, then the router will not auto render and it will attempt to find the next route. This is so that you can cascade paths in the event that you want to chain them together, do some type of decision making real time to determine whether that's the right class for the request, or perform some other unsaid dark magic. In the controller above we return a <code>True</code>thy value and it auto renders.</p>
 <p>By specifying the Model in the Route, you're able to re-use the same Model class across multiple routes.</p>
@@ -92,7 +92,7 @@
 <p>The template is specified by the controller's <code>.template</code> attribute and Hiker checks for that file in the <code>./templates</code> folder. The default template engine is <code>Template::Mustache</code> (<a href="https://github.com/softmoth/p6-Template-Mustache">repo</a>). See that module's documentation for more info.</p>
 <h3 id="running-the-app">Running the App</h3>
 <p>Really pretty straight forward from the boilerplate:</p>
-<div class="sourceCode" id="cb5"><pre class="sourceCode bash"><code class="sourceCode bash"><span id="cb5-1"><a href="#cb5-1" aria-hidden="true" tabindex="-1"></a><span class="ex">somedir$</span> perl6 app.pl6</span></code></pre></div>
+<div class="sourceCode" id="cb5"><pre class="sourceCode bash"><code class="sourceCode bash"><a class="sourceLine" id="cb5-1" title="1"><span class="ex">somedir</span>$ perl6 app.pl6</a></code></pre></div>
 <p>Now you can visit <code>http://127.0.0.1:8080/</code> in your favorite Internet Explorer and find a nice 'Hello web!' message waiting to greet you. If you visit any other URI you'll receive the default 'no route found' message from <code>HTTP::Server::Router</code>.</p>
 <h3 id="the-rest">The Rest</h3>
 <p>The module is relatively young. With feedback from the community, practical applications, and some extra feature expansion, Hiker could be pretty great and it's a good start to taking the tediousness out of building a website in P6. I'm open to feedback and I'd love to hear/see where you think Hiker can be improved, what it's missing to be productive, and possibly anything else [constructive or otherwise] you'd like to see in a practical, rapid development P6 web server.</p>
