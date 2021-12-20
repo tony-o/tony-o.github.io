@@ -1,3 +1,4 @@
+docs/404.html
 docs/index.html
 docs/articles/20150731-refactoring-httpserverasync.html
 docs/articles/20150808-httpserverasync-writing-an-http-request-parser.html
@@ -17,8 +18,10 @@ docs/articles/20211023-why-visual-and-aural-programming-arent.html
 docs/articles/20211101-raku-one-liners.html
 docs/articles/20211112-gos-missing-functional-suspects.html
 docs/articles/20211215-six-minute-ab-testing.html
+docs/articles/20211220-fez-orgs-a-winter-solstice-miracle.html
 docs/tags/database.html
 docs/tags/golang.html
 docs/tags/postgres.html
 docs/tags/programming.html
+docs/tags/raku.html
 docs/tags/rakudo.html

@@ -66,6 +66,7 @@ foreach my $article (reverse sort @articles) {
 
   if (-f "docs/$newfn" && !$regen) {
     printf "skipping: docs/%s\n", $newfn;
+    $files{"./docs/$newfn"}++;
     next;
   }
 
@@ -122,4 +123,4 @@ sub rglob {
 my @docs = grep { -f $_ && $_ =~ m{\.html$} } rglob('docs');
 spurt "./docs/sitemap.txt", join("\n", @docs);
 
-printf "WARNING: unused files:\n%s\n", join("\n", grep { $files{$_} == 0 } sort keys %files) if grep { $files{$_} == 0 } keys %files;
+printf "WARNING: unused files:\n%s\n", join("\n", grep { $_ !~ m/^\.\/docs\/\d+\.html$/ && $files{$_} == 0 } sort keys %files) if grep { $_ !~ m/^\.\/docs\/\d+\.html$/ && $files{$_} == 0 } keys %files;

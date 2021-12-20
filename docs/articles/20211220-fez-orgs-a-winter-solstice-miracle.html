@@ -1,0 +1,109 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <title>dbks - Fez Orgs: A Winter Solstice Miracle</title>
+   	<meta name="description" content="Fez Orgs: A Winter Solstice Miracle" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta content="text/html;charset=utf-8" http-equiv="Content-Type" />
+    <meta content="utf-8" http-equiv="encoding" />
+    <link rel="stylesheet" href="//cdnjs.cloudflare.com/ajax/libs/highlight.js/11.2.0/styles/github.min.css" />
+    <link rel="stylesheet" href="/s/style.css" />
+  </head>
+  <body>
+    <div id="title">
+      <a href="/"><img alt="dbks logo" src="/i/dbks.png" /></a> <a href="/"><h1>deathbykeystroke</h1></a>
+    </div>
+    <div id="article">
+      <h1>Fez Orgs: A Winter Solstice Miracle</h1>
+      <h6>// date:  2021-12-20</h6>
+      <h6>// filed: <a href="/tags/programming.html">programming</a>, <a href="/tags/rakudo.html">rakudo</a></h6>
+      <h6>// <a href="https://deathbykeystroke.com/articles/20211220-fez-orgs-a-winter-solstice-miracle.html">perma</a></h6>
+      <br/>
+
+      <p>Fez now has orgs, it happened over the weekend. Let's take a look at how to get started with them:</p>
+<h2 id="creating-an-org">Creating an Org</h2>
+<p>Take it easy: <code>fez org create &lt;org-name&gt;</code>. If a user or org with that name already exists then this will fail but the skies the limit here. When you create the org you're automatically assigned the role of <code>admin</code>, more on this in the next section.</p>
+<h2 id="managing-your-org">Managing Your Org</h2>
+<p>Great, you're an admin. Now what? Do you have release managers or people you want to allow to upload modules on behalf of <code>org</code>? Fez has two roles:</p>
+<ul>
+<li>Admin - can upload modules, can invite, and manage roles of other users</li>
+<li>Member - can upload modules</li>
+</ul>
+<p>Assign your members accordingly:</p>
+<h3 id="inviting-users-to-your-org">Inviting Users to Your Org</h3>
+<p><code>fez org invite &lt;org-name&gt; &lt;role&gt; &lt;username&gt;</code>. So if I were inviting <code>ugexe</code> to my <code>Zef</code> org then I'd run <code>fez org invite Zef admin ugexe</code> and he'd get an email letting him know about how awesome his life is about to be.</p>
+<h3 id="listing-and-accepting-your-open-invites">Listing and Accepting Your Open Invites</h3>
+<pre><code>$ fez org pending
+&gt;&gt;= R Org
+&gt;&gt;= a Zen
+&gt;&gt;= m zef</code></pre>
+<p>I've been invited to <code>zef</code> as a <code>member</code> and to <code>Zen</code> as an <code>admin</code>. I accept (and the command is the same for both):</p>
+<pre><code>$ fez org accept Zen
+&gt;&gt;= You&#39;re now a very nice member of Zen</code></pre>
+<h3 id="modify-a-users-role">Modify a User's Role</h3>
+<p>Ugexe has done a stellar job in <code>zef</code>, let's promote him to admin:</p>
+<pre><code>$ fez org mod zef admin ugexe
+&gt;&gt;= User&#39;s role was modified</code></pre>
+<p>WHAT??? I just won the lotto! Now I want to leave my orgs because I don't have time :(</p>
+<h2 id="leaving-an-org">Leaving an Org</h2>
+<pre><code>$ fez org leave Zen
+&gt;&gt;= You&#39;re no longer in Zen</code></pre>
+<p>This action will fail if you're the last remaining admin in the org. Why? Leaving the org as the last admin will essentially abandon it so this is designed in a way that you must be very intentional in this action so you must first run <code>fez org mod &lt;org&gt; member &lt;your username&gt;</code> and then <code>leave</code>.</p>
+<p>Now you can manage your entire group!</p>
+<h2 id="bonus-round">Bonus Round</h2>
+<p>A couple of other actions you may or may not find useful:</p>
+<h3 id="list-org-members">List Org Members</h3>
+<pre><code>$ fez org members zef
+&gt;&gt;= R Org Name
+&gt;&gt;= a tony-o
+&gt;&gt;= a ugexe</code></pre>
+<h3 id="list-orgs-you-belong-to">List Orgs You Belong To</h3>
+<pre><code>$ fez org list
+&gt;&gt;= R Org Name
+&gt;&gt;= a zef</code></pre>
+<h2 id="finale">Finale</h2>
+<p>That's basically all and if you need a reminder then of course <code>fez org -h</code> will give you the command <code>USAGE</code>. Have fun!</p>
+
+
+    </div>
+    <div id="footer">
+      <h6>// social twitter:<a href="https://twitter.com/oynoto">@oynoto</a>, patreon:<a href="https://www.patreon.com/oynot">@oynot</a>, github:<a href="https://github.com/tony-o">tony-o</a></h6>
+    </div>
+    <script src="//cdnjs.cloudflare.com/ajax/libs/highlight.js/11.2.0/highlight.min.js"></script>
+    <script src="/s/hljs-raku.js"></script>
+    <script>
+      hljs.registerLanguage("raku", hljs_raku);
+      (function(){
+        languages = {}
+        pres      = document.getElementsByTagName("pre");
+        for(i = 0; i < hljs.listLanguages().length; i++){
+          languages['language-' + hljs.listLanguages()[i]] = 1;
+        }
+        for(i = 0; i < pres.length; i++){
+          pre = pres[i];
+          cn  = 'language-plaintext';
+          ls  = (pre.getAttribute("class") || 'plaintext').split(' ');
+          for(j = 0; j < ls.length; j++){
+            if(languages['language-' + ls[j]]){
+              cn = 'language-' + ls[j];
+              break;
+            }
+          }
+          codes = pre.getElementsByTagName("code")
+          for(j = 0; j < codes.length; j++){
+            codes[j].setAttribute("class", (codes[j].getAttribute("class") + " hljs " + cn).trim())
+          }
+        }
+        hljs.highlightAll();
+      })();
+    </script>
+    <script async src="https://www.googletagmanager.com/gtag/js?id=G-FKJQZPJ2XK"></script>
+    <script>
+      window.dataLayer = window.dataLayer || [];
+      function gtag(){dataLayer.push(arguments);}
+      gtag('js', new Date());
+      gtag('config', 'G-FKJQZPJ2XK');
+    </script>
+
+  </body>
+</html>

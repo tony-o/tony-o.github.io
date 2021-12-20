@@ -22,7 +22,7 @@
 
       <p>So, you want to roll features out slowly or maybe you just want to dip your toes in the water to try out that shiny new button. Great! AB testing has multitudes of methodologies, articles, and optometrists working on the problem. Let's roll our own and then explore the edge cases, problems, and considerations involved with AB testing.</p>
 <h2 id="ab-testing">AB Testing</h2>
-<p>There's all kinds of ways to do AB testing, some using DB functions, others using hashing methods, and some are as simple as just <code>mod</code>ing an id. Each have their benefits and draw backs but we'll aim for speed and even distribution even with small sample sizes. Even distribution with a small sample size is doable but complex with <code>mod</code> so we'll use hashing for the initial setup.</p>
+<p>There's all kinds of ways to do AB testing, some using DB functions, others using hashing methods, and some are as simple as just <code>mod</code>ing an id. Each have their benefits and draw backs but we'll aim for speed and even distribution even with small sample sizes. Even distribution with a small sample size is doable but complex with just a plain old <code>mod</code> so we'll use hashing for the initial setup.</p>
 <p>Initial considerations:</p>
 <ol>
 <li>Determinism. A user should <em>always</em> be shown the same bucket they initially saw</li>
@@ -32,7 +32,7 @@
 <li>Tests can be updated and buckets may disappear, handle gracefully</li>
 </ol>
 <p>Point one is fairly self explanatory. It'd be a pretty poor customer experience if every time you visited your favorite search engine (probably alta vista) the search bar was moved around.</p>
-<p>To discuss <code>mod</code> a little further, the basic idea is that you take the remainder of the id divided by how many buckets the test contains, with consideration their weights, and then choose the bucket corresponding with the remainder. You can do funny stuff to make this distribute more evenly but this isn't a math lesson, we're talking about AB testing and we just wanna hash, man.</p>
+<p>To discuss <code>mod</code> a little further, the basic idea is that you take the remainder of the id divided by how many buckets the test contains, with consideration their weights, and then choose the bucket corresponding with the remainder. You can do funny stuff to make this distribute more evenly distributed without hashing but this isn't a math lesson, we're talking about AB testing and we just wanna hash, man.</p>
 <p>If the bucketing only matters over the lifetime of the app then no queries should ever be necessary. If you have a distributed system or many things bucketing entities then you may end up storing bucket details in a database of some sort and memoizing locally.</p>
 <p>Let's define some types:</p>
 <div class="sourceCode" id="cb1"><pre class="sourceCode go"><code class="sourceCode go"><span id="cb1-1"><a href="#cb1-1" aria-hidden="true" tabindex="-1"></a><span class="co">// This is a bare AB Test</span></span>
@@ -144,7 +144,7 @@ bucket b is within the right range, expected=2&lt;=x&lt;=3,got=2</code></pre>
 <p>What if it's really biased bucketing? Oh I don't know, 3 tests?</p>
 <pre><code>bucket control is within the right range, expected=1&lt;=x&lt;=2,got=2
 bucket a is within the right range, expected=0&lt;=x&lt;=1,got=1
-bucket b is not within the right range, expected=0&lt;=x&lt;=1,got=0</code></pre>
+bucket b is within the right range, expected=0&lt;=x&lt;=1,got=0</code></pre>
 <p>Bingo! Okay, for the rest of this article we're going to use the OG pool size of <code>100000</code> and we'll consider our even distribution problem solved.</p>
 <p>Now to test point one, remember point one? Determinism. Let's get after it:</p>
 <div class="sourceCode" id="cb10"><pre class="sourceCode go"><code class="sourceCode go"><span id="cb10-1"><a href="#cb10-1" aria-hidden="true" tabindex="-1"></a>    testBucket<span class="op">,</span> _ <span class="op">:=</span> tests<span class="op">.</span>GetBucket<span class="op">(</span><span class="st">&quot;test1&quot;</span><span class="op">,</span> <span class="st">&quot;hello, world!&quot;</span><span class="op">)</span></span>
