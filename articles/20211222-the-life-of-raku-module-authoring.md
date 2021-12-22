@@ -52,11 +52,11 @@ Our module directory structure:
 └── META6.json
 ```
 
-`lib` is the main content of your module, it's where all of your module's utilities, helpers, and organization happens.  Each file corresponds to one or more modules or classes, more on this in the META topic.
-
-`t` contains all of your module's tests.  If you have author only tests then you'd also have a directory `xt` and that directory works roughly the same. For your users' sanity WRITE TESTS!
+`lib` is the main content of your module, it's where all of your module's utilities, helpers, and organization happens.  Each file corresponds to one or more modules or classes, more on in the `META6.json` paragraph below.
 
 `META6.json` is how zef knows what the module is, it's how fez knows what it's uploading, and it's how rakudo knows how to load what and from where. Let's take a look at the structure of META6.json:
+
+`t` contains all of your module's tests.  If you have "author only" tests then you'd also have a directory `xt` and that directory works roughly the same. For your users' sanity WRITE TESTS!
 
 ```json
 {
