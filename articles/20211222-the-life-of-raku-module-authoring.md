@@ -47,8 +47,8 @@ Our module directory structure:
 ├── lib
 │   └── ROT13.rakumod
 ├── t
-│   ├── 00-use.t
-│   └── 01-tests.t
+│   ├── 00-use.rakutest
+│   └── 01-tests.rakutest
 └── META6.json
 ```
 
@@ -93,6 +93,8 @@ sub rot13(Str() $_) is export { .trans('a..zA..Z'=>'n..za..mN..ZA..Z') }
 ```
 
 Great, you can test it now (from the root of your module directory) with `raku -Ilib -e 'use ROT13; say rot13("hello, WoRlD!");`. You should get output of `uryyb, JbEyQ!`.
+
+Now fill in your tests and run the tests with `zef test .`
 
 ## Publishing Your Module
 
