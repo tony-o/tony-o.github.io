@@ -62,7 +62,7 @@ Our module directory structure:
 {
   "name": "ROT13",
   "auth": "zef:tony-o",
-  "version": "0.0.0",
+  "version": "0.0.1",
   "api": 0,
 
   "provides": {
@@ -78,11 +78,15 @@ Our module directory structure:
 }
 ```
 
+A quick discussion about `dist`s.  A `dist` is the fully qualified name of your module and it contains the `name, auth, and version`.  It's how `zef` can differentiate your ROT13 module from mine. It works in conjunction with `use` eg `use ROT13:auth<zef:tony-o>` and in `zef` eg `zef install ROT13:auth<tony-o>:ver<0.0.1>`.  The dist string is always qualified with both the `:auth` and the `:ver` internally to raku and the ecosystem, but the end user isn't required to type the fully qualified `dist` if they're less picky about what version/author of the module they'd like. In `use` statements you can combine `auth` and `ver` to get the author or version you're expecting or you can omit one or both.
+
+It's better practice to fully qualify your `use` statements; as more modules hit the ecosystem with the same `name`, this practice will help keep your modules running smoothly.
+
 * `name`: this is the name of the module and becomes part of your `dist`, it's what is referenced when your consumers type `zef install ROT13`.
-* `auth`: this is how the ecosystem knows who the author is.  On fez this is strict, no other rakudo ecosystem guarantee this matches the uploader's username. auth also becomes part of your `dist`.
-* `version`: version must be unique to the `auth` and `name`.  Eg you can't upload two `dists` with the value of `ROT13:auth<zef:tony-o>:ver<0.0.0>`.
-* `provides`: in provides is the key/value pairs of module and class names to which file they belong to.  If you have two modules in one file then you should have the same file listed twice with the key for each being each class/module name. All `.rakumod` files in `lib` should be in the META6.json file.
-* `*depends`: lists all of your module's dependencies and at which point they're needed, ours will have none. Plain `depends` means `runtime` dependency.
+* `auth`: this is how the ecosystem knows who the author is.  On fez this is strict, no other rakudo ecosystem guarantee this matches the uploader's username.
+* `version`: version must be unique to the `auth` and `name`.  Eg you can't upload two `dists` with the value of `ROT13:auth<zef:tony-o>:ver<0.0.1>`.
+* `provides`: in provides is the key/value pairs of module and class names to which file they belong to.  If you have two modules in one file then you should have the same file listed twice with the key for each being each class/module name. All `.rakumod` files in `lib` should be in the META6.json file.  The keys here are how rakudo knows which file to look for your class/module in.
+* `depends`: a list of your runtime depencies
 
 Let's whip up a quick ROT13 module, in `lib/ROT13.rakumod` dump the following
 
@@ -92,9 +96,9 @@ unit module ROT13;
 sub rot13(Str() $_) is export { .trans('a..zA..Z'=>'n..za..mN..ZA..Z') }
 ```
 
-Great, you can test it now (from the root of your module directory) with `raku -Ilib -e 'use ROT13; say rot13("hello, WoRlD!");`. You should get output of `uryyb, JbEyQ!`.
+Great, you can test it now (from the root of your module directory) with `raku -I. -e 'use ROT13; say rot13("hello, WoRlD!");`. You should get output of `uryyb, JbEyQ!`.
 
-Now fill in your tests and run the tests with `zef test .`
+Now fill in your test files and run the tests with `zef test .`
 
 ## Publishing Your Module
 
@@ -120,7 +124,7 @@ $ fez checkbuild
 >>= Inspecting ./META6.json
 >>= meta<provides> looks OK
 >>= meta<resources> looks OK
->>= ROT13:ver<0.0.0>:auth<zef:tony-o> looks OK
+>>= ROT13:ver<0.0.1>:auth<zef:tony-o> looks OK
 ```
 
 Oh snap, we're lookin' good!
