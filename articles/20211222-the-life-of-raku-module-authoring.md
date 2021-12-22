@@ -78,7 +78,7 @@ Our module directory structure:
 }
 ```
 
-* `name`: this is the name of the module and becomes part of your `dist`, it's what is referenced when your consumers type `use ROT13` into their scripts.
+* `name`: this is the name of the module and becomes part of your `dist`, it's what is referenced when your consumers type `zef install ROT13`.
 * `auth`: this is how the ecosystem knows who the author is.  On fez this is strict, no other rakudo ecosystem guarantee this matches the uploader's username. auth also becomes part of your `dist`.
 * `version`: version must be unique to the `auth` and `name`.  Eg you can't upload two `dists` with the value of `ROT13:auth<zef:tony-o>:ver<0.0.0>`.
 * `provides`: in provides is the key/value pairs of module and class names to which file they belong to.  If you have two modules in one file then you should have the same file listed twice with the key for each being each class/module name. All `.rakumod` files in `lib` should be in the META6.json file.
