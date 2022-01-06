@@ -20,6 +20,7 @@ docs/articles/20211112-gos-missing-functional-suspects.html
 docs/articles/20211215-six-minute-ab-testing.html
 docs/articles/20211220-fez-orgs-a-winter-solstice-miracle.html
 docs/articles/20211222-the-life-of-raku-module-authoring.html
+docs/articles/20220106-real-macros-in-go.html
 docs/tags/database.html
 docs/tags/golang.html
 docs/tags/postgres.html
