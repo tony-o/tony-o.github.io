@@ -10,7 +10,7 @@ if [[ $# -ne 1 ]]; then
   title="$*"
 fi
 
-slug="$(echo "${title}" | perl -p -e '$_ = lc($_); $_ =~ s/ /-/g; $_ =~ s/[^\w-]+//g;')"
+slug="$(echo "${title}" | perl -p -e '$_ = lc($_); $_ =~ s/ /-/g; $_ =~ s/[^\w-]+//g; $_ =~ s/\-{2,}/-/g;')"
 name="$( date +"%Y%m%d" )-${slug}.md"
 fpath="articles/${name}"
 
