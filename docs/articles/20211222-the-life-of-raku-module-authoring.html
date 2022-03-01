@@ -20,7 +20,10 @@
       <h6>// <a href="https://deathbykeystroke.com/articles/20211222-the-life-of-raku-module-authoring.html">perma</a></h6>
       <br/>
 
-      <p>Hello, world! This article is a lot about <code>fez</code> and how you can get started writing your first module and making it available to other users. Presuming you have <code>rakudo</code> and <code>zef</code> installed, install <code>fez</code>!</p>
+      <p>Hello, world! This article is a lot about <code>fez</code> and how
+you can get started writing your first module and making it available to
+other users. Presuming you have <code>rakudo</code> and <code>zef</code>
+installed, install <code>fez</code>!</p>
 <pre><code>$ zef install fez
 ===&gt; Searching for: fez
 ===&gt; Updating fez mirror: https://360.zef.pm/
@@ -50,7 +53,11 @@
 
 1 bin/ script [fez] installed to:
 /home/tonyo/.local/share/perl6/site/bin</code></pre>
-<p>Make sure that the last line is in your <code>$PATH</code> so the next set of commands all run smoothly. Now we can start writing the actual module, let's write ROT13 since it's a fairly easy problem to solve and this article really is less about module content than how to get working with <code>fez</code>.</p>
+<p>Make sure that the last line is in your <code>$PATH</code> so the
+next set of commands all run smoothly. Now we can start writing the
+actual module, let's write ROT13 since it's a fairly easy problem to
+solve and this article really is less about module content than how to
+get working with <code>fez</code>.</p>
 <h2 id="writing-the-module">Writing the Module</h2>
 <p>Our module directory structure:</p>
 <pre><code>.
@@ -60,10 +67,20 @@
 │   ├── 00-use.rakutest
 │   └── 01-tests.rakutest
 └── META6.json</code></pre>
-<p><code>lib</code> is the main content of your module, it's where all of your module's utilities, helpers, and organization happens. Each file corresponds to one or more modules or classes, more on in the <code>META6.json</code> paragraph below.</p>
-<p><code>META6.json</code> is how zef knows what the module is, it's how fez knows what it's uploading, and it's how rakudo knows how to load what and from where. Let's take a look at the structure of META6.json:</p>
-<p><code>t</code> contains all of your module's tests. If you have "author only" tests then you'd also have a directory <code>xt</code> and that directory works roughly the same. For your users' sanity WRITE TESTS!</p>
-<div class="sourceCode" id="cb3"><pre class="sourceCode json"><code class="sourceCode json"><span id="cb3-1"><a href="#cb3-1" aria-hidden="true" tabindex="-1"></a><span class="fu">{</span></span>
+<p><code>lib</code> is the main content of your module, it's where all
+of your module's utilities, helpers, and organization happens. Each file
+corresponds to one or more modules or classes, more on in the
+<code>META6.json</code> paragraph below.</p>
+<p><code>META6.json</code> is how zef knows what the module is, it's how
+fez knows what it's uploading, and it's how rakudo knows how to load
+what and from where. Let's take a look at the structure of
+META6.json:</p>
+<p><code>t</code> contains all of your module's tests. If you have
+"author only" tests then you'd also have a directory <code>xt</code> and
+that directory works roughly the same. For your users' sanity WRITE
+TESTS!</p>
+<div class="sourceCode" id="cb3"><pre
+class="sourceCode json"><code class="sourceCode json"><span id="cb3-1"><a href="#cb3-1" aria-hidden="true" tabindex="-1"></a><span class="fu">{</span></span>
 <span id="cb3-2"><a href="#cb3-2" aria-hidden="true" tabindex="-1"></a>  <span class="dt">&quot;name&quot;</span><span class="fu">:</span> <span class="st">&quot;ROT13&quot;</span><span class="fu">,</span></span>
 <span id="cb3-3"><a href="#cb3-3" aria-hidden="true" tabindex="-1"></a>  <span class="dt">&quot;auth&quot;</span><span class="fu">:</span> <span class="st">&quot;zef:tony-o&quot;</span><span class="fu">,</span></span>
 <span id="cb3-4"><a href="#cb3-4" aria-hidden="true" tabindex="-1"></a>  <span class="dt">&quot;version&quot;</span><span class="fu">:</span> <span class="st">&quot;0.0.1&quot;</span><span class="fu">,</span></span>
@@ -80,21 +97,54 @@
 <span id="cb3-15"><a href="#cb3-15" aria-hidden="true" tabindex="-1"></a>  <span class="dt">&quot;tags&quot;</span><span class="fu">:</span>        <span class="ot">[</span> <span class="st">&quot;ROT13&quot;</span><span class="ot">,</span> <span class="st">&quot;crypto&quot;</span> <span class="ot">]</span><span class="fu">,</span></span>
 <span id="cb3-16"><a href="#cb3-16" aria-hidden="true" tabindex="-1"></a>  <span class="dt">&quot;description&quot;</span><span class="fu">:</span> <span class="st">&quot;ROT13 everything!&quot;</span></span>
 <span id="cb3-17"><a href="#cb3-17" aria-hidden="true" tabindex="-1"></a><span class="fu">}</span></span></code></pre></div>
-<p>A quick discussion about <code>dist</code>s. A <code>dist</code> is the fully qualified name of your module and it contains the <code>name, auth, and version</code>. It's how <code>zef</code> can differentiate your ROT13 module from mine. It works in conjunction with <code>use</code>, such as <code>use ROT13:auth&lt;zef:tony-o&gt;</code>, and in <code>zef: zef install ROT13:auth&lt;tony-o&gt;:ver&lt;0.0.1&gt;</code>. The dist string is always qualified with both the <code>:auth</code> and the <code>:ver</code> internally to raku and the ecosystem, but the end user isn't required to type the fully qualified <code>dist</code> if they're less picky about what version/author of the module they'd like. In <code>use</code> statements you can combine <code>auth</code> and <code>ver</code> to get the author or version you're expecting or you can omit one or both.</p>
-<p>It's better practice to fully qualify your <code>use</code> statements; as more modules hit the ecosystem with the same <code>name</code>, this practice will help keep your modules running smoothly.</p>
+<p>A quick discussion about <code>dist</code>s. A <code>dist</code> is
+the fully qualified name of your module and it contains the
+<code>name, auth, and version</code>. It's how <code>zef</code> can
+differentiate your ROT13 module from mine. It works in conjunction with
+<code>use</code>, such as <code>use ROT13:auth&lt;zef:tony-o&gt;</code>,
+and in
+<code>zef: zef install ROT13:auth&lt;tony-o&gt;:ver&lt;0.0.1&gt;</code>.
+The dist string is always qualified with both the <code>:auth</code> and
+the <code>:ver</code> internally to raku and the ecosystem, but the end
+user isn't required to type the fully qualified <code>dist</code> if
+they're less picky about what version/author of the module they'd like.
+In <code>use</code> statements you can combine <code>auth</code> and
+<code>ver</code> to get the author or version you're expecting or you
+can omit one or both.</p>
+<p>It's better practice to fully qualify your <code>use</code>
+statements; as more modules hit the ecosystem with the same
+<code>name</code>, this practice will help keep your modules running
+smoothly.</p>
 <ul>
-<li><code>name</code>: this is the name of the module and becomes part of your <code>dist</code>, it's what is referenced when your consumers type <code>zef install ROT13</code>.</li>
-<li><code>auth</code>: this is how the ecosystem knows who the author is. On fez this is strict, no other rakudo ecosystem guarantees this matches the uploader's username.</li>
-<li><code>version</code>: version must be unique to the <code>auth</code> and <code>name</code>. For instance, you can't upload two <code>dists</code> with the value of <code>ROT13:auth&lt;zef:tony-o&gt;:ver&lt;0.0.1&gt;</code>.</li>
-<li><code>provides</code>: in provides is the key/value pairs of module and class names to which file they belong to. If you have two modules in one file then you should have the same file listed twice with the key for each being each class/module name. All <code>.rakumod</code> files in <code>lib</code> should be in the META6.json file. The keys here are how rakudo knows which file to look for your class/module in.</li>
+<li><code>name</code>: this is the name of the module and becomes part
+of your <code>dist</code>, it's what is referenced when your consumers
+type <code>zef install ROT13</code>.</li>
+<li><code>auth</code>: this is how the ecosystem knows who the author
+is. On fez this is strict, no other rakudo ecosystem guarantees this
+matches the uploader's username.</li>
+<li><code>version</code>: version must be unique to the
+<code>auth</code> and <code>name</code>. For instance, you can't upload
+two <code>dists</code> with the value of
+<code>ROT13:auth&lt;zef:tony-o&gt;:ver&lt;0.0.1&gt;</code>.</li>
+<li><code>provides</code>: in provides is the key/value pairs of module
+and class names to which file they belong to. If you have two modules in
+one file then you should have the same file listed twice with the key
+for each being each class/module name. All <code>.rakumod</code> files
+in <code>lib</code> should be in the META6.json file. The keys here are
+how rakudo knows which file to look for your class/module in.</li>
 <li><code>depends</code>: a list of your runtime depencies</li>
 </ul>
-<p>Let's whip up a quick ROT13 module, in <code>lib/ROT13.rakumod</code> dump the following</p>
-<div class="sourceCode" id="cb4"><pre class="sourceCode raku"><code class="sourceCode raku"><span id="cb4-1"><a href="#cb4-1" aria-hidden="true" tabindex="-1"></a>unit <span class="kw">module</span> ROT13;</span>
+<p>Let's whip up a quick ROT13 module, in <code>lib/ROT13.rakumod</code>
+dump the following</p>
+<div class="sourceCode" id="cb4"><pre
+class="sourceCode raku"><code class="sourceCode raku"><span id="cb4-1"><a href="#cb4-1" aria-hidden="true" tabindex="-1"></a>unit <span class="kw">module</span> ROT13;</span>
 <span id="cb4-2"><a href="#cb4-2" aria-hidden="true" tabindex="-1"></a></span>
 <span id="cb4-3"><a href="#cb4-3" aria-hidden="true" tabindex="-1"></a><span class="bu">sub</span> rot13<span class="kw">(</span><span class="dt">Str</span><span class="kw">()</span> <span class="va">$_</span><span class="kw">)</span> <span class="kw">is</span> <span class="bu">export</span> <span class="kw">{</span> <span class="kw">.</span>trans<span class="kw">(</span><span class="ch">&#39;</span><span class="st">a..zA..Z</span><span class="ch">&#39;</span><span class="kw">=&gt;</span><span class="ch">&#39;</span><span class="st">n..za..mN..ZA..Z</span><span class="ch">&#39;</span><span class="kw">)</span> <span class="kw">}</span></span></code></pre></div>
-<p>Great, you can test it now (from the root of your module directory) with <code>raku -I. -e 'use ROT13; say rot13("hello, WoRlD!");</code>. You should get output of <code>uryyb, JbEyQ!</code>.</p>
-<p>Now fill in your test files and run the tests with <code>zef test .</code></p>
+<p>Great, you can test it now (from the root of your module directory)
+with <code>raku -I. -e 'use ROT13; say rot13("hello, WoRlD!");</code>.
+You should get output of <code>uryyb, JbEyQ!</code>.</p>
+<p>Now fill in your test files and run the tests with
+<code>zef test .</code></p>
 <h2 id="publishing-your-module">Publishing Your Module</h2>
 <h3 id="register">Register</h3>
 <p>If you're not registered with fez, now's the time!</p>
@@ -116,19 +166,29 @@
 <h3 id="publish">Publish</h3>
 <pre><code>$ fez upload
 &gt;&gt;= Hey! You did it! Your dist will be indexed shortly.</code></pre>
-<p>Only thing to note here is that if there's a problem indexing your module then you'll receive an email with the gripe.</p>
+<p>Only thing to note here is that if there's a problem indexing your
+module then you'll receive an email with the gripe.</p>
 <h2 id="further-reading">Further Reading</h2>
 <p>You can read more about <code>fez</code> here:</p>
 <ul>
-<li><a href="https://deathbykeystroke.com/articles/20210116-fezzef---a-raku-ecosystem-and-auth.html">(FEZ|ZEF) - A Raku Ecosystem and Auth</a></li>
-<li><a href="https://deathbykeystroke.com/articles/20210120-faq-zef-ecosystem.html">faq: zef ecosystem</a></li>
-<li><a href="https://deathbykeystroke.com/articles/20211220-fez-orgs-a-winter-solstice-miracle.html">Fez Orgs: A Winter Solstice Miracle</a></li>
+<li><a
+href="https://deathbykeystroke.com/articles/20210116-fezzef---a-raku-ecosystem-and-auth.html">(FEZ|ZEF)
+- A Raku Ecosystem and Auth</a></li>
+<li><a
+href="https://deathbykeystroke.com/articles/20210120-faq-zef-ecosystem.html">faq:
+zef ecosystem</a></li>
+<li><a
+href="https://deathbykeystroke.com/articles/20211220-fez-orgs-a-winter-solstice-miracle.html">Fez
+Orgs: A Winter Solstice Miracle</a></li>
 </ul>
 <p>Perhaps you'd prefer listening:</p>
 <ul>
-<li><a href="https://conf.raku.org/talk/143">Fez/Zef, an Ecosystem and the Architecture</a></li>
+<li><a href="https://conf.raku.org/talk/143">Fez/Zef, an Ecosystem and
+the Architecture</a></li>
 </ul>
-<p>That's it! If there's other things you'd like to know about fez, zef, or ecosystems then send <code>tony-o</code> some chat in IRC or an email!</p>
+<p>That's it! If there's other things you'd like to know about fez, zef,
+or ecosystems then send <code>tony-o</code> some chat in IRC or an
+email!</p>
 
 
     </div>

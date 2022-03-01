@@ -20,20 +20,43 @@
       <h6>// <a href="https://deathbykeystroke.com/articles/20211215-six-minute-ab-testing.html">perma</a></h6>
       <br/>
 
-      <p>So, you want to roll features out slowly or maybe you just want to dip your toes in the water to try out that shiny new button. Great! AB testing has multitudes of methodologies, articles, and optometrists working on the problem. Let's roll our own and then explore the edge cases, problems, and considerations involved with AB testing.</p>
+      <p>So, you want to roll features out slowly or maybe you just want to
+dip your toes in the water to try out that shiny new button. Great! AB
+testing has multitudes of methodologies, articles, and optometrists
+working on the problem. Let's roll our own and then explore the edge
+cases, problems, and considerations involved with AB testing.</p>
 <h2 id="ab-testing">AB Testing</h2>
-<p>There's all kinds of ways to do AB testing, some using DB functions, others using hashing methods, and some are as simple as just <code>mod</code>ing an id. Each have their benefits and draw backs but we'll aim for speed and even distribution even with small sample sizes. Even distribution with a small sample size is doable but complex with just a plain old <code>mod</code> so we'll use hashing for the initial setup.</p>
+<p>There's all kinds of ways to do AB testing, some using DB functions,
+others using hashing methods, and some are as simple as just
+<code>mod</code>ing an id. Each have their benefits and draw backs but
+we'll aim for speed and even distribution even with small sample sizes.
+Even distribution with a small sample size is doable but complex with
+just a plain old <code>mod</code> so we'll use hashing for the initial
+setup.</p>
 <p>Initial considerations:</p>
 <ol>
-<li>Determinism. A user should <em>always</em> be shown the same bucket they initially saw</li>
+<li>Determinism. A user should <em>always</em> be shown the same bucket
+they initially saw</li>
 <li>Even bucket distribution</li>
 <li>Bucketing should never use or require more than one query</li>
-<li>Tests can contain more than two buckets and each bucket can be weighted</li>
-<li>Tests can be updated and buckets may disappear, handle gracefully</li>
+<li>Tests can contain more than two buckets and each bucket can be
+weighted</li>
+<li>Tests can be updated and buckets may disappear, handle
+gracefully</li>
 </ol>
-<p>Point one is fairly self explanatory. It'd be a pretty poor customer experience if every time you visited your favorite search engine (probably alta vista) the search bar was moved around.</p>
-<p>To discuss <code>mod</code> a little further, the basic idea is that you take the remainder of the id divided by how many buckets the test contains, with consideration their weights, and then choose the bucket corresponding with the remainder. You can do funny stuff to make this distribute more evenly distributed without hashing but this isn't a math lesson, we're talking about AB testing and we just wanna hash, man.</p>
-<p>If the bucketing only matters over the lifetime of the app then no queries should ever be necessary. If you have a distributed system or many things bucketing entities then you may end up storing bucket details in a database of some sort and memoizing locally.</p>
+<p>Point one is fairly self explanatory. It'd be a pretty poor customer
+experience if every time you visited your favorite search engine
+(probably alta vista) the search bar was moved around.</p>
+<p>To discuss <code>mod</code> a little further, the basic idea is that
+you take the remainder of the id divided by how many buckets the test
+contains, with consideration their weights, and then choose the bucket
+corresponding with the remainder. You can do funny stuff to make this
+distribute more evenly distributed without hashing but this isn't a math
+lesson, we're talking about AB testing and we just wanna hash, man.</p>
+<p>If the bucketing only matters over the lifetime of the app then no
+queries should ever be necessary. If you have a distributed system or
+many things bucketing entities then you may end up storing bucket
+details in a database of some sort and memoizing locally.</p>
 <p>Let's define some types:</p>
 <div class="sourceCode" id="cb1"><pre class="sourceCode go"><code class="sourceCode go"><span id="cb1-1"><a href="#cb1-1" aria-hidden="true" tabindex="-1"></a><span class="co">// This is a bare AB Test</span></span>
 <span id="cb1-2"><a href="#cb1-2" aria-hidden="true" tabindex="-1"></a><span class="kw">type</span> Test <span class="kw">struct</span> <span class="op">{</span></span>
@@ -44,9 +67,13 @@
 <span id="cb1-7"><a href="#cb1-7" aria-hidden="true" tabindex="-1"></a></span>
 <span id="cb1-8"><a href="#cb1-8" aria-hidden="true" tabindex="-1"></a><span class="co">// This is our directory of AB Tests</span></span>
 <span id="cb1-9"><a href="#cb1-9" aria-hidden="true" tabindex="-1"></a><span class="kw">type</span> ABTests <span class="kw">map</span><span class="op">[</span><span class="dt">string</span><span class="op">][]</span>Test</span></code></pre></div>
-<p>First thing to notice, type <code>Test</code> contains no stateful information. It doesn't keep track of ids bucketed or what type of overall AB test it belongs to.</p>
-<p>We're off to a blazing start and have satisfied no criterion we've designated for success.</p>
-<p>Let's add the bucketing receiver so we can add <code>Test</code>s to <code>ABTests</code>:</p>
+<p>First thing to notice, type <code>Test</code> contains no stateful
+information. It doesn't keep track of ids bucketed or what type of
+overall AB test it belongs to.</p>
+<p>We're off to a blazing start and have satisfied no criterion we've
+designated for success.</p>
+<p>Let's add the bucketing receiver so we can add <code>Test</code>s to
+<code>ABTests</code>:</p>
 <div class="sourceCode" id="cb2"><pre class="sourceCode go"><code class="sourceCode go"><span id="cb2-1"><a href="#cb2-1" aria-hidden="true" tabindex="-1"></a><span class="kw">func</span> <span class="op">(</span>a ABTest<span class="op">)</span> AddTest<span class="op">(</span>testName <span class="dt">string</span><span class="op">,</span> t Test<span class="op">)</span> <span class="dt">bool</span> <span class="op">{</span></span>
 <span id="cb2-2"><a href="#cb2-2" aria-hidden="true" tabindex="-1"></a>    <span class="kw">if</span> _<span class="op">,</span> ok <span class="op">:=</span> a<span class="op">[</span>testName<span class="op">];</span> <span class="op">!</span>ok <span class="op">{</span></span>
 <span id="cb2-3"><a href="#cb2-3" aria-hidden="true" tabindex="-1"></a>        a<span class="op">[</span>testName<span class="op">]</span> <span class="op">=</span> <span class="op">[]</span>Test<span class="op">{}</span></span>
@@ -57,7 +84,10 @@
 <span id="cb2-8"><a href="#cb2-8" aria-hidden="true" tabindex="-1"></a>    a<span class="op">[</span>testName<span class="op">]</span> <span class="op">=</span> <span class="bu">append</span><span class="op">(</span>a<span class="op">[</span>testName<span class="op">],</span> t<span class="op">)</span></span>
 <span id="cb2-9"><a href="#cb2-9" aria-hidden="true" tabindex="-1"></a>    <span class="kw">return</span> <span class="ot">true</span></span>
 <span id="cb2-10"><a href="#cb2-10" aria-hidden="true" tabindex="-1"></a><span class="op">}</span></span></code></pre></div>
-<p>One thing to note here is that <code>AddTest</code> is calculating the <code>totalWeight</code> for the test here rather than during bucketing so we don't have to recalculate each time we want to know something about the test.</p>
+<p>One thing to note here is that <code>AddTest</code> is calculating
+the <code>totalWeight</code> for the test here rather than during
+bucketing so we don't have to recalculate each time we want to know
+something about the test.</p>
 <p>Cool, now we can do something like this in <code>main.go</code>:</p>
 <div class="sourceCode" id="cb3"><pre class="sourceCode go"><code class="sourceCode go"><span id="cb3-1"><a href="#cb3-1" aria-hidden="true" tabindex="-1"></a><span class="kw">func</span> main<span class="op">()</span> <span class="op">{</span></span>
 <span id="cb3-2"><a href="#cb3-2" aria-hidden="true" tabindex="-1"></a>    tests <span class="op">:=</span> ABTest<span class="op">{}</span></span>
@@ -68,7 +98,9 @@
 <span id="cb3-7"><a href="#cb3-7" aria-hidden="true" tabindex="-1"></a></span>
 <span id="cb3-8"><a href="#cb3-8" aria-hidden="true" tabindex="-1"></a>  <span class="co">//...</span></span>
 <span id="cb3-9"><a href="#cb3-9" aria-hidden="true" tabindex="-1"></a><span class="op">}</span></span></code></pre></div>
-<p>Aaaand, we still have none of the success criteria being met. Let's at least do some bucketing so we can make progress towards our goals.</p>
+<p>Aaaand, we still have none of the success criteria being met. Let's
+at least do some bucketing so we can make progress towards our
+goals.</p>
 <div class="sourceCode" id="cb4"><pre class="sourceCode go"><code class="sourceCode go"><span id="cb4-1"><a href="#cb4-1" aria-hidden="true" tabindex="-1"></a><span class="kw">func</span> <span class="op">(</span>t Test<span class="op">)</span> getBucket<span class="op">(</span>initialWeight <span class="dt">int64</span><span class="op">)</span> <span class="op">(</span><span class="dt">string</span><span class="op">,</span> <span class="dt">bool</span><span class="op">)</span> <span class="op">{</span></span>
 <span id="cb4-2"><a href="#cb4-2" aria-hidden="true" tabindex="-1"></a>    <span class="kw">for</span> idx<span class="op">,</span> ui <span class="op">:=</span> <span class="kw">range</span> t<span class="op">.</span>Weights <span class="op">{</span></span>
 <span id="cb4-3"><a href="#cb4-3" aria-hidden="true" tabindex="-1"></a>        initialWeight <span class="op">-=</span> <span class="dt">int64</span><span class="op">(</span>ui<span class="op">)</span></span>
@@ -91,9 +123,18 @@
 <span id="cb4-20"><a href="#cb4-20" aria-hidden="true" tabindex="-1"></a>    bucket<span class="op">,</span> _ <span class="op">:=</span> t<span class="op">.</span>getBucket<span class="op">(</span><span class="dt">int64</span><span class="op">(</span>hash<span class="op">(</span>key<span class="op">)</span> <span class="op">%</span> t<span class="op">.</span>totalWeight<span class="op">))</span></span>
 <span id="cb4-21"><a href="#cb4-21" aria-hidden="true" tabindex="-1"></a>    <span class="kw">return</span> bucket<span class="op">,</span> <span class="ot">nil</span></span>
 <span id="cb4-22"><a href="#cb4-22" aria-hidden="true" tabindex="-1"></a><span class="op">}</span></span></code></pre></div>
-<p>The keen observer will notice that this could be just one function. It could be but having it as two methods allows us to do other little tricks later on and makes it a little clearer whose responsibility it is for what part of the action.</p>
-<p>Our <code>GetBucket</code> function takes a test name and entity id, looks for a test by that name, verifies it has more than zero tests to its name, hashes the id with the test name, retrieves the bucket from the test and returns this.</p>
-<p>You might also notice that we are still using <code>mod</code> (or <code>%</code> in go). Hashing is just one method of randomizing the order of the buckets distribution. Don't believe it? Agreed, sounds a little too mathy to let that sleeping dog lie.</p>
+<p>The keen observer will notice that this could be just one function.
+It could be but having it as two methods allows us to do other little
+tricks later on and makes it a little clearer whose responsibility it is
+for what part of the action.</p>
+<p>Our <code>GetBucket</code> function takes a test name and entity id,
+looks for a test by that name, verifies it has more than zero tests to
+its name, hashes the id with the test name, retrieves the bucket from
+the test and returns this.</p>
+<p>You might also notice that we are still using <code>mod</code> (or
+<code>%</code> in go). Hashing is just one method of randomizing the
+order of the buckets distribution. Don't believe it? Agreed, sounds a
+little too mathy to let that sleeping dog lie.</p>
 <p>Let's test it, in <code>main.go</code> add:</p>
 <div class="sourceCode" id="cb5"><pre class="sourceCode go"><code class="sourceCode go"><span id="cb5-1"><a href="#cb5-1" aria-hidden="true" tabindex="-1"></a><span class="kw">const</span> ACCEPTABLE_THRESHOLD <span class="op">=</span> <span class="op">.</span><span class="dv">01</span> <span class="co">// 1%</span></span>
 <span id="cb5-2"><a href="#cb5-2" aria-hidden="true" tabindex="-1"></a><span class="kw">const</span> POOL_SIZE            <span class="op">=</span> <span class="dv">100000</span></span></code></pre></div>
@@ -133,11 +174,13 @@
 <span id="cb6-33"><a href="#cb6-33" aria-hidden="true" tabindex="-1"></a>            fmt<span class="op">.</span>Printf<span class="op">(</span><span class="st">&quot;bucket %s is within the right range, expected=%0.3f&lt;=x&lt;=%0.3f,got=%0.3f</span><span class="ch">\n</span><span class="st">&quot;</span><span class="op">,</span> bkt<span class="op">,</span> min<span class="op">,</span> max<span class="op">,</span> <span class="dt">float64</span><span class="op">(</span>a<span class="op">))</span></span>
 <span id="cb6-34"><a href="#cb6-34" aria-hidden="true" tabindex="-1"></a>        <span class="op">}</span></span>
 <span id="cb6-35"><a href="#cb6-35" aria-hidden="true" tabindex="-1"></a>    <span class="op">}</span></span></code></pre></div>
-<p>Now, upon running this hog, we should get some cool messages from golang letting us know our distribution is within the city limits.</p>
+<p>Now, upon running this hog, we should get some cool messages from
+golang letting us know our distribution is within the city limits.</p>
 <pre><code>bucket control is within the right range, expected=49500&lt;=x&lt;=50500,got=50000
 bucket a is within the right range, expected=24750&lt;=x&lt;=25250,got=25001
 bucket b is within the right range, expected=24750&lt;=x&lt;=25250,got=24999</code></pre>
-<p>Woohoo, point two is done and dusted. Great distribution. If you play around and make the pool size only 10, we should still be OK.</p>
+<p>Woohoo, point two is done and dusted. Great distribution. If you play
+around and make the pool size only 10, we should still be OK.</p>
 <pre><code>bucket control is within the right range, expected=4&lt;=x&lt;=6,got=5
 bucket a is within the right range, expected=2&lt;=x&lt;=3,got=3
 bucket b is within the right range, expected=2&lt;=x&lt;=3,got=2</code></pre>
@@ -145,9 +188,13 @@ bucket b is within the right range, expected=2&lt;=x&lt;=3,got=2</code></pre>
 <pre><code>bucket control is within the right range, expected=1&lt;=x&lt;=2,got=2
 bucket a is within the right range, expected=0&lt;=x&lt;=1,got=1
 bucket b is within the right range, expected=0&lt;=x&lt;=1,got=0</code></pre>
-<p>Bingo! Okay, for the rest of this article we're going to use the OG pool size of <code>100000</code> and we'll consider our even distribution problem solved.</p>
-<p>Now to test point one, remember point one? Determinism. Let's get after it:</p>
-<div class="sourceCode" id="cb10"><pre class="sourceCode go"><code class="sourceCode go"><span id="cb10-1"><a href="#cb10-1" aria-hidden="true" tabindex="-1"></a>    testBucket<span class="op">,</span> _ <span class="op">:=</span> tests<span class="op">.</span>GetBucket<span class="op">(</span><span class="st">&quot;test1&quot;</span><span class="op">,</span> <span class="st">&quot;hello, world!&quot;</span><span class="op">)</span></span>
+<p>Bingo! Okay, for the rest of this article we're going to use the OG
+pool size of <code>100000</code> and we'll consider our even
+distribution problem solved.</p>
+<p>Now to test point one, remember point one? Determinism. Let's get
+after it:</p>
+<div class="sourceCode" id="cb10"><pre
+class="sourceCode go"><code class="sourceCode go"><span id="cb10-1"><a href="#cb10-1" aria-hidden="true" tabindex="-1"></a>    testBucket<span class="op">,</span> _ <span class="op">:=</span> tests<span class="op">.</span>GetBucket<span class="op">(</span><span class="st">&quot;test1&quot;</span><span class="op">,</span> <span class="st">&quot;hello, world!&quot;</span><span class="op">)</span></span>
 <span id="cb10-2"><a href="#cb10-2" aria-hidden="true" tabindex="-1"></a>    misses <span class="op">:=</span> <span class="dv">0</span></span>
 <span id="cb10-3"><a href="#cb10-3" aria-hidden="true" tabindex="-1"></a>    <span class="kw">for</span> i <span class="op">:=</span> <span class="dv">0</span><span class="op">;</span> i <span class="op">&lt;</span> POOL_SIZE<span class="op">;</span> i<span class="op">++</span> <span class="op">{</span></span>
 <span id="cb10-4"><a href="#cb10-4" aria-hidden="true" tabindex="-1"></a>        <span class="kw">if</span> tb<span class="op">,</span> _ <span class="op">:=</span> tests<span class="op">.</span>GetBucket<span class="op">(</span><span class="st">&quot;test1&quot;</span><span class="op">,</span> <span class="st">&quot;hello, world!&quot;</span><span class="op">);</span> tb <span class="op">!=</span> testBucket <span class="op">{</span></span>
@@ -157,10 +204,21 @@ bucket b is within the right range, expected=0&lt;=x&lt;=1,got=0</code></pre>
 <span id="cb10-8"><a href="#cb10-8" aria-hidden="true" tabindex="-1"></a>    <span class="kw">if</span> misses <span class="op">&gt;</span> <span class="dv">0</span> <span class="op">{</span></span>
 <span id="cb10-9"><a href="#cb10-9" aria-hidden="true" tabindex="-1"></a>        fmt<span class="op">.</span>Printf<span class="op">(</span><span class="st">&quot;Determinism misses: %d</span><span class="ch">\n</span><span class="st">&quot;</span><span class="op">,</span> misses<span class="op">)</span></span>
 <span id="cb10-10"><a href="#cb10-10" aria-hidden="true" tabindex="-1"></a>  <span class="op">}</span></span></code></pre></div>
-<p>No messages about misses, great. That half solves point one. If you later add another <code>Test</code> to that test name with a different distribution then you're really asking for trouble. Users that saw you were giving away $1m to anyone who saw the message and were on the fence about it may no longer see that message and then you'll have some very unhappy users (but only some of them).</p>
-<p>Let's add on some memoization, more on this after the next heading. For this article we're going to pretend that the determinism is only required for the duration of this process. You might consider a database for a more highly distributed system and this is the only acceptable query our process should perform to maintain integrity. Here we're only going to use a local variable:</p>
+<p>No messages about misses, great. That half solves point one. If you
+later add another <code>Test</code> to that test name with a different
+distribution then you're really asking for trouble. Users that saw you
+were giving away $1m to anyone who saw the message and were on the fence
+about it may no longer see that message and then you'll have some very
+unhappy users (but only some of them).</p>
+<p>Let's add on some memoization, more on this after the next heading.
+For this article we're going to pretend that the determinism is only
+required for the duration of this process. You might consider a database
+for a more highly distributed system and this is the only acceptable
+query our process should perform to maintain integrity. Here we're only
+going to use a local variable:</p>
 <p>In your ABTest package add/alter:</p>
-<div class="sourceCode" id="cb11"><pre class="sourceCode go"><code class="sourceCode go"><span id="cb11-1"><a href="#cb11-1" aria-hidden="true" tabindex="-1"></a><span class="kw">var</span> memoization <span class="op">=</span> <span class="kw">map</span><span class="op">[</span><span class="dt">string</span><span class="op">]</span><span class="kw">map</span><span class="op">[</span><span class="dt">string</span><span class="op">]</span><span class="dt">string</span><span class="op">{}</span>  <span class="co">//&lt;=====</span></span>
+<div class="sourceCode" id="cb11"><pre
+class="sourceCode go"><code class="sourceCode go"><span id="cb11-1"><a href="#cb11-1" aria-hidden="true" tabindex="-1"></a><span class="kw">var</span> memoization <span class="op">=</span> <span class="kw">map</span><span class="op">[</span><span class="dt">string</span><span class="op">]</span><span class="kw">map</span><span class="op">[</span><span class="dt">string</span><span class="op">]</span><span class="dt">string</span><span class="op">{}</span>  <span class="co">//&lt;=====</span></span>
 <span id="cb11-2"><a href="#cb11-2" aria-hidden="true" tabindex="-1"></a></span>
 <span id="cb11-3"><a href="#cb11-3" aria-hidden="true" tabindex="-1"></a><span class="kw">func</span> <span class="op">(</span>a ABTest<span class="op">)</span> GetBucket<span class="op">(</span>testName<span class="op">,</span> id <span class="dt">string</span><span class="op">)</span> <span class="op">(</span><span class="dt">string</span><span class="op">,</span> <span class="dt">error</span><span class="op">)</span> <span class="op">{</span></span>
 <span id="cb11-4"><a href="#cb11-4" aria-hidden="true" tabindex="-1"></a>    <span class="kw">var</span> t Test</span>
@@ -181,11 +239,21 @@ bucket b is within the right range, expected=0&lt;=x&lt;=1,got=0</code></pre>
 <span id="cb11-19"><a href="#cb11-19" aria-hidden="true" tabindex="-1"></a>    memoize<span class="op">[</span>testName<span class="op">][</span>key<span class="op">]</span> <span class="op">=</span> bucket</span>
 <span id="cb11-20"><a href="#cb11-20" aria-hidden="true" tabindex="-1"></a>    <span class="kw">return</span> bucket<span class="op">,</span> <span class="ot">nil</span></span>
 <span id="cb11-21"><a href="#cb11-21" aria-hidden="true" tabindex="-1"></a><span class="op">}</span></span></code></pre></div>
-<p>Testing our assumptions again we'd expect nothing to have changed and nothing does. All clear.</p>
+<p>Testing our assumptions again we'd expect nothing to have changed and
+nothing does. All clear.</p>
 <h2 id="updating-tests">Updating Tests</h2>
-<p>If you want to be able to update tests then storing bucketed user's bucket is probably fine enough. If you're pure of heart and declare tests with different buckets or distributions to be similar but not the same then the <code>ABTests</code> object could be simplified above. For this article we make no such proclamations and no guarantees. We want to show a user the same bucket they saw before so long as that bucket still exists.</p>
-<p>Next step is to add another <code>Test</code> to our <code>"test1"</code> bucket and make sure we get original distributions with already bucketed ids and new distributions with new ids:</p>
-<div class="sourceCode" id="cb12"><pre class="sourceCode go"><code class="sourceCode go"><span id="cb12-1"><a href="#cb12-1" aria-hidden="true" tabindex="-1"></a><span class="kw">func</span> main<span class="op">()</span> <span class="op">{</span></span>
+<p>If you want to be able to update tests then storing bucketed user's
+bucket is probably fine enough. If you're pure of heart and declare
+tests with different buckets or distributions to be similar but not the
+same then the <code>ABTests</code> object could be simplified above. For
+this article we make no such proclamations and no guarantees. We want to
+show a user the same bucket they saw before so long as that bucket still
+exists.</p>
+<p>Next step is to add another <code>Test</code> to our
+<code>"test1"</code> bucket and make sure we get original distributions
+with already bucketed ids and new distributions with new ids:</p>
+<div class="sourceCode" id="cb12"><pre
+class="sourceCode go"><code class="sourceCode go"><span id="cb12-1"><a href="#cb12-1" aria-hidden="true" tabindex="-1"></a><span class="kw">func</span> main<span class="op">()</span> <span class="op">{</span></span>
 <span id="cb12-2"><a href="#cb12-2" aria-hidden="true" tabindex="-1"></a>    <span class="co">//...</span></span>
 <span id="cb12-3"><a href="#cb12-3" aria-hidden="true" tabindex="-1"></a></span>
 <span id="cb12-4"><a href="#cb12-4" aria-hidden="true" tabindex="-1"></a>    <span class="co">// test regressions</span></span>
@@ -223,8 +291,10 @@ bucket b is within the right range, expected=0&lt;=x&lt;=1,got=0</code></pre>
 <pre><code>bucket control is within the right range, expected=49500&lt;=x&lt;=50500,got=50000
 bucket a is within the right range, expected=24750&lt;=x&lt;=25250,got=25001
 bucket b is within the right range, expected=24750&lt;=x&lt;=25250,got=24999</code></pre>
-<p>Now let's make sure that new users are bucketed in our zany <code>control:1 / a:1 / b:98</code> bucketing scheme.</p>
-<div class="sourceCode" id="cb14"><pre class="sourceCode go"><code class="sourceCode go"><span id="cb14-1"><a href="#cb14-1" aria-hidden="true" tabindex="-1"></a><span class="kw">func</span> main<span class="op">()</span> <span class="op">{</span></span>
+<p>Now let's make sure that new users are bucketed in our zany
+<code>control:1 / a:1 / b:98</code> bucketing scheme.</p>
+<div class="sourceCode" id="cb14"><pre
+class="sourceCode go"><code class="sourceCode go"><span id="cb14-1"><a href="#cb14-1" aria-hidden="true" tabindex="-1"></a><span class="kw">func</span> main<span class="op">()</span> <span class="op">{</span></span>
 <span id="cb14-2"><a href="#cb14-2" aria-hidden="true" tabindex="-1"></a>    <span class="co">//...</span></span>
 <span id="cb14-3"><a href="#cb14-3" aria-hidden="true" tabindex="-1"></a></span>
 <span id="cb14-4"><a href="#cb14-4" aria-hidden="true" tabindex="-1"></a>    buckets <span class="op">=</span> <span class="kw">map</span><span class="op">[</span><span class="dt">string</span><span class="op">]</span><span class="dt">uint32</span><span class="op">{}</span></span>
@@ -257,8 +327,12 @@ bucket b is within the right range, expected=24750&lt;=x&lt;=25250,got=24999</co
 <pre><code>bucket control is within the right range, expected=990&lt;=x&lt;=1010,got=1009
 bucket a is not within the right range, expected=990&lt;=x&lt;=1010,got=1042
 bucket b is within the right range, expected=97020&lt;=x&lt;=98980,got=97949</code></pre>
-<p>What's our major malfunction? Looks like we didn't test our distribution enough. Let's try some stuff. We tried <code>fnv</code>, let's give <code>adler32</code> a shot. Modifying our <code>func hash(string)</code>:</p>
-<div class="sourceCode" id="cb16"><pre class="sourceCode go"><code class="sourceCode go"><span id="cb16-1"><a href="#cb16-1" aria-hidden="true" tabindex="-1"></a><span class="kw">func</span> hash<span class="op">(</span>s <span class="dt">string</span><span class="op">)</span> <span class="dt">uint32</span> <span class="op">{</span></span>
+<p>What's our major malfunction? Looks like we didn't test our
+distribution enough. Let's try some stuff. We tried <code>fnv</code>,
+let's give <code>adler32</code> a shot. Modifying our
+<code>func hash(string)</code>:</p>
+<div class="sourceCode" id="cb16"><pre
+class="sourceCode go"><code class="sourceCode go"><span id="cb16-1"><a href="#cb16-1" aria-hidden="true" tabindex="-1"></a><span class="kw">func</span> hash<span class="op">(</span>s <span class="dt">string</span><span class="op">)</span> <span class="dt">uint32</span> <span class="op">{</span></span>
 <span id="cb16-2"><a href="#cb16-2" aria-hidden="true" tabindex="-1"></a>    h <span class="op">:=</span> adler32<span class="op">.</span>New<span class="op">()</span></span>
 <span id="cb16-3"><a href="#cb16-3" aria-hidden="true" tabindex="-1"></a>    h<span class="op">.</span>Write<span class="op">([]</span><span class="dt">byte</span><span class="op">(</span>s<span class="op">))</span></span>
 <span id="cb16-4"><a href="#cb16-4" aria-hidden="true" tabindex="-1"></a>    <span class="kw">return</span> h<span class="op">.</span>Sum32<span class="op">()</span></span>
@@ -270,15 +344,22 @@ bucket b is within the right range, expected=89100&lt;=x&lt;=90900,got=89991</co
 <p>WHEW! Back in business.</p>
 <p>Okay, let's recap what our goals were and what we've done:</p>
 <ol>
-<li>✓ Determinism. A user should <em>always</em> be shown the same bucket they initially saw</li>
+<li>✓ Determinism. A user should <em>always</em> be shown the same
+bucket they initially saw</li>
 <li>✓ Even bucket distribution</li>
 <li>✓ Bucketing should never use or require more than one query</li>
-<li>✓ Tests can contain more than two buckets and each bucket can be weighted</li>
-<li>𐄂 Tests can be updated and buckets may disappear, handle gracefully</li>
+<li>✓ Tests can contain more than two buckets and each bucket can be
+weighted</li>
+<li>𐄂 Tests can be updated and buckets may disappear, handle
+gracefully</li>
 </ol>
-<h2 id="how-to-handle-failing-buckets">How to Handle Failing Buckets</h2>
-<p>Your users don't want green text on the yellow background, apparently. Let's see what happens when we update that test to remove bucket <code>a</code>.</p>
-<div class="sourceCode" id="cb18"><pre class="sourceCode go"><code class="sourceCode go"><span id="cb18-1"><a href="#cb18-1" aria-hidden="true" tabindex="-1"></a><span class="kw">func</span> main<span class="op">()</span> <span class="op">{</span></span>
+<h2 id="how-to-handle-failing-buckets">How to Handle Failing
+Buckets</h2>
+<p>Your users don't want green text on the yellow background,
+apparently. Let's see what happens when we update that test to remove
+bucket <code>a</code>.</p>
+<div class="sourceCode" id="cb18"><pre
+class="sourceCode go"><code class="sourceCode go"><span id="cb18-1"><a href="#cb18-1" aria-hidden="true" tabindex="-1"></a><span class="kw">func</span> main<span class="op">()</span> <span class="op">{</span></span>
 <span id="cb18-2"><a href="#cb18-2" aria-hidden="true" tabindex="-1"></a>    <span class="co">//...</span></span>
 <span id="cb18-3"><a href="#cb18-3" aria-hidden="true" tabindex="-1"></a></span>
 <span id="cb18-4"><a href="#cb18-4" aria-hidden="true" tabindex="-1"></a>    tests<span class="op">.</span>AddTest<span class="op">(</span><span class="st">&quot;test1&quot;</span><span class="op">,</span> Test<span class="op">{</span></span>
@@ -296,8 +377,16 @@ bucket b is within the right range, expected=89100&lt;=x&lt;=90900,got=89991</co
 <span id="cb18-16"><a href="#cb18-16" aria-hidden="true" tabindex="-1"></a>    <span class="op">}</span></span>
 <span id="cb18-17"><a href="#cb18-17" aria-hidden="true" tabindex="-1"></a></span>
 <span id="cb18-18"><a href="#cb18-18" aria-hidden="true" tabindex="-1"></a><span class="op">}</span></span></code></pre></div>
-<p>Another undesirable outcome. We're really disappointing our parents today. <code>buckets</code> contains the original distribution of <code>control:50% / a:25% / b:25%</code> and we've ripped feature <code>a</code> out of the product entirely. Here we have some decisions to make, we could make feature <code>a</code> users now see <code>control</code>, they could be rebucketed into the largest bucket, or they could just be reseeded using the latest <code>Test</code>. Grab your toolbox and let's reseed the users:</p>
-<div class="sourceCode" id="cb19"><pre class="sourceCode go"><code class="sourceCode go"><span id="cb19-1"><a href="#cb19-1" aria-hidden="true" tabindex="-1"></a><span class="kw">func</span> <span class="op">(</span>a ABTest<span class="op">)</span> GetBucket<span class="op">(</span>testName<span class="op">,</span> id <span class="dt">string</span><span class="op">)</span> <span class="op">(</span><span class="dt">string</span><span class="op">,</span> <span class="dt">error</span><span class="op">)</span> <span class="op">{</span></span>
+<p>Another undesirable outcome. We're really disappointing our parents
+today. <code>buckets</code> contains the original distribution of
+<code>control:50% / a:25% / b:25%</code> and we've ripped feature
+<code>a</code> out of the product entirely. Here we have some decisions
+to make, we could make feature <code>a</code> users now see
+<code>control</code>, they could be rebucketed into the largest bucket,
+or they could just be reseeded using the latest <code>Test</code>. Grab
+your toolbox and let's reseed the users:</p>
+<div class="sourceCode" id="cb19"><pre
+class="sourceCode go"><code class="sourceCode go"><span id="cb19-1"><a href="#cb19-1" aria-hidden="true" tabindex="-1"></a><span class="kw">func</span> <span class="op">(</span>a ABTest<span class="op">)</span> GetBucket<span class="op">(</span>testName<span class="op">,</span> id <span class="dt">string</span><span class="op">)</span> <span class="op">(</span><span class="dt">string</span><span class="op">,</span> <span class="dt">error</span><span class="op">)</span> <span class="op">{</span></span>
 <span id="cb19-2"><a href="#cb19-2" aria-hidden="true" tabindex="-1"></a>    <span class="kw">var</span> t Test</span>
 <span id="cb19-3"><a href="#cb19-3" aria-hidden="true" tabindex="-1"></a>    <span class="kw">if</span> ts<span class="op">,</span> ok <span class="op">:=</span> a<span class="op">[</span>testName<span class="op">];</span> <span class="op">!</span>ok <span class="op">||</span> <span class="bu">len</span><span class="op">(</span>ts<span class="op">)</span> <span class="op">==</span> <span class="dv">0</span> <span class="op">{</span></span>
 <span id="cb19-4"><a href="#cb19-4" aria-hidden="true" tabindex="-1"></a>        <span class="kw">return</span> <span class="st">&quot;&quot;</span><span class="op">,</span> errors<span class="op">.</span>New<span class="op">(</span>fmt<span class="op">.</span>Sprintf<span class="op">(</span><span class="st">&quot;cannot find test name %s&quot;</span><span class="op">,</span> testName<span class="op">))</span></span>
@@ -319,12 +408,28 @@ bucket b is within the right range, expected=89100&lt;=x&lt;=90900,got=89991</co
 <span id="cb19-20"><a href="#cb19-20" aria-hidden="true" tabindex="-1"></a>    memoize<span class="op">[</span>testName<span class="op">][</span>key<span class="op">]</span> <span class="op">=</span> bucket</span>
 <span id="cb19-21"><a href="#cb19-21" aria-hidden="true" tabindex="-1"></a>    <span class="kw">return</span> bucket<span class="op">,</span> <span class="ot">nil</span></span>
 <span id="cb19-22"><a href="#cb19-22" aria-hidden="true" tabindex="-1"></a><span class="op">}</span></span></code></pre></div>
-<p>Now when we rerun our tests we end up with a nicer distribution of closer to 50/50 (it's somewhere closer to 51.25/48.75) which is what we'd expect given that we re-bucketed 25% of the users to <code>b</code> 95% of the time and the <code>control</code> 50% can only grow given our constraint that users should have the same experience each time. The math for bucket <code>b</code> is <code>0.25 (original b) + (.25 (original a) * .95 (b's current distribution))</code></p>
+<p>Now when we rerun our tests we end up with a nicer distribution of
+closer to 50/50 (it's somewhere closer to 51.25/48.75) which is what
+we'd expect given that we re-bucketed 25% of the users to <code>b</code>
+95% of the time and the <code>control</code> 50% can only grow given our
+constraint that users should have the same experience each time. The
+math for bucket <code>b</code> is
+<code>0.25 (original b) + (.25 (original a) * .95 (b's current distribution))</code></p>
 <p>This gives us goal five, great work everyone!</p>
 <h2 id="bonus-testing">Bonus: Testing</h2>
-<p>Note that about half way through this exercise we had to modify our hashing function. FNV wasn't performing poorly but it wasn't meeting our distribution constraint. One of the more fun aspects of being a programmer is that you can theorize about things then you can benchmark them, and then you get to argue about your findings with people who want nothing more than to gain your power or prove you wrong. Let's write a better test for something real world.</p>
-<p>In the real world, our users aren't sequential numbers and sometimes they're not numbers at all. Users don't also sequentially visit features on your site. Let's find the best distributed algorithm for UUIDs among different sample sizes:</p>
-<div class="sourceCode" id="cb20"><pre class="sourceCode go"><code class="sourceCode go"><span id="cb20-1"><a href="#cb20-1" aria-hidden="true" tabindex="-1"></a><span class="kw">func</span> adlerHash<span class="op">(</span>s <span class="dt">string</span><span class="op">)</span> <span class="dt">uint64</span> <span class="op">{</span></span>
+<p>Note that about half way through this exercise we had to modify our
+hashing function. FNV wasn't performing poorly but it wasn't meeting our
+distribution constraint. One of the more fun aspects of being a
+programmer is that you can theorize about things then you can benchmark
+them, and then you get to argue about your findings with people who want
+nothing more than to gain your power or prove you wrong. Let's write a
+better test for something real world.</p>
+<p>In the real world, our users aren't sequential numbers and sometimes
+they're not numbers at all. Users don't also sequentially visit features
+on your site. Let's find the best distributed algorithm for UUIDs among
+different sample sizes:</p>
+<div class="sourceCode" id="cb20"><pre
+class="sourceCode go"><code class="sourceCode go"><span id="cb20-1"><a href="#cb20-1" aria-hidden="true" tabindex="-1"></a><span class="kw">func</span> adlerHash<span class="op">(</span>s <span class="dt">string</span><span class="op">)</span> <span class="dt">uint64</span> <span class="op">{</span></span>
 <span id="cb20-2"><a href="#cb20-2" aria-hidden="true" tabindex="-1"></a>    h <span class="op">:=</span> adler32<span class="op">.</span>New<span class="op">()</span></span>
 <span id="cb20-3"><a href="#cb20-3" aria-hidden="true" tabindex="-1"></a>    h<span class="op">.</span>Write<span class="op">([]</span><span class="dt">byte</span><span class="op">(</span>s<span class="op">))</span></span>
 <span id="cb20-4"><a href="#cb20-4" aria-hidden="true" tabindex="-1"></a>    <span class="kw">return</span> <span class="dt">uint64</span><span class="op">(</span>h<span class="op">.</span>Sum32<span class="op">())</span></span>
@@ -440,7 +545,11 @@ bucket b is within the right range, expected=89100&lt;=x&lt;=90900,got=89991</co
 <span id="cb20-114"><a href="#cb20-114" aria-hidden="true" tabindex="-1"></a>        <span class="op">}</span></span>
 <span id="cb20-115"><a href="#cb20-115" aria-hidden="true" tabindex="-1"></a>    <span class="op">}</span></span>
 <span id="cb20-116"><a href="#cb20-116" aria-hidden="true" tabindex="-1"></a><span class="op">}</span></span></code></pre></div>
-<p>This will give you a nice little table showing different distribution characteristics given different sample and bucket sizes for each hashing method listed. A fun thing to do before you head out to return your library books is to implement your own bucketing method, try to get a better distribution with low sample sizes!</p>
+<p>This will give you a nice little table showing different distribution
+characteristics given different sample and bucket sizes for each hashing
+method listed. A fun thing to do before you head out to return your
+library books is to implement your own bucketing method, try to get a
+better distribution with low sample sizes!</p>
 
 
     </div>

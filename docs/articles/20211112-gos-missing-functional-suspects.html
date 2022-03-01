@@ -20,10 +20,22 @@
       <h6>// <a href="https://deathbykeystroke.com/articles/20211112-gos-missing-functional-suspects.html">perma</a></h6>
       <br/>
 
-      <p>When you first start learning functional programming you get all kinds of tools that challenge how you think about lists. You get things like <code>foldl</code>, <code>foldr</code>, <code>map</code>, and <code>filter</code>. Those things are really hard to stop using because they're <em>very</em> concise and clear in the way they function. Let's make a golang generator that gives us those four functions for any type in go!</p>
+      <p>When you first start learning functional programming you get all
+kinds of tools that challenge how you think about lists. You get things
+like <code>foldl</code>, <code>foldr</code>, <code>map</code>, and
+<code>filter</code>. Those things are really hard to stop using because
+they're <em>very</em> concise and clear in the way they function. Let's
+make a golang generator that gives us those four functions for any type
+in go!</p>
 <h2 id="writing-a-generator">Writing a Generator</h2>
-<p>Go could have macros but it doesn't because there's no precompiler. Instead of a precompiler they wrote code that does what macros do but you have to run it manually before you run your code rather than just inlining during compilation. So let's write a generator that just spits out a random number and then we'll modify it later so that it gives us what we want function wise.</p>
-<p>In your scratch pad project directory toss the following into a file (<code>pkg/generators/functional.go</code>):</p>
+<p>Go could have macros but it doesn't because there's no precompiler.
+Instead of a precompiler they wrote code that does what macros do but
+you have to run it manually before you run your code rather than just
+inlining during compilation. So let's write a generator that just spits
+out a random number and then we'll modify it later so that it gives us
+what we want function wise.</p>
+<p>In your scratch pad project directory toss the following into a file
+(<code>pkg/generators/functional.go</code>):</p>
 <div class="sourceCode" id="cb1"><pre class="sourceCode go"><code class="sourceCode go"><span id="cb1-1"><a href="#cb1-1" aria-hidden="true" tabindex="-1"></a><span class="co">//go:build ignore</span></span>
 <span id="cb1-2"><a href="#cb1-2" aria-hidden="true" tabindex="-1"></a></span>
 <span id="cb1-3"><a href="#cb1-3" aria-hidden="true" tabindex="-1"></a><span class="kw">package</span> main</span>
@@ -63,8 +75,15 @@
 <span id="cb1-37"><a href="#cb1-37" aria-hidden="true" tabindex="-1"></a>                time<span class="op">.</span>Now<span class="op">(),</span></span>
 <span id="cb1-38"><a href="#cb1-38" aria-hidden="true" tabindex="-1"></a>        <span class="op">})</span></span>
 <span id="cb1-39"><a href="#cb1-39" aria-hidden="true" tabindex="-1"></a><span class="op">}</span></span></code></pre></div>
-<p>What a mouthful. Don't worry, this should make what we're about to do much easier. This generator will get modified later. You can test it manually by doing a quick <code>go run pkg/generators/functional.go &amp;&amp; go run main_random.go</code> and you can clean it up by just removing the generated <code>main_random.go</code> file.</p>
-<p>I'm going to put this generator in <code>pkg/generators</code> directory to refer to later so we have this directory structure for the demo:</p>
+<p>What a mouthful. Don't worry, this should make what we're about to do
+much easier. This generator will get modified later. You can test it
+manually by doing a quick
+<code>go run pkg/generators/functional.go &amp;&amp; go run main_random.go</code>
+and you can clean it up by just removing the generated
+<code>main_random.go</code> file.</p>
+<p>I'm going to put this generator in <code>pkg/generators</code>
+directory to refer to later so we have this directory structure for the
+demo:</p>
 <pre><code>.
 ├── app.go
 ├── go.mod
@@ -72,7 +91,8 @@
     └─── generators
          └── functional.go</code></pre>
 <h2 id="demo-structs">Demo Structs</h2>
-<p>Now let's make a demo struct we can do something functional with. In <code>pkg/mytypes/demo.go</code>:</p>
+<p>Now let's make a demo struct we can do something functional with. In
+<code>pkg/mytypes/demo.go</code>:</p>
 <div class="sourceCode" id="cb3"><pre class="sourceCode go"><code class="sourceCode go"><span id="cb3-1"><a href="#cb3-1" aria-hidden="true" tabindex="-1"></a><span class="kw">package</span> mytypes</span>
 <span id="cb3-2"><a href="#cb3-2" aria-hidden="true" tabindex="-1"></a></span>
 <span id="cb3-3"><a href="#cb3-3" aria-hidden="true" tabindex="-1"></a><span class="co">//go:generate go run ../generators/functional.go Demo string int</span></span>
@@ -81,9 +101,16 @@
 <span id="cb3-6"><a href="#cb3-6" aria-hidden="true" tabindex="-1"></a>        Str <span class="dt">string</span></span>
 <span id="cb3-7"><a href="#cb3-7" aria-hidden="true" tabindex="-1"></a>        Num <span class="dt">int</span></span>
 <span id="cb3-8"><a href="#cb3-8" aria-hidden="true" tabindex="-1"></a><span class="op">}</span></span></code></pre></div>
-<p>Now if you run <code>go generate pkg/mytypes/demo.go</code> you'll actually see a new file <code>main_random.go</code> that will still just spit out a random number. Let's fix that to do a filter.</p>
+<p>Now if you run <code>go generate pkg/mytypes/demo.go</code> you'll
+actually see a new file <code>main_random.go</code> that will still just
+spit out a random number. Let's fix that to do a filter.</p>
 <h2 id="implementing-filter">Implementing Filter</h2>
-<p>Focusing on <code>pkg/generators/functional.go</code> and modify a few things. First, the package needs to be fixed so change that the template does something more in the spirit of functional programming (make this more practical if you're following this for real world stuff). Let's enhance our generator to loop over arguments and use those. Our generator should now look something like:</p>
+<p>Focusing on <code>pkg/generators/functional.go</code> and modify a
+few things. First, the package needs to be fixed so change that the
+template does something more in the spirit of functional programming
+(make this more practical if you're following this for real world
+stuff). Let's enhance our generator to loop over arguments and use
+those. Our generator should now look something like:</p>
 <div class="sourceCode" id="cb4"><pre class="sourceCode go"><code class="sourceCode go"><span id="cb4-1"><a href="#cb4-1" aria-hidden="true" tabindex="-1"></a><span class="co">//go:build ignore</span></span>
 <span id="cb4-2"><a href="#cb4-2" aria-hidden="true" tabindex="-1"></a></span>
 <span id="cb4-3"><a href="#cb4-3" aria-hidden="true" tabindex="-1"></a><span class="kw">package</span> main</span>
@@ -137,7 +164,8 @@
 <span id="cb4-51"><a href="#cb4-51" aria-hidden="true" tabindex="-1"></a>                fmt<span class="op">.</span>Fprintf<span class="op">(</span>os<span class="op">.</span>Stderr<span class="op">,</span> <span class="st">&quot;error generating %s: %v</span><span class="ch">\n</span><span class="st">&quot;</span><span class="op">,</span> os<span class="op">.</span>Args<span class="op">[</span><span class="dv">1</span><span class="op">],</span> err<span class="op">)</span></span>
 <span id="cb4-52"><a href="#cb4-52" aria-hidden="true" tabindex="-1"></a>        <span class="op">}</span></span>
 <span id="cb4-53"><a href="#cb4-53" aria-hidden="true" tabindex="-1"></a><span class="op">}</span></span></code></pre></div>
-<p>and after <code>go generate pkg/mytypes/demo.go</code> our directory should be:</p>
+<p>and after <code>go generate pkg/mytypes/demo.go</code> our directory
+should be:</p>
 <pre><code>.
 ├── app.go
 ├── go.mod
@@ -148,8 +176,14 @@
         ├── demo_fns.go
         └── demo.go
 </code></pre>
-<p>In the main function of the generator we're gather arguments and giving them to the generator one by one. The line checking for a lowercase first letter is the gatherer. It's not going to get any use for <code>filter</code> but we will need it for <code>map</code> because it takes one type and doesn't necessarily return that type.</p>
-<p>Now we're pretty much set for life. Time to retire. Unless you're having fun then let's do some filtering. From here it's just straight go.</p>
+<p>In the main function of the generator we're gather arguments and
+giving them to the generator one by one. The line checking for a
+lowercase first letter is the gatherer. It's not going to get any use
+for <code>filter</code> but we will need it for <code>map</code> because
+it takes one type and doesn't necessarily return that type.</p>
+<p>Now we're pretty much set for life. Time to retire. Unless you're
+having fun then let's do some filtering. From here it's just straight
+go.</p>
 <p>Our filter function should look something like this:</p>
 <div class="sourceCode" id="cb6"><pre class="sourceCode go"><code class="sourceCode go"><span id="cb6-1"><a href="#cb6-1" aria-hidden="true" tabindex="-1"></a><span class="kw">type</span> AS <span class="op">[]</span>A</span>
 <span id="cb6-2"><a href="#cb6-2" aria-hidden="true" tabindex="-1"></a></span>
@@ -174,7 +208,8 @@
 <span id="cb7-9"><a href="#cb7-9" aria-hidden="true" tabindex="-1"></a>        <span class="op">}</span></span>
 <span id="cb7-10"><a href="#cb7-10" aria-hidden="true" tabindex="-1"></a>        <span class="kw">return</span> rs</span>
 <span id="cb7-11"><a href="#cb7-11" aria-hidden="true" tabindex="-1"></a><span class="op">}</span></span></code></pre></div>
-<p>So now when you run your generate statement you should get the following in <code>pkg/mytypes/demo_fns.go</code>:</p>
+<p>So now when you run your generate statement you should get the
+following in <code>pkg/mytypes/demo_fns.go</code>:</p>
 <div class="sourceCode" id="cb8"><pre class="sourceCode go"><code class="sourceCode go"><span id="cb8-1"><a href="#cb8-1" aria-hidden="true" tabindex="-1"></a><span class="co">// Code generated by go; DO NOT EDIT.</span></span>
 <span id="cb8-2"><a href="#cb8-2" aria-hidden="true" tabindex="-1"></a><span class="co">// Generated 2021-11-12 16:28:41.742174392 -0800 PST m=+0.000470763</span></span>
 <span id="cb8-3"><a href="#cb8-3" aria-hidden="true" tabindex="-1"></a><span class="co">// Functional receivers for Demo</span></span>
@@ -193,9 +228,18 @@
 <span id="cb8-16"><a href="#cb8-16" aria-hidden="true" tabindex="-1"></a>        <span class="op">}</span></span>
 <span id="cb8-17"><a href="#cb8-17" aria-hidden="true" tabindex="-1"></a>        <span class="kw">return</span> rs</span>
 <span id="cb8-18"><a href="#cb8-18" aria-hidden="true" tabindex="-1"></a><span class="op">}</span></span></code></pre></div>
-<p>Now, wherever <code>Demo</code>s are used you can do a quick <code>demos.Filter(func (d Demo) { return d.Num &gt; 3 })</code> to get all of your objects where the number is greater than three. In your own version you might even change the return type so that <code>.Filter</code> becomes chainable with some other stuff down the line.</p>
+<p>Now, wherever <code>Demo</code>s are used you can do a quick
+<code>demos.Filter(func (d Demo) { return d.Num &gt; 3 })</code> to get
+all of your objects where the number is greater than three. In your own
+version you might even change the return type so that
+<code>.Filter</code> becomes chainable with some other stuff down the
+line.</p>
 <h3 id="map">Map</h3>
-<p>Map gets a little sticky. The return type is usually known to the programmer but go's compiler needs to know. This is where all that wonky stuff we did in the generator's <code>main</code> comes in handy. We can tell our generator what it is we <em>really</em> need from a <code>Map</code>.</p>
+<p>Map gets a little sticky. The return type is usually known to the
+programmer but go's compiler needs to know. This is where all that wonky
+stuff we did in the generator's <code>main</code> comes in handy. We can
+tell our generator what it is we <em>really</em> need from a
+<code>Map</code>.</p>
 <p>Our ideal <code>Map</code> might look something like:</p>
 <div class="sourceCode" id="cb9"><pre class="sourceCode go"><code class="sourceCode go"><span id="cb9-1"><a href="#cb9-1" aria-hidden="true" tabindex="-1"></a><span class="kw">func</span> <span class="op">(</span>xs Demos<span class="op">)</span> MapString<span class="op">(</span>fn <span class="kw">func</span><span class="op">(</span>Demo<span class="op">)</span> <span class="dt">string</span><span class="op">)</span> <span class="op">[]</span><span class="dt">string</span> <span class="op">{</span></span>
 <span id="cb9-2"><a href="#cb9-2" aria-hidden="true" tabindex="-1"></a>    rs <span class="op">:=</span> <span class="bu">make</span><span class="op">([]</span><span class="dt">string</span><span class="op">,</span> <span class="dv">0</span><span class="op">)</span></span>
@@ -205,8 +249,11 @@
 <span id="cb9-6"><a href="#cb9-6" aria-hidden="true" tabindex="-1"></a>    <span class="kw">return</span> rs</span>
 <span id="cb9-7"><a href="#cb9-7" aria-hidden="true" tabindex="-1"></a><span class="op">}</span></span></code></pre></div>
 <p>Jeez, what a beaut.</p>
-<p>To template that we need to be able to loop over whatever types were requested of the generator and to do that we can use some template magic:</p>
-<div class="sourceCode" id="cb10"><pre class="sourceCode go"><code class="sourceCode go"><span id="cb10-1"><a href="#cb10-1" aria-hidden="true" tabindex="-1"></a><span class="op">{{-</span> <span class="kw">range</span> $t <span class="op">:=</span> $m<span class="op">.</span>Types <span class="op">}}</span></span>
+<p>To template that we need to be able to loop over whatever types were
+requested of the generator and to do that we can use some template
+magic:</p>
+<div class="sourceCode" id="cb10"><pre
+class="sourceCode go"><code class="sourceCode go"><span id="cb10-1"><a href="#cb10-1" aria-hidden="true" tabindex="-1"></a><span class="op">{{-</span> <span class="kw">range</span> $t <span class="op">:=</span> $m<span class="op">.</span>Types <span class="op">}}</span></span>
 <span id="cb10-2"><a href="#cb10-2" aria-hidden="true" tabindex="-1"></a><span class="kw">func</span> <span class="op">(</span>xs <span class="op">{{</span> $m<span class="op">.</span>Alias <span class="op">}})</span> Map<span class="op">{{</span> $t <span class="op">|</span> Title <span class="op">}}(</span>fn <span class="kw">func</span><span class="op">({{</span> $m<span class="op">.</span>Receiver <span class="op">}})</span> <span class="op">{{</span> $t <span class="op">}})</span> <span class="op">[]{{</span> $t <span class="op">}}</span> <span class="op">{</span></span>
 <span id="cb10-3"><a href="#cb10-3" aria-hidden="true" tabindex="-1"></a>        rs <span class="op">:=</span> <span class="bu">make</span><span class="op">([]{{</span> $t <span class="op">}},</span> <span class="dv">0</span><span class="op">)</span></span>
 <span id="cb10-4"><a href="#cb10-4" aria-hidden="true" tabindex="-1"></a>        <span class="kw">for</span> _<span class="op">,</span> x <span class="op">:=</span> <span class="kw">range</span> xs <span class="op">{</span></span>
@@ -215,11 +262,21 @@
 <span id="cb10-7"><a href="#cb10-7" aria-hidden="true" tabindex="-1"></a>        <span class="kw">return</span> rs</span>
 <span id="cb10-8"><a href="#cb10-8" aria-hidden="true" tabindex="-1"></a><span class="op">}</span></span>
 <span id="cb10-9"><a href="#cb10-9" aria-hidden="true" tabindex="-1"></a><span class="op">{{-</span> end <span class="op">}}</span></span></code></pre></div>
-<p>This loops over the types our main parsed and generates <code>MapString</code> and <code>MapInt</code>. If you need others you can always go back to your <code>pkg/mytypes/demo.go</code> file and add the types to your <code>go:generate</code> line. Now when you generate you'll have two more functions in your package.</p>
-<p>So now we have <code>filter</code> and <code>map</code>. Lastly we need some fold equivalents and we'll generate those in the <code>mytypes</code> package simply because this is a demo and you shouldn't be copy and pasting code blindly into your editor.</p>
+<p>This loops over the types our main parsed and generates
+<code>MapString</code> and <code>MapInt</code>. If you need others you
+can always go back to your <code>pkg/mytypes/demo.go</code> file and add
+the types to your <code>go:generate</code> line. Now when you generate
+you'll have two more functions in your package.</p>
+<p>So now we have <code>filter</code> and <code>map</code>. Lastly we
+need some fold equivalents and we'll generate those in the
+<code>mytypes</code> package simply because this is a demo and you
+shouldn't be copy and pasting code blindly into your editor.</p>
 <h2 id="implementing-folds">Implementing Folds</h2>
-<p>So, create another generator file called <code>pkg/generators/folds.go</code> and let's modify functions <code>main</code> and <code>gen</code> to look like this:</p>
-<div class="sourceCode" id="cb11"><pre class="sourceCode go"><code class="sourceCode go"><span id="cb11-1"><a href="#cb11-1" aria-hidden="true" tabindex="-1"></a><span class="kw">func</span> gen<span class="op">(</span>pkg <span class="dt">string</span><span class="op">,</span> pairs <span class="op">[][]</span><span class="dt">string</span><span class="op">)</span> <span class="dt">error</span> <span class="op">{</span></span>
+<p>So, create another generator file called
+<code>pkg/generators/folds.go</code> and let's modify functions
+<code>main</code> and <code>gen</code> to look like this:</p>
+<div class="sourceCode" id="cb11"><pre
+class="sourceCode go"><code class="sourceCode go"><span id="cb11-1"><a href="#cb11-1" aria-hidden="true" tabindex="-1"></a><span class="kw">func</span> gen<span class="op">(</span>pkg <span class="dt">string</span><span class="op">,</span> pairs <span class="op">[][]</span><span class="dt">string</span><span class="op">)</span> <span class="dt">error</span> <span class="op">{</span></span>
 <span id="cb11-2"><a href="#cb11-2" aria-hidden="true" tabindex="-1"></a>        file<span class="op">,</span> err <span class="op">:=</span> os<span class="op">.</span>Create<span class="op">(</span>fmt<span class="op">.</span>Sprintf<span class="op">(</span><span class="st">&quot;%s_folds.go&quot;</span><span class="op">,</span> strings<span class="op">.</span>ToLower<span class="op">(</span>pkg<span class="op">)))</span></span>
 <span id="cb11-3"><a href="#cb11-3" aria-hidden="true" tabindex="-1"></a>        <span class="kw">if</span> err <span class="op">!=</span> <span class="ot">nil</span> <span class="op">{</span></span>
 <span id="cb11-4"><a href="#cb11-4" aria-hidden="true" tabindex="-1"></a>                <span class="kw">return</span> err</span>
@@ -250,9 +307,14 @@
 <span id="cb11-29"><a href="#cb11-29" aria-hidden="true" tabindex="-1"></a>        <span class="op">}</span></span>
 <span id="cb11-30"><a href="#cb11-30" aria-hidden="true" tabindex="-1"></a>        gen<span class="op">(</span>pkg<span class="op">,</span> pairs<span class="op">)</span></span>
 <span id="cb11-31"><a href="#cb11-31" aria-hidden="true" tabindex="-1"></a><span class="op">}</span></span></code></pre></div>
-<p>Our fold generator is going to take a list of type pairs we need folds for and generate those. So if we give the generator <code>string int</code> we'll get folds where our accumulator and inputs are of types <code>string int</code> respectively.</p>
-<p>In our template we'll modify the non boilerplate comments with the following bit of cuteness:</p>
-<div class="sourceCode" id="cb12"><pre class="sourceCode go"><code class="sourceCode go"><span id="cb12-1"><a href="#cb12-1" aria-hidden="true" tabindex="-1"></a><span class="op">{{</span> <span class="kw">range</span> $t <span class="op">:=</span> $m<span class="op">.</span>Pairs <span class="op">}}</span></span>
+<p>Our fold generator is going to take a list of type pairs we need
+folds for and generate those. So if we give the generator
+<code>string int</code> we'll get folds where our accumulator and inputs
+are of types <code>string int</code> respectively.</p>
+<p>In our template we'll modify the non boilerplate comments with the
+following bit of cuteness:</p>
+<div class="sourceCode" id="cb12"><pre
+class="sourceCode go"><code class="sourceCode go"><span id="cb12-1"><a href="#cb12-1" aria-hidden="true" tabindex="-1"></a><span class="op">{{</span> <span class="kw">range</span> $t <span class="op">:=</span> $m<span class="op">.</span>Pairs <span class="op">}}</span></span>
 <span id="cb12-2"><a href="#cb12-2" aria-hidden="true" tabindex="-1"></a><span class="kw">func</span> Foldl<span class="op">{{</span> index $t <span class="dv">0</span> <span class="op">|</span> Title <span class="op">}}{{</span> index $t <span class="dv">1</span> <span class="op">|</span> Title <span class="op">}}(</span>fn <span class="kw">func</span><span class="op">(</span>a <span class="op">{{</span> index $t <span class="dv">0</span> <span class="op">}},</span> b <span class="op">{{</span> index $t <span class="dv">1</span> <span class="op">}})</span> <span class="op">{{</span> index $t <span class="dv">0</span> <span class="op">}},</span> acc <span class="op">{{</span> index $t <span class="dv">0</span> <span class="op">}},</span> is <span class="op">[]{{</span> index $t <span class="dv">1</span> <span class="op">}})</span> <span class="op">{{</span> index $t <span class="dv">0</span> <span class="op">}}</span> <span class="op">{</span></span>
 <span id="cb12-3"><a href="#cb12-3" aria-hidden="true" tabindex="-1"></a>        res <span class="op">:=</span> acc</span>
 <span id="cb12-4"><a href="#cb12-4" aria-hidden="true" tabindex="-1"></a>        <span class="kw">for</span> i <span class="op">:=</span> <span class="kw">range</span> is <span class="op">{</span></span>
@@ -277,9 +339,16 @@
 <span id="cb12-23"><a href="#cb12-23" aria-hidden="true" tabindex="-1"></a>        <span class="kw">return</span> res</span>
 <span id="cb12-24"><a href="#cb12-24" aria-hidden="true" tabindex="-1"></a><span class="op">}</span></span>
 <span id="cb12-25"><a href="#cb12-25" aria-hidden="true" tabindex="-1"></a><span class="op">{{-</span> end <span class="op">}}</span></span></code></pre></div>
-<p>With the input tuple <code>string, int</code> this template will generate <code>FoldlStringInt</code> and <code>FoldrStringInt</code>. Now we're having some real fun.</p>
-<p>Now we can add <code>//go:generate go run ../generators/folds.go mytypes int int</code> to <code>pkg/mytypes/demo.go</code>, run the generator, and then you can view the very excellent generated code in <code>pkg/mytypes/mytypes_folds.go</code>:</p>
-<div class="sourceCode" id="cb13"><pre class="sourceCode go"><code class="sourceCode go"><span id="cb13-1"><a href="#cb13-1" aria-hidden="true" tabindex="-1"></a><span class="co">// Code generated by go; DO NOT EDIT.</span></span>
+<p>With the input tuple <code>string, int</code> this template will
+generate <code>FoldlStringInt</code> and <code>FoldrStringInt</code>.
+Now we're having some real fun.</p>
+<p>Now we can add
+<code>//go:generate go run ../generators/folds.go mytypes int int</code>
+to <code>pkg/mytypes/demo.go</code>, run the generator, and then you can
+view the very excellent generated code in
+<code>pkg/mytypes/mytypes_folds.go</code>:</p>
+<div class="sourceCode" id="cb13"><pre
+class="sourceCode go"><code class="sourceCode go"><span id="cb13-1"><a href="#cb13-1" aria-hidden="true" tabindex="-1"></a><span class="co">// Code generated by go; DO NOT EDIT.</span></span>
 <span id="cb13-2"><a href="#cb13-2" aria-hidden="true" tabindex="-1"></a><span class="co">// Generated 2021-11-12 16:52:05.48205752 -0800 PST m=+0.000807965</span></span>
 <span id="cb13-3"><a href="#cb13-3" aria-hidden="true" tabindex="-1"></a><span class="co">// Functional folds for mytypes</span></span>
 <span id="cb13-4"><a href="#cb13-4" aria-hidden="true" tabindex="-1"></a><span class="co">// Pairs:</span></span>
@@ -312,7 +381,17 @@
 <span id="cb13-31"><a href="#cb13-31" aria-hidden="true" tabindex="-1"></a>        <span class="kw">return</span> res</span>
 <span id="cb13-32"><a href="#cb13-32" aria-hidden="true" tabindex="-1"></a><span class="op">}</span></span></code></pre></div>
 <p>Boom.</p>
-<p>Wait just a gosh dang minute. Why's that <code>foldr</code> look so weird? Well, short story is that in Haskell and similarly implemented languages, <code>foldr</code> will thunk the <em>right</em> value and only continue if that value is requested and in that way you can prematurely terminate a right fold. A left fold will not happen as the fold is evaluated <em>from the left</em>. This is a confusing thing if you're not already familiar with it but the basics are that <code>foldl + [1 2 3] -&gt; (1 + (2 + 3))</code> and thus cannot short circuit. Conversely, <code>foldr + [1 2 3] -&gt; (3 + (2 + (1)))</code> and if you notice the 1 in its own parens then you'll notice that the <code>+</code> is only done if the <em>next</em> value is evaluated.</p>
+<p>Wait just a gosh dang minute. Why's that <code>foldr</code> look so
+weird? Well, short story is that in Haskell and similarly implemented
+languages, <code>foldr</code> will thunk the <em>right</em> value and
+only continue if that value is requested and in that way you can
+prematurely terminate a right fold. A left fold will not happen as the
+fold is evaluated <em>from the left</em>. This is a confusing thing if
+you're not already familiar with it but the basics are that
+<code>foldl + [1 2 3] -&gt; (1 + (2 + 3))</code> and thus cannot short
+circuit. Conversely, <code>foldr + [1 2 3] -&gt; (3 + (2 + (1)))</code>
+and if you notice the 1 in its own parens then you'll notice that the
+<code>+</code> is only done if the <em>next</em> value is evaluated.</p>
 <p>Okay, now boom slam.</p>
 <p>That's all for today!</p>
 

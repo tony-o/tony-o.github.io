@@ -20,13 +20,23 @@
       <h6>// <a href="https://deathbykeystroke.com/articles/20150915-parallel-testing-and-an-iconoclastic-pilgrimage.html">perma</a></h6>
       <br/>
 
-      <h1 id="this-is-an-article-about-green">This is an article about <code>Green</code></h1>
-<p><code>Green</code> is a module I wrote with the intention of replacing the well loved <code>prove</code> command in favor of something that can parallel test all files and even perform parallel testing of functions inside of a test file.</p>
+      <h1 id="this-is-an-article-about-green">This is an article about
+<code>Green</code></h1>
+<p><code>Green</code> is a module I wrote with the intention of
+replacing the well loved <code>prove</code> command in favor of
+something that can parallel test all files and even perform parallel
+testing of functions inside of a test file.</p>
 <p>Wait, what?</p>
-<p>Don't worry, the parallel testing of functions doesn't mean all your code is going to run at once. It means that you can put multiple test groups into one file and have those groups all tested in parallel while the methods in those groups retain their order and are executed in series.</p>
+<p>Don't worry, the parallel testing of functions doesn't mean all your
+code is going to run at once. It means that you can put multiple test
+groups into one file and have those groups all tested in parallel while
+the methods in those groups retain their order and are executed in
+series.</p>
 <p>This is confusing.</p>
-<p>Let's take a look at an example, then we'll talk about how the module was put together. Afterwards, more in depth examples.</p>
-<div class="sourceCode" id="cb1"><pre class="sourceCode perl"><code class="sourceCode perl"><span id="cb1-1"><a href="#cb1-1" aria-hidden="true" tabindex="-1"></a><span class="fu">use</span> Green :harness;</span>
+<p>Let's take a look at an example, then we'll talk about how the module
+was put together. Afterwards, more in depth examples.</p>
+<div class="sourceCode" id="cb1"><pre
+class="sourceCode perl"><code class="sourceCode perl"><span id="cb1-1"><a href="#cb1-1" aria-hidden="true" tabindex="-1"></a><span class="fu">use</span> Green :harness;</span>
 <span id="cb1-2"><a href="#cb1-2" aria-hidden="true" tabindex="-1"></a></span>
 <span id="cb1-3"><a href="#cb1-3" aria-hidden="true" tabindex="-1"></a>set(<span class="ot">&quot;</span><span class="st">Group 1</span><span class="ot">&quot;</span>, <span class="kw">sub </span>{</span>
 <span id="cb1-4"><a href="#cb1-4" aria-hidden="true" tabindex="-1"></a>  test(<span class="ot">&quot;</span><span class="st">Group 1, Test 1</span><span class="ot">&quot;</span>, <span class="kw">sub </span>{ ok <span class="dv">1</span>==<span class="dv">1</span>; });</span>
@@ -56,51 +66,104 @@
       [P] Group 2, Test 2
 
    [P] 4 of 4 passing (2511.628ms)</code></pre>
-<p>Notice the runtime of 2.5 seconds. Normally if you combined all four of those <code>test</code> groups into a series, you'd have ended up waiting around four seconds (Group 1 has a <code>sleep 2</code> and Group 2 has <code>sleep 1</code> twice).</p>
-<p>*Please note that the startup time for my perl6 is anywhere between <code>500ms</code> and <code>1s</code>.</p>
+<p>Notice the runtime of 2.5 seconds. Normally if you combined all four
+of those <code>test</code> groups into a series, you'd have ended up
+waiting around four seconds (Group 1 has a <code>sleep 2</code> and
+Group 2 has <code>sleep 1</code> twice).</p>
+<p>*Please note that the startup time for my perl6 is anywhere between
+<code>500ms</code> and <code>1s</code>.</p>
 <h2 id="pitfalls-considerations">Pitfalls &amp; Considerations</h2>
 <ul>
-<li>Output can get jumbled if you have multiple groups testing at the same time, <code>test()</code> output should be cached and wait for the <code>set</code> to be completed</li>
-<li>Tests should be able to return a promise, that promise will determine the result of the test</li>
+<li>Output can get jumbled if you have multiple groups testing at the
+same time, <code>test()</code> output should be cached and wait for the
+<code>set</code> to be completed</li>
+<li>Tests should be able to return a promise, that promise will
+determine the result of the test</li>
 <li>Concision for simple and short test files</li>
-<li>Output of failing tests should be reserved for the end of the <code>set</code> to be completed, this provides a nicer output and aids in troubleshooting. <code>prove</code> has always driven me nuts with trying to figure out the trace for the error</li>
-<li>Output from <code>say</code> and <code>warn</code> should be immediately written and unimpeded</li>
+<li>Output of failing tests should be reserved for the end of the
+<code>set</code> to be completed, this provides a nicer output and aids
+in troubleshooting. <code>prove</code> has always driven me nuts with
+trying to figure out the trace for the error</li>
+<li>Output from <code>say</code> and <code>warn</code> should be
+immediately written and unimpeded</li>
 </ul>
-<h4 id="why-is-it-such-a-big-deal-to-have-a-test-give-its-result-as-soon-as-its-available">Why is it such a big deal to have a <code>test</code> give its result as soon as its available?</h4>
-<p>This causes issues when tests fail. When a test fails and you need to print the stack trace for the test, you can't guarantee that another test being executed in parallel isn't busy writing to the output. This can cause jumbled or confusing stuff on the command line. Imagine that two tests complete at roughly the same time, the first fails and needs to print the failure and then the stack trace. The second completes with success and brags about its accomplishment to stdout between the time that the first test showed error and generated the stack trace information to be printed. You'd end up with some output that looks roughly like</p>
+<h4
+id="why-is-it-such-a-big-deal-to-have-a-test-give-its-result-as-soon-as-its-available">Why
+is it such a big deal to have a <code>test</code> give its result as
+soon as its available?</h4>
+<p>This causes issues when tests fail. When a test fails and you need to
+print the stack trace for the test, you can't guarantee that another
+test being executed in parallel isn't busy writing to the output. This
+can cause jumbled or confusing stuff on the command line. Imagine that
+two tests complete at roughly the same time, the first fails and needs
+to print the failure and then the stack trace. The second completes with
+success and brags about its accomplishment to stdout between the time
+that the first test showed error and generated the stack trace
+information to be printed. You'd end up with some output that looks
+roughly like</p>
 <pre><code>[F] #1 Failed test 1
 [P] Passed test 2
 
 #1 - not ok
   in block  at &lt;path&gt;.pm6:103
   in block  at &lt;path&gt;.pm6:94</code></pre>
-<p>Yes, that's manageable for two tests. It's not when you have a test file with several tens or hundreds of tests in it. It's certainly not manageable when you have several test files running at once, all trying to write at once.</p>
-<p>There are other ways to deal with it, I think this solution is the cleanest and that's why Green is built in this way.</p>
-<h4 id="other-problems-with-parallelization-and-testing">Other problems with parallelization and testing</h4>
-<p>There exists another big issue; what about when you want to do some asynchronous IO and don't want to have to handle setting up your own <code>await</code> and returning mechanisms to get the result? <code>Green</code> handles this too. If your test returns a <code>Promise</code> then <code>Green</code> will automatically await the promise and use its result as the output for the test result. This is useful when you need to do things like non-blocking database calls or non-blocking file reads, reading data from channels, etc. This also prevents <code>Green</code> from executing the next consecutive test until the <code>Promise</code> is <code>Kept|Broken</code>, this keeps <code>test</code>s executing in serial despite containing potentially a large amount of non-blocking code.</p>
-<p>Why not let the user handle that? The user can handle that, they just shouldn't return a <code>Promise</code> from the <code>test()</code>'s method.</p>
+<p>Yes, that's manageable for two tests. It's not when you have a test
+file with several tens or hundreds of tests in it. It's certainly not
+manageable when you have several test files running at once, all trying
+to write at once.</p>
+<p>There are other ways to deal with it, I think this solution is the
+cleanest and that's why Green is built in this way.</p>
+<h4 id="other-problems-with-parallelization-and-testing">Other problems
+with parallelization and testing</h4>
+<p>There exists another big issue; what about when you want to do some
+asynchronous IO and don't want to have to handle setting up your own
+<code>await</code> and returning mechanisms to get the result?
+<code>Green</code> handles this too. If your test returns a
+<code>Promise</code> then <code>Green</code> will automatically await
+the promise and use its result as the output for the test result. This
+is useful when you need to do things like non-blocking database calls or
+non-blocking file reads, reading data from channels, etc. This also
+prevents <code>Green</code> from executing the next consecutive test
+until the <code>Promise</code> is <code>Kept|Broken</code>, this keeps
+<code>test</code>s executing in serial despite containing potentially a
+large amount of non-blocking code.</p>
+<p>Why not let the user handle that? The user can handle that, they just
+shouldn't return a <code>Promise</code> from the <code>test()</code>'s
+method.</p>
 <h4 id="considerations">Considerations</h4>
-<p>The main purpose of a testing suite is to make testing easy, having a stack trace not be a two step process, make the testing output simple to read, and to keep things simple.</p>
+<p>The main purpose of a testing suite is to make testing easy, having a
+stack trace not be a two step process, make the testing output simple to
+read, and to keep things simple.</p>
 <h5 id="making-test-easy">Making test easy</h5>
-<p>To run <code>Green</code> against the current directory, you have to simply type <code>green</code> on the command line. Done.</p>
-<p><code>Green</code> automatically <code>-Iblib -Ilib</code> and looks for the following directories in order <code>t/, test/, tests/</code>, stops on the first match and continues to test every file in that directory that ends with <code>.t</code></p>
+<p>To run <code>Green</code> against the current directory, you have to
+simply type <code>green</code> on the command line. Done.</p>
+<p><code>Green</code> automatically <code>-Iblib -Ilib</code> and looks
+for the following directories in order <code>t/, test/, tests/</code>,
+stops on the first match and continues to test every file in that
+directory that ends with <code>.t</code></p>
 <p>Doesn't get much easier than that.</p>
 <hr />
-<p>Another feature of <code>Green</code> is the quick testing shorthands.</p>
-<div class="sourceCode" id="cb4"><pre class="sourceCode perl"><code class="sourceCode perl"><span id="cb4-1"><a href="#cb4-1" aria-hidden="true" tabindex="-1"></a><span class="fu">use</span> Green :harness;</span>
+<p>Another feature of <code>Green</code> is the quick testing
+shorthands.</p>
+<div class="sourceCode" id="cb4"><pre
+class="sourceCode perl"><code class="sourceCode perl"><span id="cb4-1"><a href="#cb4-1" aria-hidden="true" tabindex="-1"></a><span class="fu">use</span> Green :harness;</span>
 <span id="cb4-2"><a href="#cb4-2" aria-hidden="true" tabindex="-1"></a></span>
 <span id="cb4-3"><a href="#cb4-3" aria-hidden="true" tabindex="-1"></a>&gt;&gt; { &lt;Callable <span class="dv">1</span>&gt;; };</span>
 <span id="cb4-4"><a href="#cb4-4" aria-hidden="true" tabindex="-1"></a>&gt;&gt; { &lt;Callable <span class="dv">2</span>&gt;; };</span></code></pre></div>
 <p>This will execute both <code>Callable</code>s in series.</p>
 <p>Too much crap? Try again.</p>
-<div class="sourceCode" id="cb5"><pre class="sourceCode perl"><code class="sourceCode perl"><span id="cb5-1"><a href="#cb5-1" aria-hidden="true" tabindex="-1"></a><span class="fu">use</span> Green :harness;</span>
+<div class="sourceCode" id="cb5"><pre
+class="sourceCode perl"><code class="sourceCode perl"><span id="cb5-1"><a href="#cb5-1" aria-hidden="true" tabindex="-1"></a><span class="fu">use</span> Green :harness;</span>
 <span id="cb5-2"><a href="#cb5-2" aria-hidden="true" tabindex="-1"></a></span>
 <span id="cb5-3"><a href="#cb5-3" aria-hidden="true" tabindex="-1"></a>ok <span class="dv">1</span>==<span class="dv">1</span>;</span>
 <span id="cb5-4"><a href="#cb5-4" aria-hidden="true" tabindex="-1"></a>ok <span class="dv">2</span>==<span class="dv">1</span>;</span></code></pre></div>
 <p>This is also acceptable shorthand.</p>
 <hr />
-<p>Have some tests that require some parallel processing and don't want to deal with writing your own promise/result handlers? Check this out</p>
-<div class="sourceCode" id="cb6"><pre class="sourceCode perl"><code class="sourceCode perl"><span id="cb6-1"><a href="#cb6-1" aria-hidden="true" tabindex="-1"></a><span class="fu">use</span> Green :harness;</span>
+<p>Have some tests that require some parallel processing and don't want
+to deal with writing your own promise/result handlers? Check this
+out</p>
+<div class="sourceCode" id="cb6"><pre
+class="sourceCode perl"><code class="sourceCode perl"><span id="cb6-1"><a href="#cb6-1" aria-hidden="true" tabindex="-1"></a><span class="fu">use</span> Green :harness;</span>
 <span id="cb6-2"><a href="#cb6-2" aria-hidden="true" tabindex="-1"></a></span>
 <span id="cb6-3"><a href="#cb6-3" aria-hidden="true" tabindex="-1"></a>set(<span class="ot">&#39;</span><span class="ss">Set 1</span><span class="ot">&#39;</span>, <span class="kw">sub </span>{</span>
 <span id="cb6-4"><a href="#cb6-4" aria-hidden="true" tabindex="-1"></a>  test(<span class="ot">&#39;</span><span class="ss">Test 1</span><span class="ot">&#39;</span>, -&gt; <span class="dt">$done</span> {</span>
@@ -114,9 +177,18 @@
 <span id="cb6-12"><a href="#cb6-12" aria-hidden="true" tabindex="-1"></a>    ok <span class="dv">1</span>==<span class="dv">1</span>;</span>
 <span id="cb6-13"><a href="#cb6-13" aria-hidden="true" tabindex="-1"></a>  });</span>
 <span id="cb6-14"><a href="#cb6-14" aria-hidden="true" tabindex="-1"></a>});</span></code></pre></div>
-<p>When there is an extra parameter expected on the <code>Callable</code> that <code>test</code> is passed, <code>Green</code> handles tossing in a sub that the test can execute when it's done processing. Easy doggone peasy.</p>
-<h4 id="visibility-on-stack-traces-and-easy-to-read-output">Visibility on stack traces and easy to read output</h4>
-<p>My only really major complaint with <code>prove</code> is that it's a pain to get a stack trace. Sure it gives me the first line, that's great. Rarely is my issue on that first line of a stack trace. <code>Green</code> took cues from other testing suites from other languages that are much easier to read. Sample failure output from <code>Green</code> looks like the following:</p>
+<p>When there is an extra parameter expected on the
+<code>Callable</code> that <code>test</code> is passed,
+<code>Green</code> handles tossing in a sub that the test can execute
+when it's done processing. Easy doggone peasy.</p>
+<h4 id="visibility-on-stack-traces-and-easy-to-read-output">Visibility
+on stack traces and easy to read output</h4>
+<p>My only really major complaint with <code>prove</code> is that it's a
+pain to get a stack trace. Sure it gives me the first line, that's
+great. Rarely is my issue on that first line of a stack trace.
+<code>Green</code> took cues from other testing suites from other
+languages that are much easier to read. Sample failure output from
+<code>Green</code> looks like the following:</p>
 <pre><code>tonyo@imac ~/projects/perl6-green/examples$ perl6 failure.pl6
    [F] Prefixed Tests
       [F] #1 - Prefixed 1
@@ -131,10 +203,13 @@
 
    [F] 0 of 2 passing (501.065ms)</code></pre>
 <p>Again, easy.</p>
-<p>The output of this is easy to read. <code>set</code>s are output all at once along with the failures. Nothing is jumbled, it's just clean.</p>
+<p>The output of this is easy to read. <code>set</code>s are output all
+at once along with the failures. Nothing is jumbled, it's just
+clean.</p>
 <h2 id="some-more-examples">Some more examples</h2>
 <h6 id="concise-series">Concise series</h6>
-<div class="sourceCode" id="cb8"><pre class="sourceCode perl"><code class="sourceCode perl"><span id="cb8-1"><a href="#cb8-1" aria-hidden="true" tabindex="-1"></a><span class="kw">#!/usr/bin/env perl6</span></span>
+<div class="sourceCode" id="cb8"><pre
+class="sourceCode perl"><code class="sourceCode perl"><span id="cb8-1"><a href="#cb8-1" aria-hidden="true" tabindex="-1"></a><span class="kw">#!/usr/bin/env perl6</span></span>
 <span id="cb8-2"><a href="#cb8-2" aria-hidden="true" tabindex="-1"></a></span>
 <span id="cb8-3"><a href="#cb8-3" aria-hidden="true" tabindex="-1"></a><span class="fu">use</span> lib <span class="ot">&#39;</span><span class="ss">../lib</span><span class="ot">&#39;</span>;</span>
 <span id="cb8-4"><a href="#cb8-4" aria-hidden="true" tabindex="-1"></a><span class="fu">use</span> Green :harness;</span>
@@ -164,7 +239,8 @@
 
    [P] 4 of 4 passing (6528.732ms)</code></pre>
 <h6 id="failure">Failure</h6>
-<div class="sourceCode" id="cb10"><pre class="sourceCode perl"><code class="sourceCode perl"><span id="cb10-1"><a href="#cb10-1" aria-hidden="true" tabindex="-1"></a><span class="kw">#!/usr/bin/env perl6</span></span>
+<div class="sourceCode" id="cb10"><pre
+class="sourceCode perl"><code class="sourceCode perl"><span id="cb10-1"><a href="#cb10-1" aria-hidden="true" tabindex="-1"></a><span class="kw">#!/usr/bin/env perl6</span></span>
 <span id="cb10-2"><a href="#cb10-2" aria-hidden="true" tabindex="-1"></a></span>
 <span id="cb10-3"><a href="#cb10-3" aria-hidden="true" tabindex="-1"></a><span class="fu">use</span> lib <span class="ot">&#39;</span><span class="ss">../lib</span><span class="ot">&#39;</span>;</span>
 <span id="cb10-4"><a href="#cb10-4" aria-hidden="true" tabindex="-1"></a><span class="fu">use</span> Green :harness;</span>
@@ -187,7 +263,8 @@
 
    [F] 0 of 2 passing (535.971ms)</code></pre>
 <h6 id="more-concise">More Concise</h6>
-<div class="sourceCode" id="cb12"><pre class="sourceCode perl"><code class="sourceCode perl"><span id="cb12-1"><a href="#cb12-1" aria-hidden="true" tabindex="-1"></a><span class="kw">#!/usr/bin/env perl6</span></span>
+<div class="sourceCode" id="cb12"><pre
+class="sourceCode perl"><code class="sourceCode perl"><span id="cb12-1"><a href="#cb12-1" aria-hidden="true" tabindex="-1"></a><span class="kw">#!/usr/bin/env perl6</span></span>
 <span id="cb12-2"><a href="#cb12-2" aria-hidden="true" tabindex="-1"></a></span>
 <span id="cb12-3"><a href="#cb12-3" aria-hidden="true" tabindex="-1"></a><span class="fu">use</span> lib <span class="ot">&#39;</span><span class="ss">../lib</span><span class="ot">&#39;</span>;</span>
 <span id="cb12-4"><a href="#cb12-4" aria-hidden="true" tabindex="-1"></a><span class="fu">use</span> Green :harness;</span>
@@ -214,7 +291,8 @@
 
    [F] 1 of 3 passing (602.168ms)</code></pre>
 <h6 id="parallel-tests">Parallel Tests</h6>
-<div class="sourceCode" id="cb14"><pre class="sourceCode perl"><code class="sourceCode perl"><span id="cb14-1"><a href="#cb14-1" aria-hidden="true" tabindex="-1"></a><span class="kw">#!/usr/bin/env perl6</span></span>
+<div class="sourceCode" id="cb14"><pre
+class="sourceCode perl"><code class="sourceCode perl"><span id="cb14-1"><a href="#cb14-1" aria-hidden="true" tabindex="-1"></a><span class="kw">#!/usr/bin/env perl6</span></span>
 <span id="cb14-2"><a href="#cb14-2" aria-hidden="true" tabindex="-1"></a></span>
 <span id="cb14-3"><a href="#cb14-3" aria-hidden="true" tabindex="-1"></a><span class="fu">use</span> lib <span class="ot">&#39;</span><span class="ss">../lib</span><span class="ot">&#39;</span>;</span>
 <span id="cb14-4"><a href="#cb14-4" aria-hidden="true" tabindex="-1"></a><span class="fu">use</span> Green :harness;</span>
@@ -258,7 +336,8 @@
 
    [P] 4 of 4 passing (2629.375ms)</code></pre>
 <h6 id="series">Series</h6>
-<div class="sourceCode" id="cb16"><pre class="sourceCode perl"><code class="sourceCode perl"><span id="cb16-1"><a href="#cb16-1" aria-hidden="true" tabindex="-1"></a><span class="kw">#!/usr/bin/env perl6</span></span>
+<div class="sourceCode" id="cb16"><pre
+class="sourceCode perl"><code class="sourceCode perl"><span id="cb16-1"><a href="#cb16-1" aria-hidden="true" tabindex="-1"></a><span class="kw">#!/usr/bin/env perl6</span></span>
 <span id="cb16-2"><a href="#cb16-2" aria-hidden="true" tabindex="-1"></a></span>
 <span id="cb16-3"><a href="#cb16-3" aria-hidden="true" tabindex="-1"></a><span class="fu">use</span> lib <span class="ot">&#39;</span><span class="ss">../lib</span><span class="ot">&#39;</span>;</span>
 <span id="cb16-4"><a href="#cb16-4" aria-hidden="true" tabindex="-1"></a><span class="fu">use</span> Green :harness;</span>
@@ -300,7 +379,10 @@
 
    [P] 3 of 3 passing (3572.252ms)</code></pre>
 <h1 id="final-thoughts">Final thoughts</h1>
-<p>Comments or PRs are welcome. You can find the repository for <code>Green</code> <a href="https://github.com/tony-o/perl6-green">here</a>. You can leave your rude dude peanut gallery in #perl6 if you're so inclined.</p>
+<p>Comments or PRs are welcome. You can find the repository for
+<code>Green</code> <a
+href="https://github.com/tony-o/perl6-green">here</a>. You can leave
+your rude dude peanut gallery in #perl6 if you're so inclined.</p>
 
 
     </div>
