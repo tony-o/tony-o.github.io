@@ -6,7 +6,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <meta content="text/html;charset=utf-8" http-equiv="Content-Type" />
     <meta content="utf-8" http-equiv="encoding" />
-    <link rel="stylesheet" href="//cdnjs.cloudflare.com/ajax/libs/highlight.js/11.2.0/styles/github.min.css" />
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.2.0/styles/base16/danqing.min.css" />
     <link rel="stylesheet" href="/s/style.css" />
   </head>
   <body>
@@ -20,11 +20,22 @@
       <h6>// <a href="https://deathbykeystroke.com/articles/20150731-refactoring-httpserverasync.html">perma</a></h6>
       <br/>
 
-      <p>purée Even serialized HTTP servers are complicated. Let's make one that is asynchronous for the three Fs; fun, frustration, fury.</p>
-<p>We're going to rewrite HTTP::Server::Async from near scratch because, frankly, it's crap. I hate that it even has my name on it. I wrote it for a <code>rakudo</code> version that was still less mature than what we have today and because of the dreaded <code>NYI</code>, there are a lot of hacks and inefficiencies.</p>
-<p>Let's start with the fun. We're going to use the <code>HTTP::Server</code> role that is floating around in the environment. I created that role with the intention of folks creating their own versions of HTTP servers that are hot swappable under front ends. Similar to the way Mojolicious will run under their home grown server, or hypnotoad, or coolguyluke420's hacked together monster.</p>
+      <p>purée Even serialized HTTP servers are complicated. Let's make one
+that is asynchronous for the three Fs; fun, frustration, fury.</p>
+<p>We're going to rewrite HTTP::Server::Async from near scratch because,
+frankly, it's crap. I hate that it even has my name on it. I wrote it
+for a <code>rakudo</code> version that was still less mature than what
+we have today and because of the dreaded <code>NYI</code>, there are a
+lot of hacks and inefficiencies.</p>
+<p>Let's start with the fun. We're going to use the
+<code>HTTP::Server</code> role that is floating around in the
+environment. I created that role with the intention of folks creating
+their own versions of HTTP servers that are hot swappable under front
+ends. Similar to the way Mojolicious will run under their home grown
+server, or hypnotoad, or coolguyluke420's hacked together monster.</p>
 <h3 id="httpserverasync">HTTP::Server::Async</h3>
-<h4 id="the-cornerstone-of-any-hipsters-repertoire">The cornerstone of any hipster's repertoire</h4>
+<h4 id="the-cornerstone-of-any-hipsters-repertoire">The cornerstone of
+any hipster's repertoire</h4>
 <p>--</p>
 <h3 id="itinerary">Itinerary</h3>
 <ol>
@@ -34,27 +45,38 @@
 </ol>
 <p>Let's get on with it.</p>
 <h3 id="install-httpserver">Install <code>HTTP::Server</code></h3>
-<p>If you're into <code>zef</code> and its awesomeness. If you're asking what <code>zef</code> is then you should definitely go check it out.</p>
+<p>If you're into <code>zef</code> and its awesomeness. If you're asking
+what <code>zef</code> is then you should definitely go check it out.</p>
 <pre><code>zef install HTTP::Server</code></pre>
 <p>If you're not into <code>zef</code>'s freshness</p>
 <pre><code>panda install HTTP::Server</code></pre>
 <h3 id="anatomy-of-an-http-server">Anatomy of an HTTP Server</h3>
-<p>HTTP servers are fairly simple. They run fast and loose, like old gregg. There are also a lot of caveats to the simple process I'm going to write below.</p>
+<p>HTTP servers are fairly simple. They run fast and loose, like old
+gregg. There are also a lot of caveats to the simple process I'm going
+to write below.</p>
 <ol>
 <li>A connection is requested</li>
 <li>Connection is accepted</li>
 <li>Client sends an HTTP request</li>
 <li>Server processes the requests</li>
-<li>Parse cookies (this is middleware, we're not going to do this in the server right now)</li>
-<li>Response handler needs to handle chunked and binary encoding, etc (we'll implement this)</li>
-<li>Certain headers expect the connection to behave differently, IE upgrade to HTTP/2.0, websocket, etc (we're going to create the mechanism to allow this to happen)</li>
+<li>Parse cookies (this is middleware, we're not going to do this in the
+server right now)</li>
+<li>Response handler needs to handle chunked and binary encoding, etc
+(we'll implement this)</li>
+<li>Certain headers expect the connection to behave differently, IE
+upgrade to HTTP/2.0, websocket, etc (we're going to create the mechanism
+to allow this to happen)</li>
 <li>Pipelining requests will be supported</li>
 <li>Server sends response to client</li>
 </ol>
-<p>Some of the caveats are listed above, there are whole lot of other things going on that we'll explore as we write some hipster perl6 codes.</p>
+<p>Some of the caveats are listed above, there are whole lot of other
+things going on that we'll explore as we write some hipster perl6
+codes.</p>
 <h3 id="write-code">Write Code</h3>
-<p>I'm going to make some assumptions about you and assume you have a text editor, perl6, and understand at least some perl6 basics.</p>
-<div class="sourceCode" id="cb3"><pre class="sourceCode perl"><code class="sourceCode perl"><span id="cb3-1"><a href="#cb3-1" aria-hidden="true" tabindex="-1"></a><span class="fu">use</span> <span class="fu">HTTP::Server</span>;</span>
+<p>I'm going to make some assumptions about you and assume you have a
+text editor, perl6, and understand at least some perl6 basics.</p>
+<div class="sourceCode" id="cb3"><pre
+class="sourceCode perl"><code class="sourceCode perl"><span id="cb3-1"><a href="#cb3-1" aria-hidden="true" tabindex="-1"></a><span class="fu">use</span> <span class="fu">HTTP::Server</span>;</span>
 <span id="cb3-2"><a href="#cb3-2" aria-hidden="true" tabindex="-1"></a></span>
 <span id="cb3-3"><a href="#cb3-3" aria-hidden="true" tabindex="-1"></a>class <span class="fu">HTTP::Server</span>::<span class="fu">Async</span> does <span class="fu">HTTP::Server</span> {</span>
 <span id="cb3-4"><a href="#cb3-4" aria-hidden="true" tabindex="-1"></a>  has Int    <span class="wa">$.</span><span class="dt">port</span> = <span class="dv">1666</span>;</span>
@@ -84,22 +106,35 @@
 <span id="cb3-28"><a href="#cb3-28" aria-hidden="true" tabindex="-1"></a>};</span></code></pre></div>
 <p>Let's chunk this hunk of crap a part and go piece by piece.</p>
 <h4 id="customs-and-declarations">Customs and declarations</h4>
-<div class="sourceCode" id="cb4"><pre class="sourceCode perl"><code class="sourceCode perl"><span id="cb4-1"><a href="#cb4-1" aria-hidden="true" tabindex="-1"></a><span class="fu">use</span> <span class="fu">HTTP::Server</span>;</span>
+<div class="sourceCode" id="cb4"><pre
+class="sourceCode perl"><code class="sourceCode perl"><span id="cb4-1"><a href="#cb4-1" aria-hidden="true" tabindex="-1"></a><span class="fu">use</span> <span class="fu">HTTP::Server</span>;</span>
 <span id="cb4-2"><a href="#cb4-2" aria-hidden="true" tabindex="-1"></a></span>
 <span id="cb4-3"><a href="#cb4-3" aria-hidden="true" tabindex="-1"></a>class <span class="fu">HTTP::Server</span>::<span class="fu">Async</span> does <span class="fu">HTTP::Server</span> {</span></code></pre></div>
-<p>Here we're creating the class <code>HTTP::Server::Async</code> and letting perl6 know that we're going to implement whatever <code>HTTP::Server</code> tells us we should.</p>
-<h4 id="method-stubbing-and-parameter-defaults">Method stubbing and parameter defaults</h4>
-<p>We're setting ourselves up to not have to do a lot of error checking. We're setting the default port to the mark of the beast plus 1k <code>1666</code>. Our default ip to listen on is <code>0.0.0.0</code>, basically accept connections from anywhere. We have our socket factory all set up - more on <code>$.socket</code> later.</p>
-<div class="sourceCode" id="cb5"><pre class="sourceCode perl"><code class="sourceCode perl"><span id="cb5-1"><a href="#cb5-1" aria-hidden="true" tabindex="-1"></a>  has Int    <span class="wa">$.</span><span class="dt">port</span> = <span class="dv">1666</span>;</span>
+<p>Here we're creating the class <code>HTTP::Server::Async</code> and
+letting perl6 know that we're going to implement whatever
+<code>HTTP::Server</code> tells us we should.</p>
+<h4 id="method-stubbing-and-parameter-defaults">Method stubbing and
+parameter defaults</h4>
+<p>We're setting ourselves up to not have to do a lot of error checking.
+We're setting the default port to the mark of the beast plus 1k
+<code>1666</code>. Our default ip to listen on is <code>0.0.0.0</code>,
+basically accept connections from anywhere. We have our socket factory
+all set up - more on <code>$.socket</code> later.</p>
+<div class="sourceCode" id="cb5"><pre
+class="sourceCode perl"><code class="sourceCode perl"><span id="cb5-1"><a href="#cb5-1" aria-hidden="true" tabindex="-1"></a>  has Int    <span class="wa">$.</span><span class="dt">port</span> = <span class="dv">1666</span>;</span>
 <span id="cb5-2"><a href="#cb5-2" aria-hidden="true" tabindex="-1"></a>  has Str    <span class="wa">$.</span><span class="dt">ip</span>   = <span class="ot">&#39;</span><span class="ss">0.0.0.0</span><span class="ot">&#39;</span>;</span>
 <span id="cb5-3"><a href="#cb5-3" aria-hidden="true" tabindex="-1"></a></span>
 <span id="cb5-4"><a href="#cb5-4" aria-hidden="true" tabindex="-1"></a>  has Supply <span class="wa">$.</span><span class="dt">socket</span>;</span></code></pre></div>
-<p>Our other class attributes are something we'll use during the method calls, right now we're just stubbing it up.</p>
-<div class="sourceCode" id="cb6"><pre class="sourceCode perl"><code class="sourceCode perl"><span id="cb6-1"><a href="#cb6-1" aria-hidden="true" tabindex="-1"></a>  has <span class="dt">@</span>.handlers;</span>
+<p>Our other class attributes are something we'll use during the method
+calls, right now we're just stubbing it up.</p>
+<div class="sourceCode" id="cb6"><pre
+class="sourceCode perl"><code class="sourceCode perl"><span id="cb6-1"><a href="#cb6-1" aria-hidden="true" tabindex="-1"></a>  has <span class="dt">@</span>.handlers;</span>
 <span id="cb6-2"><a href="#cb6-2" aria-hidden="true" tabindex="-1"></a>  has <span class="dt">@</span>.afters;</span>
 <span id="cb6-3"><a href="#cb6-3" aria-hidden="true" tabindex="-1"></a>  has <span class="dt">@</span>.middleware;</span></code></pre></div>
-<p>And finally, we'll actually do what we told the compiler we'd do, add some stubs for the <code>HTTP::Server</code> role.</p>
-<div class="sourceCode" id="cb7"><pre class="sourceCode perl"><code class="sourceCode perl"><span id="cb7-1"><a href="#cb7-1" aria-hidden="true" tabindex="-1"></a>  method handler(Callable <span class="dt">$sub</span>) {</span>
+<p>And finally, we'll actually do what we told the compiler we'd do, add
+some stubs for the <code>HTTP::Server</code> role.</p>
+<div class="sourceCode" id="cb7"><pre
+class="sourceCode perl"><code class="sourceCode perl"><span id="cb7-1"><a href="#cb7-1" aria-hidden="true" tabindex="-1"></a>  method handler(Callable <span class="dt">$sub</span>) {</span>
 <span id="cb7-2"><a href="#cb7-2" aria-hidden="true" tabindex="-1"></a></span>
 <span id="cb7-3"><a href="#cb7-3" aria-hidden="true" tabindex="-1"></a>  }</span>
 <span id="cb7-4"><a href="#cb7-4" aria-hidden="true" tabindex="-1"></a></span>
@@ -114,9 +149,14 @@
 <span id="cb7-13"><a href="#cb7-13" aria-hidden="true" tabindex="-1"></a>  method <span class="fu">listen</span>(Bool <span class="dt">$block</span>? = False) {</span>
 <span id="cb7-14"><a href="#cb7-14" aria-hidden="true" tabindex="-1"></a></span>
 <span id="cb7-15"><a href="#cb7-15" aria-hidden="true" tabindex="-1"></a>  }</span></code></pre></div>
-<p>At this point we're pretty well put together. We have an Async server that essentially refuses every connection, listens on no sockets, and doesn't take any flack from anybody. In other words, it does nothing at this point.</p>
-<p>Let's start by setting up our listening socket. We're going to modify the <code>.listen</code> method.</p>
-<div class="sourceCode" id="cb8"><pre class="sourceCode perl"><code class="sourceCode perl"><span id="cb8-1"><a href="#cb8-1" aria-hidden="true" tabindex="-1"></a>  method <span class="fu">listen</span>(Bool <span class="dt">$block</span>? = False) {</span>
+<p>At this point we're pretty well put together. We have an Async server
+that essentially refuses every connection, listens on no sockets, and
+doesn't take any flack from anybody. In other words, it does nothing at
+this point.</p>
+<p>Let's start by setting up our listening socket. We're going to modify
+the <code>.listen</code> method.</p>
+<div class="sourceCode" id="cb8"><pre
+class="sourceCode perl"><code class="sourceCode perl"><span id="cb8-1"><a href="#cb8-1" aria-hidden="true" tabindex="-1"></a>  method <span class="fu">listen</span>(Bool <span class="dt">$block</span>? = False) {</span>
 <span id="cb8-2"><a href="#cb8-2" aria-hidden="true" tabindex="-1"></a>    <span class="kw">my</span> Promise <span class="dt">$prom</span> .=new;</span>
 <span id="cb8-3"><a href="#cb8-3" aria-hidden="true" tabindex="-1"></a></span>
 <span id="cb8-4"><a href="#cb8-4" aria-hidden="true" tabindex="-1"></a>    <span class="wa">$.</span><span class="dt">socket</span> = <span class="fu">IO::Socket</span>::<span class="fu">Async</span>.<span class="fu">listen</span>(<span class="wa">$.</span><span class="dt">ip</span>, <span class="wa">$.</span><span class="dt">port</span>) <span class="ot">or</span> <span class="fu">die</span> <span class="ot">&quot;</span><span class="st">Failed to listen on </span><span class="wa">$.</span><span class="st">ip:</span><span class="wa">$.</span><span class="st">port</span><span class="ot">&quot;</span>;</span>
@@ -129,9 +169,15 @@
 <span id="cb8-11"><a href="#cb8-11" aria-hidden="true" tabindex="-1"></a>    await <span class="dt">$prom</span> <span class="kw">if</span> <span class="dt">$block</span>;</span>
 <span id="cb8-12"><a href="#cb8-12" aria-hidden="true" tabindex="-1"></a>    <span class="kw">return</span> <span class="dt">$prom</span>;</span>
 <span id="cb8-13"><a href="#cb8-13" aria-hidden="true" tabindex="-1"></a>  }</span></code></pre></div>
-<p>Wow this is sooooooo cool. We have an Async socket that listens, accepts connections and absolutely nothing else. We're at a decision point now, how do we want to handle request parsing? The answer in this tutorial is, obviously we're going to use a <code>Supply</code> to generate request, response combinations to be handled later.</p>
-<p>This is grown tiresome already, let's answer some requests and see where we stand. Inside of our <code>$.socket.tap</code>:</p>
-<div class="sourceCode" id="cb9"><pre class="sourceCode perl"><code class="sourceCode perl"><span id="cb9-1"><a href="#cb9-1" aria-hidden="true" tabindex="-1"></a>      <span class="dt">$conn</span>.<span class="fu">send</span>(<span class="ot">qq{</span><span class="st">HTTP/1.1 200 OK</span></span>
+<p>Wow this is sooooooo cool. We have an Async socket that listens,
+accepts connections and absolutely nothing else. We're at a decision
+point now, how do we want to handle request parsing? The answer in this
+tutorial is, obviously we're going to use a <code>Supply</code> to
+generate request, response combinations to be handled later.</p>
+<p>This is grown tiresome already, let's answer some requests and see
+where we stand. Inside of our <code>$.socket.tap</code>:</p>
+<div class="sourceCode" id="cb9"><pre
+class="sourceCode perl"><code class="sourceCode perl"><span id="cb9-1"><a href="#cb9-1" aria-hidden="true" tabindex="-1"></a>      <span class="dt">$conn</span>.<span class="fu">send</span>(<span class="ot">qq{</span><span class="st">HTTP/1.1 200 OK</span></span>
 <span id="cb9-2"><a href="#cb9-2" aria-hidden="true" tabindex="-1"></a><span class="st">Content-Type: text/plain</span></span>
 <span id="cb9-3"><a href="#cb9-3" aria-hidden="true" tabindex="-1"></a><span class="st">Content-Length: 9</span></span>
 <span id="cb9-4"><a href="#cb9-4" aria-hidden="true" tabindex="-1"></a></span>
@@ -141,22 +187,34 @@
 <span id="cb9-8"><a href="#cb9-8" aria-hidden="true" tabindex="-1"></a>      CATCH { <span class="kw">default</span> { .<span class="fu">say</span>; } }</span></code></pre></div>
 <p>Couple of notes at this point.</p>
 <ol>
-<li>The <code>CATCH</code> is vitally important to troubleshooting; currently errors are lost in the sauce and never bubble up anywhere without that handler</li>
+<li>The <code>CATCH</code> is vitally important to troubleshooting;
+currently errors are lost in the sauce and never bubble up anywhere
+without that handler</li>
 <li>We're serving static content and then closing the connection</li>
 <li>We're up to step 3 of our 5 part program</li>
 </ol>
-<p>Because pipelined requests are sent serially, we're going to handle the parsing all in a single thread and then dish those out with a new <code>HTTP::Response</code> object. It's going to be really neat.</p>
-<p>At this point your file should be pretty clean. You can start the server with a little code below and visit the page in your browser.</p>
-<div class="sourceCode" id="cb10"><pre class="sourceCode perl"><code class="sourceCode perl"><span id="cb10-1"><a href="#cb10-1" aria-hidden="true" tabindex="-1"></a><span class="fu">use</span> lib <span class="ot">&#39;</span><span class="ss">lib</span><span class="ot">&#39;</span>;</span>
+<p>Because pipelined requests are sent serially, we're going to handle
+the parsing all in a single thread and then dish those out with a new
+<code>HTTP::Response</code> object. It's going to be really neat.</p>
+<p>At this point your file should be pretty clean. You can start the
+server with a little code below and visit the page in your browser.</p>
+<div class="sourceCode" id="cb10"><pre
+class="sourceCode perl"><code class="sourceCode perl"><span id="cb10-1"><a href="#cb10-1" aria-hidden="true" tabindex="-1"></a><span class="fu">use</span> lib <span class="ot">&#39;</span><span class="ss">lib</span><span class="ot">&#39;</span>;</span>
 <span id="cb10-2"><a href="#cb10-2" aria-hidden="true" tabindex="-1"></a><span class="fu">use</span> <span class="fu">HTTP::Server</span>::<span class="fu">Async</span>;</span>
 <span id="cb10-3"><a href="#cb10-3" aria-hidden="true" tabindex="-1"></a></span>
 <span id="cb10-4"><a href="#cb10-4" aria-hidden="true" tabindex="-1"></a><span class="kw">my</span> <span class="fu">HTTP::Server</span>::<span class="fu">Async</span> <span class="dt">$h</span> .=new;</span>
 <span id="cb10-5"><a href="#cb10-5" aria-hidden="true" tabindex="-1"></a><span class="dt">$h</span>.<span class="fu">listen</span>(True);</span>
 <span id="cb10-6"><a href="#cb10-6" aria-hidden="true" tabindex="-1"></a><span class="co">#or: await $h.listen;</span></span></code></pre></div>
-<p>Now go to <code>http://127.0.0.1:1666/</code>, you should see <code>What's up</code>.</p>
-<p>Now undo all that <code>$conn.close</code> and <code>$conn.send</code> crap we've done. We're done messing around, we're going to parse some requests.</p>
-<p>Here's the code for detecting the end of request headers, after this we'll write down some stuff to handle the rest of the request. This code goes inside of our <code>$.socket.tap(</code></p>
-<div class="sourceCode" id="cb11"><pre class="sourceCode perl"><code class="sourceCode perl"><span id="cb11-1"><a href="#cb11-1" aria-hidden="true" tabindex="-1"></a>      <span class="kw">my</span> Buf <span class="dt">$data</span> .=new; <span class="co">#buffer across chunks received</span></span>
+<p>Now go to <code>http://127.0.0.1:1666/</code>, you should see
+<code>What's up</code>.</p>
+<p>Now undo all that <code>$conn.close</code> and
+<code>$conn.send</code> crap we've done. We're done messing around,
+we're going to parse some requests.</p>
+<p>Here's the code for detecting the end of request headers, after this
+we'll write down some stuff to handle the rest of the request. This code
+goes inside of our <code>$.socket.tap(</code></p>
+<div class="sourceCode" id="cb11"><pre
+class="sourceCode perl"><code class="sourceCode perl"><span id="cb11-1"><a href="#cb11-1" aria-hidden="true" tabindex="-1"></a>      <span class="kw">my</span> Buf <span class="dt">$data</span> .=new; <span class="co">#buffer across chunks received</span></span>
 <span id="cb11-2"><a href="#cb11-2" aria-hidden="true" tabindex="-1"></a>      <span class="kw">my</span> Int <span class="dt">$index</span> = <span class="dv">0</span>;  <span class="co">#index of last checked buffer position</span></span>
 <span id="cb11-3"><a href="#cb11-3" aria-hidden="true" tabindex="-1"></a>      <span class="kw">my</span> Buf <span class="dt">$rn</span>   .=new(<span class="ot">&quot;</span><span class="ch">\r\n\r\n</span><span class="ot">&quot;</span>.encode); <span class="co">#our header end detector</span></span>
 <span id="cb11-4"><a href="#cb11-4" aria-hidden="true" tabindex="-1"></a>      <span class="dt">$conn</span>.bytes_supply.tap(-&gt; <span class="dt">$bytes</span> {</span>
@@ -168,16 +226,28 @@
 <span id="cb11-10"><a href="#cb11-10" aria-hidden="true" tabindex="-1"></a>                  <span class="dt">$data</span>[<span class="dt">$index</span>+<span class="dv">3</span>] == <span class="dt">$rn</span>[<span class="dv">3</span>];</span>
 <span id="cb11-11"><a href="#cb11-11" aria-hidden="true" tabindex="-1"></a>        }</span>
 <span id="cb11-12"><a href="#cb11-12" aria-hidden="true" tabindex="-1"></a>        self!parse(<span class="dt">$data</span>, <span class="dt">$index</span>) <span class="kw">if</span> <span class="dt">$index</span> != <span class="dt">$data</span>.elems;</span></code></pre></div>
-<p>Now we need to write a crude request parsing method. In preparation of that we're going to fill out <code>method middleware</code>, <code>method handler</code>, and <code>method after</code>. Then we're going to call this article a wrap and do the parsing as another article.</p>
-<p>The point of the methods above is to allow the user of the server to hook into three parts of the request life.</p>
+<p>Now we need to write a crude request parsing method. In preparation
+of that we're going to fill out <code>method middleware</code>,
+<code>method handler</code>, and <code>method after</code>. Then we're
+going to call this article a wrap and do the parsing as another
+article.</p>
+<p>The point of the methods above is to allow the user of the server to
+hook into three parts of the request life.</p>
 <h5 id="method-middleware"><code>method middleware</code></h5>
-<p>Middleware is called whenever the headers are complete. So, possibly before the request is fully received but definitely when the headers are explicitly complete.</p>
+<p>Middleware is called whenever the headers are complete. So, possibly
+before the request is fully received but definitely when the headers are
+explicitly complete.</p>
 <h5 id="method-handler"><code>method handler</code></h5>
-<p>Handlers are called when the request is complete; that means both the headers and request body are fully parsed.</p>
+<p>Handlers are called when the request is complete; that means both the
+headers and request body are fully parsed.</p>
 <h5 id="method-after"><code>method after</code></h5>
-<p>After-ware are called when the request is complete. The <code>response</code> object should no longer be used to send data, and modifying the <code>request</code> object has no affect downstream.</p>
-<p>For right now, all we need to do is add whatever <code>Sub</code> is passed into the methods above into their respective arrays.</p>
-<div class="sourceCode" id="cb12"><pre class="sourceCode perl"><code class="sourceCode perl"><span id="cb12-1"><a href="#cb12-1" aria-hidden="true" tabindex="-1"></a> method handler(Callable <span class="dt">$sub</span>) {</span>
+<p>After-ware are called when the request is complete. The
+<code>response</code> object should no longer be used to send data, and
+modifying the <code>request</code> object has no affect downstream.</p>
+<p>For right now, all we need to do is add whatever <code>Sub</code> is
+passed into the methods above into their respective arrays.</p>
+<div class="sourceCode" id="cb12"><pre
+class="sourceCode perl"><code class="sourceCode perl"><span id="cb12-1"><a href="#cb12-1" aria-hidden="true" tabindex="-1"></a> method handler(Callable <span class="dt">$sub</span>) {</span>
 <span id="cb12-2"><a href="#cb12-2" aria-hidden="true" tabindex="-1"></a>    <span class="dt">@</span>.handlers.<span class="fu">push</span>(<span class="dt">$sub</span>);</span>
 <span id="cb12-3"><a href="#cb12-3" aria-hidden="true" tabindex="-1"></a>  }</span>
 <span id="cb12-4"><a href="#cb12-4" aria-hidden="true" tabindex="-1"></a></span>

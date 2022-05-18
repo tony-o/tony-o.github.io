@@ -1,4 +1,4 @@
-@import url('https://fonts.googleapis.com/css2?family=Roboto+Slab:wght@400;700&family=Ruda:wght@400;500;600;700&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Poppins:ital,wght@0,100;0,200;0,300;0,400;0,500;0,600;0,700;0,800;0,900;1,100;1,200;1,300;1,400;1,500;1,600;1,700;1,800;1,900&family=Roboto+Slab:wght@400;500;600;700;800&display=swap');
 
 * {
   box-sizing:  border-box;
@@ -7,9 +7,9 @@ html, body {
   min-height:  100%;
   min-width:   100%;
   font-size:   16pt;
-  font-family: 'Roboto Slab', serif;
-  background:  #EAF4EE;
-  color:       #171219;
+  font-family: Poppins, serif;
+  background:  #f1faee;
+  color:       #14213d;
   margin:      0;
   padding:     0;
 }
@@ -23,27 +23,27 @@ pre > code { overflow-x: scroll; }
 // slate gray  #6B717E
 // mint cream  #E6EFE9
 // aero blue   #C5F4E0
-// xiketic     #171219
-// flickr pink #F72585
+// xiketic     #14213d
+// flickr pink #457b9d
 */
 
 h1, h2, h3, h4, h5, h6 {
- font-family:    'Ruda', sans-serif;
+ font-family:    'Roboto Slab', sans-serif;
  font-weight:    300;
  text-transform: uppercase;
  color:          #6B717E;
 }
 
-h1 { color: #171219; }
+h1 { color: #14213d; }
 
 a {
-  color:       #F72585;
+  color:       #457b9d;
   font-weight: bold;
 }
 
-a#visited,
+a:visited,
 a:hover {
-  color: #EC0B43;
+  color: #1d3557;
 }
 
 body > div#title,
@@ -73,7 +73,7 @@ body > div#title > a > h1 {
   display:         inline-block;
   vertical-align:  middle;
   font-size:       1.5em;
-  color:           #171219;
+  color:           #14213d;
   text-decoration: none;
 }
 
@@ -88,8 +88,8 @@ body > div#articles > table tr > td:first-child {
 }
 
 body > div#articles > table tr:hover > td:first-child {
-  border-left-color: #EC0B43;
-  border-right-color: #EC0B43;
+  border-left-color: #1d3557;
+  border-right-color: #1d3557;
 }
 
 body > div#articles > table td {

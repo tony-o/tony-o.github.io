@@ -6,7 +6,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <meta content="text/html;charset=utf-8" http-equiv="Content-Type" />
     <meta content="utf-8" http-equiv="encoding" />
-    <link rel="stylesheet" href="//cdnjs.cloudflare.com/ajax/libs/highlight.js/11.2.0/styles/github.min.css" />
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.2.0/styles/base16/danqing.min.css" />
     <link rel="stylesheet" href="/s/style.css" />
   </head>
   <body>
@@ -20,14 +20,48 @@
       <h6>// <a href="https://deathbykeystroke.com/articles/20210116-fezzef---a-raku-ecosystem-and-auth.html">perma</a></h6>
       <br/>
 
-      <p>fez is a utility for interacting with the zef ecosystem. you can think of it as the opposite of zef. zef downloads distributions and installs them and fez uploads making them available to zef.</p>
+      <p>fez is a utility for interacting with the zef ecosystem. you can
+think of it as the opposite of zef. zef downloads distributions and
+installs them and fez uploads making them available to zef.</p>
 <h2 id="how-does-this-work">how does this work?</h2>
-<p>here exists a myriad of ways in which to make an ecosystem for raku. two current implementations include the current p6c (which is a text file of git repos) and, the other, cpan which works much in the same way as it does with perl (keeps an index based on <code>name</code>). Both of these implementations present their own challenges when working with raku distributions, the challenges are too off topic to really get into in this article and they're left for a follow up article.</p>
-<p>so! zef's ecosystem is built on top of s3, lambda, and cloudfront. for all intents and purposes it's a file system exposed over http. there is a json index which is a master list of all available distributions enriched with the path those distributions can be had from (spoiler alert: it's a hash of the tar.gz file that gets uploaded and placed in a specific directory). you can find the master list at https://360.zef.pm/index.json. subsequently, you can information about specific names by using the name. eg, a distribution named <code>fez</code> will have meta info available <a href="https://360.zef.pm/F/EZ/FEZ/index.json">here</a>(names with <code>::</code> are converted <code>:: =&gt; \_</code> ).</p>
-<p>ef's ecosystem also ensures that the auth matches. one limitation of cpan is that you can upload under your PAUSE ID but the distribution you upload can contain any information in the meta (or no meta), including a meaningless auth value. zef's ecosystem only indexes distributions whose meta<auth> match that of the uploader. you can be reasonably assured that when you request <code>HTTP::Tiny:auth&lt;zef:jjatria&gt;</code> using the zef ecosystem that you're not getting something by the same dist name from someone who forked and forgot to update the meta information or any other shenanigans.</p>
-<p>zef's ecosystem rejects any dist with a version of <code>*</code>. why is this? because <code>*</code> supercedes every other possible version. if zef allowed this then you could own the entire ecosystem by publishing a module with version <code>*</code> for every possible name, forcing consumers to specify version.</p>
-<p>zef also does some basic sanity checks on the meta data. if the uploaded module has a bad meta file then it's rejected by the fez indexer. no more finding modules available that won't install because the meta data is bad.</p>
-<h2 id="cool-what-do-i-need-to-get-started">cool, what do i need to get started?</h2>
+<p>here exists a myriad of ways in which to make an ecosystem for raku.
+two current implementations include the current p6c (which is a text
+file of git repos) and, the other, cpan which works much in the same way
+as it does with perl (keeps an index based on <code>name</code>). Both
+of these implementations present their own challenges when working with
+raku distributions, the challenges are too off topic to really get into
+in this article and they're left for a follow up article.</p>
+<p>so! zef's ecosystem is built on top of s3, lambda, and cloudfront.
+for all intents and purposes it's a file system exposed over http. there
+is a json index which is a master list of all available distributions
+enriched with the path those distributions can be had from (spoiler
+alert: it's a hash of the tar.gz file that gets uploaded and placed in a
+specific directory). you can find the master list at
+https://360.zef.pm/index.json. subsequently, you can information about
+specific names by using the name. eg, a distribution named
+<code>fez</code> will have meta info available <a
+href="https://360.zef.pm/F/EZ/FEZ/index.json">here</a>(names with
+<code>::</code> are converted <code>:: =&gt; \_</code> ).</p>
+<p>ef's ecosystem also ensures that the auth matches. one limitation of
+cpan is that you can upload under your PAUSE ID but the distribution you
+upload can contain any information in the meta (or no meta), including a
+meaningless auth value. zef's ecosystem only indexes distributions whose
+meta<auth> match that of the uploader. you can be reasonably assured
+that when you request <code>HTTP::Tiny:auth&lt;zef:jjatria&gt;</code>
+using the zef ecosystem that you're not getting something by the same
+dist name from someone who forked and forgot to update the meta
+information or any other shenanigans.</p>
+<p>zef's ecosystem rejects any dist with a version of <code>*</code>.
+why is this? because <code>*</code> supercedes every other possible
+version. if zef allowed this then you could own the entire ecosystem by
+publishing a module with version <code>*</code> for every possible name,
+forcing consumers to specify version.</p>
+<p>zef also does some basic sanity checks on the meta data. if the
+uploaded module has a bad meta file then it's rejected by the fez
+indexer. no more finding modules available that won't install because
+the meta data is bad.</p>
+<h2 id="cool-what-do-i-need-to-get-started">cool, what do i need to get
+started?</h2>
 <p>all you need is zef: check it out!</p>
 <pre><code>zef install fez
 ...
@@ -41,14 +75,30 @@ fez register
 &gt;&gt;= What&#39;s your website? DEATHBYPERL6.com
 &gt;&gt;= Public email address? xyz@abc.com
 =&lt;&lt; Your meta info has been updated</code></pre>
-<p>now you're off and running. once you have your module sitting pretty and ready for edgar to download it's only the simple command of:</p>
+<p>now you're off and running. once you have your module sitting pretty
+and ready for edgar to download it's only the simple command of:</p>
 <pre><code>my_module_dir$ fez upload</code></pre>
-<h2 id="what-version-of-zef-do-i-need">what version of zef do i need?</h2>
+<h2 id="what-version-of-zef-do-i-need">what version of zef do i
+need?</h2>
 <p>zef &gt; 0.10.0 should work with zef's ecosystem.</p>
 <h2 id="why-now">why now?</h2>
-<p>ugexe and i spent a ton of time deliberating how this ecosystem should work back in 2013 when we started the zef project. if you're a sleuth you can dig through zef's commits, an ecosystem was up and alpha test worthy back then but the time wasn't right (beware of the easter dragons). nine was working on precomp, zef was in its infancy, panda had its own (inflexible) way of being modularized, the state of the S# for distributions was in constant flux, there were far too many factors and possibilities to make pursuing the ecosystem sane. if an ecosystem had been designed then it certainly wouldn't have lived up to the expectations and it would've either painted us into a corner regarding how dists work or choked on its own obsolescence and cruft.</p>
-<h2 id="i-want-to-contribute-but-dont-know-how">i want to contribute but don't know how</h2>
-<p>if you want to support the effort, PRs and feature ideas are always welcome. you can find me as tony-o in #raku on freenode or, if supporting the cost of running the ecosystem is more your speed then you can donate here.</p>
+<p>ugexe and i spent a ton of time deliberating how this ecosystem
+should work back in 2013 when we started the zef project. if you're a
+sleuth you can dig through zef's commits, an ecosystem was up and alpha
+test worthy back then but the time wasn't right (beware of the easter
+dragons). nine was working on precomp, zef was in its infancy, panda had
+its own (inflexible) way of being modularized, the state of the S# for
+distributions was in constant flux, there were far too many factors and
+possibilities to make pursuing the ecosystem sane. if an ecosystem had
+been designed then it certainly wouldn't have lived up to the
+expectations and it would've either painted us into a corner regarding
+how dists work or choked on its own obsolescence and cruft.</p>
+<h2 id="i-want-to-contribute-but-dont-know-how">i want to contribute but
+don't know how</h2>
+<p>if you want to support the effort, PRs and feature ideas are always
+welcome. you can find me as tony-o in #raku on freenode or, if
+supporting the cost of running the ecosystem is more your speed then you
+can donate here.</p>
 
 
     </div>
