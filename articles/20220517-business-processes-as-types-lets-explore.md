@@ -278,6 +278,6 @@ We get what we expected, everything under id:30 is procurable so we get `Ordered
 
 All three branches of our business process tree are now handled and all three termination points within one call chain.
 
-"Yea but hey! most of this business process _can_ follow the same pattern, what about something that doesn't?  There isn't much that doesn't and in the case where you should follow very different logic then you have the fallback to `switch result.Which()` and follow the chains that way but this should be an exception if you're thinking clearly.
+"Yea but hey! most of this business process _can_ follow the same pattern, what about something that doesn't?"  There isn't much that doesn't and in the case where you should follow very different logic then you have the fallback to `switch result.Which()` and follow the chains that way but this should be an exception if you're thinking clearly.
 
 That about does it for the business process as types. This shift in thinking is possible in most languages but it does require some forethought about the what the process is and what data is needed throughout the chain.

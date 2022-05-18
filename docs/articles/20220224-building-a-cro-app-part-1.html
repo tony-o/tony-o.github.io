@@ -20,14 +20,9 @@
       <h6>// <a href="https://deathbykeystroke.com/articles/20220224-building-a-cro-app-part-1.html">perma</a></h6>
       <br/>
 
-      <p>This whole article will encompass building a Cro application (with DB
-and templating), configuring your apache web server, and ensuring your
-app is running with systemd.</p>
-<h2 id="part-1---building-the-cro-app">Part 1 - Building the Cro
-app</h2>
-<p>We're going to build a little 90s style forum, like Bytamin-C. This
-allows users to log in and participate in some chats and have a profile,
-or surf around and view some of the chats others are having.</p>
+      <p>This whole article will encompass building a Cro application (with DB and templating), configuring your apache web server, and ensuring your app is running with systemd.</p>
+<h2 id="part-1---building-the-cro-app">Part 1 - Building the Cro app</h2>
+<p>We're going to build a little 90s style forum, like Bytamin-C. This allows users to log in and participate in some chats and have a profile, or surf around and view some of the chats others are having.</p>
 <p>Let's set up our directory structure first:</p>
 <pre><code>.
 ├── bin
@@ -36,11 +31,8 @@ or surf around and view some of the chats others are having.</p>
 ├── META6.json
 ├── resources
 └── templates</code></pre>
-<p>In <code>bin/app</code> we'll have nothing for the time being, this
-will eventually be the script we use to start the webserver. In
-<code>META6.json</code> lets add the following:</p>
-<div class="sourceCode" id="cb2"><pre
-class="sourceCode json"><code class="sourceCode json"><span id="cb2-1"><a href="#cb2-1" aria-hidden="true" tabindex="-1"></a><span class="fu">{</span></span>
+<p>In <code>bin/app</code> we'll have nothing for the time being, this will eventually be the script we use to start the webserver. In <code>META6.json</code> lets add the following:</p>
+<div class="sourceCode" id="cb2"><pre class="sourceCode json"><code class="sourceCode json"><span id="cb2-1"><a href="#cb2-1" aria-hidden="true" tabindex="-1"></a><span class="fu">{</span></span>
 <span id="cb2-2"><a href="#cb2-2" aria-hidden="true" tabindex="-1"></a>  <span class="dt">&quot;name&quot;</span><span class="fu">:</span>        <span class="st">&quot;Demo&quot;</span><span class="fu">,</span></span>
 <span id="cb2-3"><a href="#cb2-3" aria-hidden="true" tabindex="-1"></a>  <span class="dt">&quot;auth&quot;</span><span class="fu">:</span>        <span class="st">&quot;zef:tony-o&quot;</span><span class="fu">,</span></span>
 <span id="cb2-4"><a href="#cb2-4" aria-hidden="true" tabindex="-1"></a>  <span class="dt">&quot;version&quot;</span><span class="fu">:</span>     <span class="st">&quot;0.0.1&quot;</span><span class="fu">,</span></span>
@@ -49,17 +41,10 @@ class="sourceCode json"><code class="sourceCode json"><span id="cb2-1"><a href="
 <span id="cb2-7"><a href="#cb2-7" aria-hidden="true" tabindex="-1"></a>  <span class="dt">&quot;depends&quot;</span><span class="fu">:</span>     <span class="ot">[</span><span class="st">&quot;cro&quot;</span><span class="ot">,</span> <span class="st">&quot;Cro::WebApp::Template&quot;</span><span class="ot">]</span><span class="fu">,</span></span>
 <span id="cb2-8"><a href="#cb2-8" aria-hidden="true" tabindex="-1"></a>  <span class="dt">&quot;provides&quot;</span><span class="fu">:</span>    <span class="fu">{}</span></span>
 <span id="cb2-9"><a href="#cb2-9" aria-hidden="true" tabindex="-1"></a><span class="fu">}</span></span></code></pre></div>
-<p>After doing this, you can run
-<code>zef install --/test --depsonly .</code> and you should end up with
-our app's dependencies so we can start filling out the rest.</p>
+<p>After doing this, you can run <code>zef install --/test --depsonly .</code> and you should end up with our app's dependencies so we can start filling out the rest.</p>
 <h3 id="the-binapp">The <code>bin/app</code></h3>
-<p>Typically stuff inside of the bin directory doesn't gain the benefit
-of precompilation. To gain some start up speed and benefits, the
-<code>bin/app</code> file will just be stubbed to start our app. So
-let's create the bit we want precompiled in
-<code>lib/Demo/App.rakumod</code> add the following:</p>
-<div class="sourceCode" id="cb3"><pre
-class="sourceCode raku"><code class="sourceCode raku"><span id="cb3-1"><a href="#cb3-1" aria-hidden="true" tabindex="-1"></a>unit <span class="kw">module</span> <span class="dt">Demo</span><span class="kw">::</span><span class="at">App</span>;</span>
+<p>Typically stuff inside of the bin directory doesn't gain the benefit of precompilation. To gain some start up speed and benefits, the <code>bin/app</code> file will just be stubbed to start our app. So let's create the bit we want precompiled in <code>lib/Demo/App.rakumod</code> add the following:</p>
+<div class="sourceCode" id="cb3"><pre class="sourceCode raku"><code class="sourceCode raku"><span id="cb3-1"><a href="#cb3-1" aria-hidden="true" tabindex="-1"></a>unit <span class="kw">module</span> <span class="dt">Demo</span><span class="kw">::</span><span class="at">App</span>;</span>
 <span id="cb3-2"><a href="#cb3-2" aria-hidden="true" tabindex="-1"></a></span>
 <span id="cb3-3"><a href="#cb3-3" aria-hidden="true" tabindex="-1"></a><span class="kw">use</span> <span class="dt">Cro</span><span class="kw">::</span><span class="at">HTTP</span><span class="kw">::</span><span class="at">Router</span>;</span>
 <span id="cb3-4"><a href="#cb3-4" aria-hidden="true" tabindex="-1"></a><span class="kw">use</span> <span class="dt">Cro</span><span class="kw">::</span><span class="at">HTTP</span><span class="kw">::</span><span class="at">Server</span>;</span>
@@ -84,11 +69,8 @@ class="sourceCode raku"><code class="sourceCode raku"><span id="cb3-1"><a href="
 <span id="cb3-23"><a href="#cb3-23" aria-hidden="true" tabindex="-1"></a>  <span class="va">$service</span><span class="kw">.</span>stop;</span>
 <span id="cb3-24"><a href="#cb3-24" aria-hidden="true" tabindex="-1"></a>  <span class="cf">exit</span>;</span>
 <span id="cb3-25"><a href="#cb3-25" aria-hidden="true" tabindex="-1"></a><span class="kw">}</span></span></code></pre></div>
-<p>You'll see we're including something called <code>Config</code>, we
-haven't created this yet so let's add this to
-<code>lib/Config.rakumod</code>:</p>
-<div class="sourceCode" id="cb4"><pre
-class="sourceCode raku"><code class="sourceCode raku"><span id="cb4-1"><a href="#cb4-1" aria-hidden="true" tabindex="-1"></a>unit <span class="kw">module</span> <span class="dt">Config</span>;</span>
+<p>You'll see we're including something called <code>Config</code>, we haven't created this yet so let's add this to <code>lib/Config.rakumod</code>:</p>
+<div class="sourceCode" id="cb4"><pre class="sourceCode raku"><code class="sourceCode raku"><span id="cb4-1"><a href="#cb4-1" aria-hidden="true" tabindex="-1"></a>unit <span class="kw">module</span> <span class="dt">Config</span>;</span>
 <span id="cb4-2"><a href="#cb4-2" aria-hidden="true" tabindex="-1"></a></span>
 <span id="cb4-3"><a href="#cb4-3" aria-hidden="true" tabindex="-1"></a><span class="bu">sub</span> config <span class="kw">is</span> <span class="bu">export</span> <span class="kw">{</span></span>
 <span id="cb4-4"><a href="#cb4-4" aria-hidden="true" tabindex="-1"></a>  <span class="kw">{</span></span>
@@ -96,50 +78,29 @@ class="sourceCode raku"><code class="sourceCode raku"><span id="cb4-1"><a href="
 <span id="cb4-6"><a href="#cb4-6" aria-hidden="true" tabindex="-1"></a>    listen-port <span class="kw">=&gt;</span> <span class="dv">8666</span><span class="kw">,</span></span>
 <span id="cb4-7"><a href="#cb4-7" aria-hidden="true" tabindex="-1"></a>  <span class="kw">}</span>;</span>
 <span id="cb4-8"><a href="#cb4-8" aria-hidden="true" tabindex="-1"></a><span class="kw">}</span></span></code></pre></div>
-<p>Now, as we add things that need configuration we can add those to
-this file. There are plenty of ways to include config and if you're
-storing passwords and secrets then this module should retrieve those in
-a secure way. We still can't run this app to test it until we modify the
-<code>provides</code> in our <code>META6.json</code>:</p>
-<div class="sourceCode" id="cb5"><pre
-class="sourceCode json"><code class="sourceCode json"><span id="cb5-1"><a href="#cb5-1" aria-hidden="true" tabindex="-1"></a><span class="fu">{</span></span>
+<p>Now, as we add things that need configuration we can add those to this file. There are plenty of ways to include config and if you're storing passwords and secrets then this module should retrieve those in a secure way. We still can't run this app to test it until we modify the <code>provides</code> in our <code>META6.json</code>:</p>
+<div class="sourceCode" id="cb5"><pre class="sourceCode json"><code class="sourceCode json"><span id="cb5-1"><a href="#cb5-1" aria-hidden="true" tabindex="-1"></a><span class="fu">{</span></span>
 <span id="cb5-2"><a href="#cb5-2" aria-hidden="true" tabindex="-1"></a>  <span class="er">...</span></span>
 <span id="cb5-3"><a href="#cb5-3" aria-hidden="true" tabindex="-1"></a>  <span class="dt">&quot;provides&quot;</span><span class="fu">:</span> <span class="fu">{</span></span>
 <span id="cb5-4"><a href="#cb5-4" aria-hidden="true" tabindex="-1"></a>    <span class="dt">&quot;Demo::App&quot;</span><span class="fu">:</span> <span class="st">&quot;lib/Demo/App.rakumod&quot;</span><span class="fu">,</span></span>
 <span id="cb5-5"><a href="#cb5-5" aria-hidden="true" tabindex="-1"></a>    <span class="dt">&quot;Config&quot;</span><span class="fu">:</span>    <span class="st">&quot;lib/Config.rakumod&quot;</span></span>
 <span id="cb5-6"><a href="#cb5-6" aria-hidden="true" tabindex="-1"></a>  <span class="fu">}</span></span>
 <span id="cb5-7"><a href="#cb5-7" aria-hidden="true" tabindex="-1"></a><span class="fu">}</span></span></code></pre></div>
-<p>Now, when you run: <code>raku -I. -e 'use Demo::App'</code> you'll
-get the message of where your server is listening and if you hit that
-ip/port + <code>/greet/world</code> with your browser
-(<code>http://127.0.0.1:8666</code> if you didn't modify the config)
-then you should get a nice message of <code>Hello, world!</code>. This
-means our server is working. Let's stub it out now, in
-<code>bin/app</code>:</p>
-<div class="sourceCode" id="cb6"><pre
-class="sourceCode raku"><code class="sourceCode raku"><span id="cb6-1"><a href="#cb6-1" aria-hidden="true" tabindex="-1"></a><span class="kw">#!/usr/bin/env raku</span></span>
+<p>Now, when you run: <code>raku -I. -e 'use Demo::App'</code> you'll get the message of where your server is listening and if you hit that ip/port + <code>/greet/world</code> with your browser (<code>http://127.0.0.1:8666</code> if you didn't modify the config) then you should get a nice message of <code>Hello, world!</code>. This means our server is working. Let's stub it out now, in <code>bin/app</code>:</p>
+<div class="sourceCode" id="cb6"><pre class="sourceCode raku"><code class="sourceCode raku"><span id="cb6-1"><a href="#cb6-1" aria-hidden="true" tabindex="-1"></a><span class="kw">#!/usr/bin/env raku</span></span>
 <span id="cb6-2"><a href="#cb6-2" aria-hidden="true" tabindex="-1"></a><span class="kw">use</span> <span class="dt">Demo</span><span class="kw">::</span><span class="at">App</span>;</span></code></pre></div>
-<p>Now your server can run with <code>raku -I. bin/app</code> and you
-can hit the same endpoint you did above for great success.</p>
-<h3 id="building-templates-and-static-files">Building Templates and
-Static Files</h3>
+<p>Now your server can run with <code>raku -I. bin/app</code> and you can hit the same endpoint you did above for great success.</p>
+<h3 id="building-templates-and-static-files">Building Templates and Static Files</h3>
 <h4 id="static-files">Static Files</h4>
-<p>Serving static files is fairly simple in cro, add the following
-routes to <code>lib/Demo/App.rakumod</code>:</p>
-<div class="sourceCode" id="cb7"><pre
-class="sourceCode raku"><code class="sourceCode raku"><span id="cb7-1"><a href="#cb7-1" aria-hidden="true" tabindex="-1"></a>get <span class="kw">-&gt;</span> <span class="ch">&#39;</span><span class="st">style</span><span class="ch">&#39;</span><span class="kw">,</span> <span class="kw">*</span><span class="va">@path</span> <span class="kw">{</span></span>
+<p>Serving static files is fairly simple in cro, add the following routes to <code>lib/Demo/App.rakumod</code>:</p>
+<div class="sourceCode" id="cb7"><pre class="sourceCode raku"><code class="sourceCode raku"><span id="cb7-1"><a href="#cb7-1" aria-hidden="true" tabindex="-1"></a>get <span class="kw">-&gt;</span> <span class="ch">&#39;</span><span class="st">style</span><span class="ch">&#39;</span><span class="kw">,</span> <span class="kw">*</span><span class="va">@path</span> <span class="kw">{</span></span>
 <span id="cb7-2"><a href="#cb7-2" aria-hidden="true" tabindex="-1"></a>  static <span class="ch">&#39;</span><span class="st">static/style</span><span class="ch">&#39;</span><span class="kw">,</span> <span class="va">@path</span>;</span>
 <span id="cb7-3"><a href="#cb7-3" aria-hidden="true" tabindex="-1"></a><span class="kw">}</span></span>
 <span id="cb7-4"><a href="#cb7-4" aria-hidden="true" tabindex="-1"></a></span>
 <span id="cb7-5"><a href="#cb7-5" aria-hidden="true" tabindex="-1"></a>get <span class="kw">-&gt;</span> <span class="ch">&#39;</span><span class="st">script</span><span class="ch">&#39;</span><span class="kw">,</span> <span class="kw">*</span><span class="va">@path</span> <span class="kw">{</span></span>
 <span id="cb7-6"><a href="#cb7-6" aria-hidden="true" tabindex="-1"></a>  static <span class="ch">&#39;</span><span class="st">static/script</span><span class="ch">&#39;</span><span class="kw">,</span> <span class="va">@path</span>;</span>
 <span id="cb7-7"><a href="#cb7-7" aria-hidden="true" tabindex="-1"></a><span class="kw">}</span></span></code></pre></div>
-<p>Cro protects us against a query like
-<code>/script/../db.sqlite</code> so we don't need to worry about path
-resolution ending up outside of our static file directories. You now
-need to create the directories <code>static/style</code> and
-<code>static/script</code> and you should have the directory structure
-of:</p>
+<p>Cro protects us against a query like <code>/script/../db.sqlite</code> so we don't need to worry about path resolution ending up outside of our static file directories. You now need to create the directories <code>static/style</code> and <code>static/script</code> and you should have the directory structure of:</p>
 <pre><code>.
 ├── bin
 │   └── app
@@ -155,13 +116,9 @@ of:</p>
 └── templates</code></pre>
 <p>That's it for static files.</p>
 <h4 id="templates">Templates</h4>
-<p>Cro has the concept of partials so we're going to modify our
-<code>greet/$name</code> route to work off of a template.</p>
-<p>First, change our <code>use</code> block in
-<code>lib/Demo/App.rakumod</code> to include
-<code>Cro::WebApp::Template</code>:</p>
-<div class="sourceCode" id="cb9"><pre
-class="sourceCode raku"><code class="sourceCode raku"><span id="cb9-1"><a href="#cb9-1" aria-hidden="true" tabindex="-1"></a>unit <span class="kw">module</span> <span class="dt">Demo</span><span class="kw">::</span><span class="at">App</span>;</span>
+<p>Cro has the concept of partials so we're going to modify our <code>greet/$name</code> route to work off of a template.</p>
+<p>First, change our <code>use</code> block in <code>lib/Demo/App.rakumod</code> to include <code>Cro::WebApp::Template</code>:</p>
+<div class="sourceCode" id="cb9"><pre class="sourceCode raku"><code class="sourceCode raku"><span id="cb9-1"><a href="#cb9-1" aria-hidden="true" tabindex="-1"></a>unit <span class="kw">module</span> <span class="dt">Demo</span><span class="kw">::</span><span class="at">App</span>;</span>
 <span id="cb9-2"><a href="#cb9-2" aria-hidden="true" tabindex="-1"></a></span>
 <span id="cb9-3"><a href="#cb9-3" aria-hidden="true" tabindex="-1"></a><span class="kw">use</span> <span class="dt">Cro</span><span class="kw">::</span><span class="at">HTTP</span><span class="kw">::</span><span class="at">Router</span>;</span>
 <span id="cb9-4"><a href="#cb9-4" aria-hidden="true" tabindex="-1"></a><span class="kw">use</span> <span class="dt">Cro</span><span class="kw">::</span><span class="at">HTTP</span><span class="kw">::</span><span class="at">Server</span>;</span>
@@ -169,19 +126,14 @@ class="sourceCode raku"><code class="sourceCode raku"><span id="cb9-1"><a href="
 <span id="cb9-6"><a href="#cb9-6" aria-hidden="true" tabindex="-1"></a></span>
 <span id="cb9-7"><a href="#cb9-7" aria-hidden="true" tabindex="-1"></a><span class="kw">use</span> <span class="dt">Config</span>;</span></code></pre></div>
 <p>And modify our application's route block to be:</p>
-<div class="sourceCode" id="cb10"><pre
-class="sourceCode raku"><code class="sourceCode raku"><span id="cb10-1"><a href="#cb10-1" aria-hidden="true" tabindex="-1"></a><span class="kw">my</span> <span class="va">$application</span> <span class="kw">=</span> route <span class="kw">{</span></span>
+<div class="sourceCode" id="cb10"><pre class="sourceCode raku"><code class="sourceCode raku"><span id="cb10-1"><a href="#cb10-1" aria-hidden="true" tabindex="-1"></a><span class="kw">my</span> <span class="va">$application</span> <span class="kw">=</span> route <span class="kw">{</span></span>
 <span id="cb10-2"><a href="#cb10-2" aria-hidden="true" tabindex="-1"></a>  template-location <span class="ch">&#39;</span><span class="st">templates/</span><span class="ch">&#39;</span>;</span>
 <span id="cb10-3"><a href="#cb10-3" aria-hidden="true" tabindex="-1"></a></span>
 <span id="cb10-4"><a href="#cb10-4" aria-hidden="true" tabindex="-1"></a>  get <span class="kw">-&gt;</span> <span class="ch">&#39;</span><span class="st">greet</span><span class="ch">&#39;</span><span class="kw">,</span> <span class="va">$name</span> <span class="kw">{</span></span>
 <span id="cb10-5"><a href="#cb10-5" aria-hidden="true" tabindex="-1"></a>    template <span class="ch">&#39;</span><span class="st">main.crotmp</span><span class="ch">&#39;</span><span class="kw">,</span> <span class="kw">{:</span><span class="va">$name</span><span class="kw">}</span>;</span>
 <span id="cb10-6"><a href="#cb10-6" aria-hidden="true" tabindex="-1"></a>  <span class="kw">}</span></span>
 <span id="cb10-7"><a href="#cb10-7" aria-hidden="true" tabindex="-1"></a><span class="kw">}</span></span></code></pre></div>
-<p>With these changes we're telling cro to look in the
-<code>templates/</code> directory for whatever <code>.crotmp</code>
-first and we're telling our greeter route to use a template giving it
-access to the <code>$name</code> variable. Now we need to create the
-template <code>templates/main.crotmp</code>:</p>
+<p>With these changes we're telling cro to look in the <code>templates/</code> directory for whatever <code>.crotmp</code> first and we're telling our greeter route to use a template giving it access to the <code>$name</code> variable. Now we need to create the template <code>templates/main.crotmp</code>:</p>
 <pre><code>&lt;!DOCTYPE html&gt;
 &lt;html&gt;
   &lt;head /&gt;
@@ -189,17 +141,10 @@ template <code>templates/main.crotmp</code>:</p>
     Greetings, &lt;.name&gt;!
   &lt;/body&gt;
 &lt;/html&gt;</code></pre>
-<p>Now firing up our application and visiting our server at
-<code>/greet/world</code> we'll get the same message but this time
-complete with html! Now let's build out our authorization and
-functionality.</p>
-<h3 id="building-our-applications-functionality">Building Our
-Application's Functionality</h3>
-<p>If we want to let users post and sign up, we're going to want a
-database. Let's define our table schemas (using SQLite for this demo),
-in <code>schema.sql</code>:</p>
-<div class="sourceCode" id="cb12"><pre
-class="sourceCode sql"><code class="sourceCode sql"><span id="cb12-1"><a href="#cb12-1" aria-hidden="true" tabindex="-1"></a><span class="kw">CREATE</span> <span class="kw">TABLE</span> users (</span>
+<p>Now firing up our application and visiting our server at <code>/greet/world</code> we'll get the same message but this time complete with html! Now let's build out our authorization and functionality.</p>
+<h3 id="building-our-applications-functionality">Building Our Application's Functionality</h3>
+<p>If we want to let users post and sign up, we're going to want a database. Let's define our table schemas (using SQLite for this demo), in <code>schema.sql</code>:</p>
+<div class="sourceCode" id="cb12"><pre class="sourceCode sql"><code class="sourceCode sql"><span id="cb12-1"><a href="#cb12-1" aria-hidden="true" tabindex="-1"></a><span class="kw">CREATE</span> <span class="kw">TABLE</span> users (</span>
 <span id="cb12-2"><a href="#cb12-2" aria-hidden="true" tabindex="-1"></a>  <span class="kw">id</span>         UUID <span class="kw">NOT</span> <span class="kw">NULL</span> <span class="kw">PRIMARY</span> <span class="kw">KEY</span>,</span>
 <span id="cb12-3"><a href="#cb12-3" aria-hidden="true" tabindex="-1"></a>  name       TEXT <span class="kw">NOT</span> <span class="kw">NULL</span>,</span>
 <span id="cb12-4"><a href="#cb12-4" aria-hidden="true" tabindex="-1"></a>  foreign_id TEXT</span>
@@ -214,40 +159,26 @@ class="sourceCode sql"><code class="sourceCode sql"><span id="cb12-1"><a href="#
 <span id="cb12-13"><a href="#cb12-13" aria-hidden="true" tabindex="-1"></a></span>
 <span id="cb12-14"><a href="#cb12-14" aria-hidden="true" tabindex="-1"></a>  <span class="kw">FOREIGN</span> <span class="kw">KEY</span>(author) <span class="kw">REFERENCES</span> users(<span class="kw">id</span>)</span>
 <span id="cb12-15"><a href="#cb12-15" aria-hidden="true" tabindex="-1"></a>);</span></code></pre></div>
-<p>Now run <code>sqlite3 resources/db.sqlite &lt; schema.sql</code>, you
-should now have a <code>db.sqlite</code> database with our posts and
-users ready to use. Let's make sure we keep our <code>META6.json</code>
-up to date, add a <code>resources</code> key:</p>
-<div class="sourceCode" id="cb13"><pre
-class="sourceCode json"><code class="sourceCode json"><span id="cb13-1"><a href="#cb13-1" aria-hidden="true" tabindex="-1"></a><span class="fu">{</span></span>
+<p>Now run <code>sqlite3 resources/db.sqlite &lt; schema.sql</code>, you should now have a <code>db.sqlite</code> database with our posts and users ready to use. Let's make sure we keep our <code>META6.json</code> up to date, add a <code>resources</code> key:</p>
+<div class="sourceCode" id="cb13"><pre class="sourceCode json"><code class="sourceCode json"><span id="cb13-1"><a href="#cb13-1" aria-hidden="true" tabindex="-1"></a><span class="fu">{</span></span>
 <span id="cb13-2"><a href="#cb13-2" aria-hidden="true" tabindex="-1"></a>  <span class="er">...</span></span>
 <span id="cb13-3"><a href="#cb13-3" aria-hidden="true" tabindex="-1"></a>  <span class="dt">&quot;provides&quot;</span><span class="fu">:</span> <span class="fu">{</span><span class="er">...</span><span class="fu">},</span></span>
 <span id="cb13-4"><a href="#cb13-4" aria-hidden="true" tabindex="-1"></a>  <span class="dt">&quot;resources&quot;</span><span class="fu">:</span> <span class="ot">[</span> <span class="st">&quot;db.sqlite&quot;</span> <span class="ot">]</span></span>
 <span id="cb13-5"><a href="#cb13-5" aria-hidden="true" tabindex="-1"></a><span class="fu">}</span></span></code></pre></div>
-<p>We're going to morph our greeter route to just be our app's main
-route and allow people to log in. In <code>lib/Demo/App.rakumod</code>
-make the modifications to our <code>$application</code>:</p>
-<div class="sourceCode" id="cb14"><pre
-class="sourceCode raku"><code class="sourceCode raku"><span id="cb14-1"><a href="#cb14-1" aria-hidden="true" tabindex="-1"></a><span class="kw">my</span> <span class="va">$application</span> <span class="kw">=</span> route <span class="kw">{</span></span>
+<p>We're going to morph our greeter route to just be our app's main route and allow people to log in. In <code>lib/Demo/App.rakumod</code> make the modifications to our <code>$application</code>:</p>
+<div class="sourceCode" id="cb14"><pre class="sourceCode raku"><code class="sourceCode raku"><span id="cb14-1"><a href="#cb14-1" aria-hidden="true" tabindex="-1"></a><span class="kw">my</span> <span class="va">$application</span> <span class="kw">=</span> route <span class="kw">{</span></span>
 <span id="cb14-2"><a href="#cb14-2" aria-hidden="true" tabindex="-1"></a>  template-location <span class="ch">&#39;</span><span class="st">templates/</span><span class="ch">&#39;</span>;</span>
 <span id="cb14-3"><a href="#cb14-3" aria-hidden="true" tabindex="-1"></a></span>
 <span id="cb14-4"><a href="#cb14-4" aria-hidden="true" tabindex="-1"></a>  get <span class="kw">-&gt;</span> <span class="kw">{</span></span>
 <span id="cb14-5"><a href="#cb14-5" aria-hidden="true" tabindex="-1"></a>    template <span class="ch">&#39;</span><span class="st">main.crotmp</span><span class="ch">&#39;</span>;</span>
 <span id="cb14-6"><a href="#cb14-6" aria-hidden="true" tabindex="-1"></a>  <span class="kw">}</span></span>
 <span id="cb14-7"><a href="#cb14-7" aria-hidden="true" tabindex="-1"></a><span class="kw">}</span></span></code></pre></div>
-<p>Now we're at a break point. For this article we're going to use
-github's oauth so you'll need to take a break from this article and
-create a github oauth app (at the time of writing this, the path in
-github is <code>Settings/Developer Settings</code>) with the following
-info:</p>
+<p>Now we're at a break point. For this article we're going to use github's oauth so you'll need to take a break from this article and create a github oauth app (at the time of writing this, the path in github is <code>Settings/Developer Settings</code>) with the following info:</p>
 <figure>
-<img src="/i/ghscreen1.png" alt="Github Screenshot" />
-<figcaption aria-hidden="true">Github Screenshot</figcaption>
+<img src="/i/ghscreen1.png" alt="Github Screenshot" /><figcaption aria-hidden="true">Github Screenshot</figcaption>
 </figure>
-<p>Now we need the secret you generated and the client id in
-<code>lib/Config.rakumod</code>:</p>
-<div class="sourceCode" id="cb15"><pre
-class="sourceCode raku"><code class="sourceCode raku"><span id="cb15-1"><a href="#cb15-1" aria-hidden="true" tabindex="-1"></a><span class="bu">sub</span> config <span class="kw">is</span> <span class="bu">export</span> <span class="kw">{</span></span>
+<p>Now we need the secret you generated and the client id in <code>lib/Config.rakumod</code>:</p>
+<div class="sourceCode" id="cb15"><pre class="sourceCode raku"><code class="sourceCode raku"><span id="cb15-1"><a href="#cb15-1" aria-hidden="true" tabindex="-1"></a><span class="bu">sub</span> config <span class="kw">is</span> <span class="bu">export</span> <span class="kw">{</span></span>
 <span id="cb15-2"><a href="#cb15-2" aria-hidden="true" tabindex="-1"></a>  <span class="kw">{</span> </span>
 <span id="cb15-3"><a href="#cb15-3" aria-hidden="true" tabindex="-1"></a>    listen-ip   <span class="kw">=&gt;</span> <span class="ch">&#39;</span><span class="st">127.0.0.1</span><span class="ch">&#39;</span><span class="kw">,</span></span>
 <span id="cb15-4"><a href="#cb15-4" aria-hidden="true" tabindex="-1"></a>    listen-port <span class="kw">=&gt;</span> <span class="dv">8666</span><span class="kw">,</span></span>
@@ -255,21 +186,16 @@ class="sourceCode raku"><code class="sourceCode raku"><span id="cb15-1"><a href=
 <span id="cb15-6"><a href="#cb15-6" aria-hidden="true" tabindex="-1"></a>    gh-client   <span class="kw">=&gt;</span> <span class="ch">&#39;</span><span class="st">85c...fc50decdf74c8</span><span class="ch">&#39;</span><span class="kw">,</span></span>
 <span id="cb15-7"><a href="#cb15-7" aria-hidden="true" tabindex="-1"></a>  <span class="kw">}</span>;</span>
 <span id="cb15-8"><a href="#cb15-8" aria-hidden="true" tabindex="-1"></a><span class="kw">}</span></span></code></pre></div>
-<p>Okay! Let's build out an OAuth flow. Essentially what happens in
-OAuth is:</p>
+<p>Okay! Let's build out an OAuth flow. Essentially what happens in OAuth is:</p>
 <ol>
-<li>Your app directs the user to the OAuth provider with a list of
-grants (what resources we want access to)</li>
-<li>The user succeeds or fails at the login (if fails then this process
-stops)</li>
+<li>Your app directs the user to the OAuth provider with a list of grants (what resources we want access to)</li>
+<li>The user succeeds or fails at the login (if fails then this process stops)</li>
 <li>The provider gives our server an authorization grant</li>
 <li>Our server then requests an access token from the provider</li>
-<li>We can use that access token to request information from the OAuth
-provider within the scope of our grants</li>
+<li>We can use that access token to request information from the OAuth provider within the scope of our grants</li>
 </ol>
 <p>We're going to modify our route to our application:</p>
-<div class="sourceCode" id="cb16"><pre
-class="sourceCode raku"><code class="sourceCode raku"><span id="cb16-1"><a href="#cb16-1" aria-hidden="true" tabindex="-1"></a><span class="kw">class</span> <span class="dt">SessionVar</span> <span class="kw">does</span> <span class="dt">Cro</span><span class="kw">::</span><span class="at">HTTP</span><span class="kw">::</span><span class="at">Auth</span> <span class="kw">{</span></span>
+<div class="sourceCode" id="cb16"><pre class="sourceCode raku"><code class="sourceCode raku"><span id="cb16-1"><a href="#cb16-1" aria-hidden="true" tabindex="-1"></a><span class="kw">class</span> <span class="dt">SessionVar</span> <span class="kw">does</span> <span class="dt">Cro</span><span class="kw">::</span><span class="at">HTTP</span><span class="kw">::</span><span class="at">Auth</span> <span class="kw">{</span></span>
 <span id="cb16-2"><a href="#cb16-2" aria-hidden="true" tabindex="-1"></a>  <span class="kw">has</span> <span class="va">$.user</span>         <span class="kw">is</span> <span class="bu">rw</span>;</span>
 <span id="cb16-3"><a href="#cb16-3" aria-hidden="true" tabindex="-1"></a>  <span class="kw">has</span> <span class="va">$.user-id</span>      <span class="kw">is</span> <span class="bu">rw</span>;</span>
 <span id="cb16-4"><a href="#cb16-4" aria-hidden="true" tabindex="-1"></a>  <span class="kw">has</span> <span class="va">$.login-state</span>  <span class="kw">is</span> <span class="bu">rw</span>;</span>
@@ -337,13 +263,8 @@ class="sourceCode raku"><code class="sourceCode raku"><span id="cb16-1"><a href=
 <span id="cb16-66"><a href="#cb16-66" aria-hidden="true" tabindex="-1"></a>    redirect <span class="ch">&#39;</span><span class="st">/</span><span class="ch">&#39;</span>;</span>
 <span id="cb16-67"><a href="#cb16-67" aria-hidden="true" tabindex="-1"></a>  <span class="kw">}</span></span>
 <span id="cb16-68"><a href="#cb16-68" aria-hidden="true" tabindex="-1"></a><span class="kw">}</span></span></code></pre></div>
-<p>Oof, this is a huge change, let's break it down. First big
-modification is the introduction of a session to our app. We're going to
-keep our user data in the session so we don't need to load it every
-request so we can tell cro to hold that in a session object resembling
-the <code>SessionVar</code> class we've designed.</p>
-<div class="sourceCode" id="cb17"><pre
-class="sourceCode raku"><code class="sourceCode raku"><span id="cb17-1"><a href="#cb17-1" aria-hidden="true" tabindex="-1"></a><span class="co"># This will hold our session data</span></span>
+<p>Oof, this is a huge change, let's break it down. First big modification is the introduction of a session to our app. We're going to keep our user data in the session so we don't need to load it every request so we can tell cro to hold that in a session object resembling the <code>SessionVar</code> class we've designed.</p>
+<div class="sourceCode" id="cb17"><pre class="sourceCode raku"><code class="sourceCode raku"><span id="cb17-1"><a href="#cb17-1" aria-hidden="true" tabindex="-1"></a><span class="co"># This will hold our session data</span></span>
 <span id="cb17-2"><a href="#cb17-2" aria-hidden="true" tabindex="-1"></a><span class="kw">class</span> <span class="dt">SessionVar</span> <span class="kw">does</span> <span class="dt">Cro</span><span class="kw">::</span><span class="at">HTTP</span><span class="kw">::</span><span class="at">Auth</span> <span class="kw">{</span></span>
 <span id="cb17-3"><a href="#cb17-3" aria-hidden="true" tabindex="-1"></a>  <span class="kw">has</span> <span class="va">$.user</span>    <span class="kw">is</span> <span class="bu">rw</span>;</span>
 <span id="cb17-4"><a href="#cb17-4" aria-hidden="true" tabindex="-1"></a>  <span class="kw">has</span> <span class="va">$.user-id</span> <span class="kw">is</span> <span class="bu">rw</span>;</span>
@@ -355,23 +276,17 @@ class="sourceCode raku"><code class="sourceCode raku"><span id="cb17-1"><a href=
 <span id="cb17-10"><a href="#cb17-10" aria-hidden="true" tabindex="-1"></a>    expiration  <span class="kw">=&gt;</span> <span class="dt">Duration</span><span class="kw">.</span>new<span class="kw">(</span><span class="dv">60</span><span class="kw">*</span><span class="dv">60</span><span class="kw">),</span></span>
 <span id="cb17-11"><a href="#cb17-11" aria-hidden="true" tabindex="-1"></a>    cookie-name <span class="kw">=&gt;</span> <span class="ch">&#39;</span><span class="st">demo-app</span><span class="ch">&#39;</span><span class="kw">,</span></span>
 <span id="cb17-12"><a href="#cb17-12" aria-hidden="true" tabindex="-1"></a>  <span class="kw">)</span>;</span></code></pre></div>
-<p>Now we need to set up our redirect. This could also be done in a link
-rather than as an endpoint for our API but this is also fine.</p>
-<div class="sourceCode" id="cb18"><pre
-class="sourceCode raku"><code class="sourceCode raku"><span id="cb18-1"><a href="#cb18-1" aria-hidden="true" tabindex="-1"></a>  get <span class="kw">-&gt;</span> <span class="dt">SessionVar</span> <span class="va">\session</span><span class="kw">,</span> <span class="ch">&#39;</span><span class="st">oauth</span><span class="ch">&#39;</span> <span class="kw">{</span></span>
+<p>Now we need to set up our redirect. This could also be done in a link rather than as an endpoint for our API but this is also fine.</p>
+<div class="sourceCode" id="cb18"><pre class="sourceCode raku"><code class="sourceCode raku"><span id="cb18-1"><a href="#cb18-1" aria-hidden="true" tabindex="-1"></a>  get <span class="kw">-&gt;</span> <span class="dt">SessionVar</span> <span class="va">\session</span><span class="kw">,</span> <span class="ch">&#39;</span><span class="st">oauth</span><span class="ch">&#39;</span> <span class="kw">{</span></span>
 <span id="cb18-2"><a href="#cb18-2" aria-hidden="true" tabindex="-1"></a>    session<span class="kw">.</span>login-state <span class="kw">=</span> <span class="kw">(</span><span class="ch">&#39;</span><span class="st">a</span><span class="ch">&#39;</span> <span class="kw">..</span> <span class="ch">&#39;</span><span class="st">z</span><span class="ch">&#39;</span><span class="kw">).</span>pick<span class="kw">(</span><span class="dv">24</span><span class="kw">).</span>sort<span class="kw">.</span>join<span class="kw">(&#39;&#39;)</span>;</span>
 <span id="cb18-3"><a href="#cb18-3" aria-hidden="true" tabindex="-1"></a>    redirect <span class="ch">&#39;</span><span class="st">https://github.com/login/oauth/authorize</span><span class="ch">&#39;</span></span>
 <span id="cb18-4"><a href="#cb18-4" aria-hidden="true" tabindex="-1"></a>           <span class="kw">~</span> <span class="ch">&quot;</span><span class="st">?client_id={</span>encode-percents<span class="kw">:</span> config<span class="ch">&lt;</span><span class="st">gh-client</span><span class="ch">&gt;</span><span class="st">}</span><span class="ch">&quot;</span></span>
 <span id="cb18-5"><a href="#cb18-5" aria-hidden="true" tabindex="-1"></a>           <span class="kw">~</span> <span class="ch">&quot;</span><span class="st">&amp;redirect_uri={</span>encode-percents<span class="kw">:</span> <span class="ch">&quot;</span><span class="st">http://localhost:8666/oauth2</span><span class="ch">&quot;</span><span class="st">}</span><span class="ch">&quot;</span>  <span class="co"># take note of this url, this is where we&#39;ll handle the login</span></span>
 <span id="cb18-6"><a href="#cb18-6" aria-hidden="true" tabindex="-1"></a>           <span class="kw">~</span> <span class="ch">&quot;</span><span class="st">&amp;state={</span>encode-percents<span class="kw">:</span> session<span class="kw">.</span>login-state<span class="st">}</span><span class="ch">&quot;</span>;</span>
 <span id="cb18-7"><a href="#cb18-7" aria-hidden="true" tabindex="-1"></a>  <span class="kw">}</span></span></code></pre></div>
-<p>Now, if you were to fire up your server and have your github OAuth
-settings correct, you could hit <code>/oauth</code> and you'd be
-presented with the nice github authorization screen.</p>
-<p>Now, once a user accepts or rejects the login request, we need to
-handle it:</p>
-<div class="sourceCode" id="cb19"><pre
-class="sourceCode raku"><code class="sourceCode raku"><span id="cb19-1"><a href="#cb19-1" aria-hidden="true" tabindex="-1"></a>  get <span class="kw">-&gt;</span> <span class="dt">SessionVar</span> <span class="va">\session</span><span class="kw">,</span> <span class="ch">&#39;</span><span class="st">oauth2</span><span class="ch">&#39;</span><span class="kw">,</span> <span class="kw">:</span><span class="va">$state</span><span class="kw">!</span> <span class="kw">is</span> query<span class="kw">,</span> <span class="dt">Str</span> <span class="kw">:</span><span class="va">$code</span><span class="kw">!</span> <span class="kw">is</span> query<span class="kw">,</span> <span class="kw">:</span><span class="va">$error</span><span class="kw">?</span> <span class="kw">is</span> query <span class="kw">{</span></span>
+<p>Now, if you were to fire up your server and have your github OAuth settings correct, you could hit <code>/oauth</code> and you'd be presented with the nice github authorization screen.</p>
+<p>Now, once a user accepts or rejects the login request, we need to handle it:</p>
+<div class="sourceCode" id="cb19"><pre class="sourceCode raku"><code class="sourceCode raku"><span id="cb19-1"><a href="#cb19-1" aria-hidden="true" tabindex="-1"></a>  get <span class="kw">-&gt;</span> <span class="dt">SessionVar</span> <span class="va">\session</span><span class="kw">,</span> <span class="ch">&#39;</span><span class="st">oauth2</span><span class="ch">&#39;</span><span class="kw">,</span> <span class="kw">:</span><span class="va">$state</span><span class="kw">!</span> <span class="kw">is</span> query<span class="kw">,</span> <span class="dt">Str</span> <span class="kw">:</span><span class="va">$code</span><span class="kw">!</span> <span class="kw">is</span> query<span class="kw">,</span> <span class="kw">:</span><span class="va">$error</span><span class="kw">?</span> <span class="kw">is</span> query <span class="kw">{</span></span>
 <span id="cb19-2"><a href="#cb19-2" aria-hidden="true" tabindex="-1"></a>    <span class="co"># If the user declined oauth, redirect home</span></span>
 <span id="cb19-3"><a href="#cb19-3" aria-hidden="true" tabindex="-1"></a>    redirect <span class="ch">&#39;</span><span class="st">/</span><span class="ch">&#39;</span> <span class="cf">if</span> <span class="va">$error</span><span class="kw">.</span>defined;</span>
 <span id="cb19-4"><a href="#cb19-4" aria-hidden="true" tabindex="-1"></a></span>
@@ -414,10 +329,8 @@ class="sourceCode raku"><code class="sourceCode raku"><span id="cb19-1"><a href=
 <span id="cb19-41"><a href="#cb19-41" aria-hidden="true" tabindex="-1"></a>    <span class="kw">}</span></span>
 <span id="cb19-42"><a href="#cb19-42" aria-hidden="true" tabindex="-1"></a>    redirect <span class="ch">&#39;</span><span class="st">/</span><span class="ch">&#39;</span>;</span>
 <span id="cb19-43"><a href="#cb19-43" aria-hidden="true" tabindex="-1"></a>  <span class="kw">}</span></span></code></pre></div>
-<p>Along with all this functionality, we also need to update our
-dependencies and project meta. The new <code>use</code> block:</p>
-<div class="sourceCode" id="cb20"><pre
-class="sourceCode raku"><code class="sourceCode raku"><span id="cb20-1"><a href="#cb20-1" aria-hidden="true" tabindex="-1"></a><span class="kw">use</span> <span class="dt">Cro</span><span class="kw">::</span><span class="at">HTTP</span><span class="kw">::</span><span class="at">Router</span>;</span>
+<p>Along with all this functionality, we also need to update our dependencies and project meta. The new <code>use</code> block:</p>
+<div class="sourceCode" id="cb20"><pre class="sourceCode raku"><code class="sourceCode raku"><span id="cb20-1"><a href="#cb20-1" aria-hidden="true" tabindex="-1"></a><span class="kw">use</span> <span class="dt">Cro</span><span class="kw">::</span><span class="at">HTTP</span><span class="kw">::</span><span class="at">Router</span>;</span>
 <span id="cb20-2"><a href="#cb20-2" aria-hidden="true" tabindex="-1"></a><span class="kw">use</span> <span class="dt">Cro</span><span class="kw">::</span><span class="at">HTTP</span><span class="kw">::</span><span class="at">Server</span>;</span>
 <span id="cb20-3"><a href="#cb20-3" aria-hidden="true" tabindex="-1"></a><span class="kw">use</span> <span class="dt">Cro</span><span class="kw">::</span><span class="at">HTTP</span><span class="kw">::</span><span class="at">Session</span><span class="kw">::</span><span class="at">InMemory</span>;</span>
 <span id="cb20-4"><a href="#cb20-4" aria-hidden="true" tabindex="-1"></a><span class="kw">use</span> <span class="dt">Cro</span><span class="kw">::</span><span class="at">WebApp</span><span class="kw">::</span><span class="at">Template</span>;</span>
@@ -427,8 +340,7 @@ class="sourceCode raku"><code class="sourceCode raku"><span id="cb20-1"><a href=
 <span id="cb20-8"><a href="#cb20-8" aria-hidden="true" tabindex="-1"></a><span class="kw">use</span> DB<span class="kw">::</span><span class="at">SQLite</span>;</span>
 <span id="cb20-9"><a href="#cb20-9" aria-hidden="true" tabindex="-1"></a><span class="kw">use</span> UUID;</span></code></pre></div>
 <p>and our new <code>META6.json</code>:</p>
-<div class="sourceCode" id="cb21"><pre
-class="sourceCode json"><code class="sourceCode json"><span id="cb21-1"><a href="#cb21-1" aria-hidden="true" tabindex="-1"></a><span class="fu">{</span></span>
+<div class="sourceCode" id="cb21"><pre class="sourceCode json"><code class="sourceCode json"><span id="cb21-1"><a href="#cb21-1" aria-hidden="true" tabindex="-1"></a><span class="fu">{</span></span>
 <span id="cb21-2"><a href="#cb21-2" aria-hidden="true" tabindex="-1"></a>  <span class="dt">&quot;name&quot;</span><span class="fu">:</span>        <span class="st">&quot;Demo&quot;</span><span class="fu">,</span></span>
 <span id="cb21-3"><a href="#cb21-3" aria-hidden="true" tabindex="-1"></a>  <span class="dt">&quot;auth&quot;</span><span class="fu">:</span>        <span class="st">&quot;zef:tony-o&quot;</span><span class="fu">,</span></span>
 <span id="cb21-4"><a href="#cb21-4" aria-hidden="true" tabindex="-1"></a>  <span class="dt">&quot;version&quot;</span><span class="fu">:</span>     <span class="st">&quot;0.0.1&quot;</span><span class="fu">,</span></span>
@@ -441,11 +353,8 @@ class="sourceCode json"><code class="sourceCode json"><span id="cb21-1"><a href=
 <span id="cb21-11"><a href="#cb21-11" aria-hidden="true" tabindex="-1"></a>  <span class="fu">},</span></span>
 <span id="cb21-12"><a href="#cb21-12" aria-hidden="true" tabindex="-1"></a>  <span class="dt">&quot;resources&quot;</span><span class="fu">:</span>  <span class="ot">[</span> <span class="st">&quot;db.sqlite&quot;</span> <span class="ot">]</span></span>
 <span id="cb21-13"><a href="#cb21-13" aria-hidden="true" tabindex="-1"></a><span class="fu">}</span></span></code></pre></div>
-<p>Now, last thing before we can test. Our <code>/</code> route has
-changed to use our session rather than just lounging around. Let's
-update our template to take advantage of our new powers.</p>
-<div class="sourceCode" id="cb22"><pre
-class="sourceCode html"><code class="sourceCode html"><span id="cb22-1"><a href="#cb22-1" aria-hidden="true" tabindex="-1"></a><span class="dt">&lt;!DOCTYPE </span>html<span class="dt">&gt;</span></span>
+<p>Now, last thing before we can test. Our <code>/</code> route has changed to use our session rather than just lounging around. Let's update our template to take advantage of our new powers.</p>
+<div class="sourceCode" id="cb22"><pre class="sourceCode html"><code class="sourceCode html"><span id="cb22-1"><a href="#cb22-1" aria-hidden="true" tabindex="-1"></a><span class="dt">&lt;!DOCTYPE </span>html<span class="dt">&gt;</span></span>
 <span id="cb22-2"><a href="#cb22-2" aria-hidden="true" tabindex="-1"></a><span class="kw">&lt;html&gt;</span></span>
 <span id="cb22-3"><a href="#cb22-3" aria-hidden="true" tabindex="-1"></a>  <span class="kw">&lt;head</span> <span class="kw">/&gt;</span></span>
 <span id="cb22-4"><a href="#cb22-4" aria-hidden="true" tabindex="-1"></a>  <span class="kw">&lt;body&gt;</span></span>
@@ -457,17 +366,9 @@ class="sourceCode html"><code class="sourceCode html"><span id="cb22-1"><a href=
 <span id="cb22-10"><a href="#cb22-10" aria-hidden="true" tabindex="-1"></a>    &lt;/<span class="kw">?&gt;</span></span>
 <span id="cb22-11"><a href="#cb22-11" aria-hidden="true" tabindex="-1"></a>  <span class="kw">&lt;/body&gt;</span></span>
 <span id="cb22-12"><a href="#cb22-12" aria-hidden="true" tabindex="-1"></a><span class="kw">&lt;/html&gt;</span></span></code></pre></div>
-<p>Fire that bad boy up with <code>raku -I. bin/app</code> and now when
-you first visit your site you'll get a <code>login</code> link and if
-you decline then you'll just be shown the login link, if you choose to
-accept fate then you should see a nice little display of your github
-name for the subsequent requests.</p>
-<p>At this point, if you were doing this in an effort to build something
-robust, you'd likely start look at real SQL servers and the available
-connection pools for them so you don't have one DB reference. You'd also
-probably start looking at session backends that are more persistent.</p>
-<h4 id="members-only-public-pages-and-a-mix-of-both">Members Only,
-Public Pages, and a Mix of Both</h4>
+<p>Fire that bad boy up with <code>raku -I. bin/app</code> and now when you first visit your site you'll get a <code>login</code> link and if you decline then you'll just be shown the login link, if you choose to accept fate then you should see a nice little display of your github name for the subsequent requests.</p>
+<p>At this point, if you were doing this in an effort to build something robust, you'd likely start look at real SQL servers and the available connection pools for them so you don't have one DB reference. You'd also probably start looking at session backends that are more persistent.</p>
+<h4 id="members-only-public-pages-and-a-mix-of-both">Members Only, Public Pages, and a Mix of Both</h4>
 <p>Now all that's left is to make a couple of pages.</p>
 <ul>
 <li>Create a new topic (only available if logged in)</li>
@@ -479,10 +380,8 @@ Public Pages, and a Mix of Both</h4>
 <li>Show respond form if logged in</li>
 </ul></li>
 </ul>
-<p>First let's show a link to make a post only if the user is logged in.
-In <code>templates/main.crotmp</code>:</p>
-<div class="sourceCode" id="cb23"><pre
-class="sourceCode html"><code class="sourceCode html"><span id="cb23-1"><a href="#cb23-1" aria-hidden="true" tabindex="-1"></a><span class="dt">&lt;!DOCTYPE </span>html<span class="dt">&gt;</span></span>
+<p>First let's show a link to make a post only if the user is logged in. In <code>templates/main.crotmp</code>:</p>
+<div class="sourceCode" id="cb23"><pre class="sourceCode html"><code class="sourceCode html"><span id="cb23-1"><a href="#cb23-1" aria-hidden="true" tabindex="-1"></a><span class="dt">&lt;!DOCTYPE </span>html<span class="dt">&gt;</span></span>
 <span id="cb23-2"><a href="#cb23-2" aria-hidden="true" tabindex="-1"></a><span class="kw">&lt;html&gt;</span></span>
 <span id="cb23-3"><a href="#cb23-3" aria-hidden="true" tabindex="-1"></a>  <span class="kw">&lt;head</span> <span class="kw">/&gt;</span></span>
 <span id="cb23-4"><a href="#cb23-4" aria-hidden="true" tabindex="-1"></a>  <span class="kw">&lt;body&gt;</span></span>
@@ -495,8 +394,7 @@ class="sourceCode html"><code class="sourceCode html"><span id="cb23-1"><a href=
 <span id="cb23-11"><a href="#cb23-11" aria-hidden="true" tabindex="-1"></a>  <span class="kw">&lt;/body&gt;</span></span>
 <span id="cb23-12"><a href="#cb23-12" aria-hidden="true" tabindex="-1"></a><span class="kw">&lt;/html&gt;</span></span></code></pre></div>
 <p>The new route (in <code>lib/Demo/App.rakumod</code>):</p>
-<div class="sourceCode" id="cb24"><pre
-class="sourceCode raku"><code class="sourceCode raku"><span id="cb24-1"><a href="#cb24-1" aria-hidden="true" tabindex="-1"></a>  <span class="co"># Anything requiring this subset will not match unless their session `user-id` is defined</span></span>
+<div class="sourceCode" id="cb24"><pre class="sourceCode raku"><code class="sourceCode raku"><span id="cb24-1"><a href="#cb24-1" aria-hidden="true" tabindex="-1"></a>  <span class="co"># Anything requiring this subset will not match unless their session `user-id` is defined</span></span>
 <span id="cb24-2"><a href="#cb24-2" aria-hidden="true" tabindex="-1"></a>  <span class="kw">subset</span> <span class="dt">LoggedIn</span> <span class="kw">of</span> <span class="dt">SessionVar</span> <span class="kw">where</span> <span class="kw">*.</span>user-id <span class="kw">??</span> <span class="dt">True</span> <span class="kw">!!</span> <span class="dt">False</span>;</span>
 <span id="cb24-3"><a href="#cb24-3" aria-hidden="true" tabindex="-1"></a></span>
 <span id="cb24-4"><a href="#cb24-4" aria-hidden="true" tabindex="-1"></a>  <span class="co"># The actual `create post` route</span></span>
@@ -541,14 +439,9 @@ class="sourceCode raku"><code class="sourceCode raku"><span id="cb24-1"><a href=
 <span id="cb24-43"><a href="#cb24-43" aria-hidden="true" tabindex="-1"></a>      <span class="kw">}</span></span>
 <span id="cb24-44"><a href="#cb24-44" aria-hidden="true" tabindex="-1"></a>    <span class="kw">}</span></span>
 <span id="cb24-45"><a href="#cb24-45" aria-hidden="true" tabindex="-1"></a>  <span class="kw">}</span></span></code></pre></div>
-<p>Okay, now we have a working endpoint. When you fire up the app you
-can log in and you can create posts. So, what's left for this tiny demo?
-Let's make the <code>/view/:post-id</code> endpoint so we can see our
-posts. We'll take the format of the old bulletin boards where we show
-the body and then a threaded view of responses below it.</p>
+<p>Okay, now we have a working endpoint. When you fire up the app you can log in and you can create posts. So, what's left for this tiny demo? Let's make the <code>/view/:post-id</code> endpoint so we can see our posts. We'll take the format of the old bulletin boards where we show the body and then a threaded view of responses below it.</p>
 <h4 id="hierarchal-post-view">Hierarchal Post View</h4>
-<p>First let's get the easy part out of the way, in
-<code>templates/view.crotmp</code>:</p>
+<p>First let's get the easy part out of the way, in <code>templates/view.crotmp</code>:</p>
 <pre><code>&lt;!DOCTYPE html&gt;
 &lt;html&gt;
   &lt;head&gt;
@@ -579,12 +472,8 @@ the body and then a threaded view of responses below it.</p>
     &lt;/?&gt;
   &lt;/body&gt;
 &lt;/html&gt;</code></pre>
-<p>Cool. Now if you're logged in you'll see a form to respond to
-whatever post you're viewing. We're wrapping our post body in
-<code>&lt;pre&gt;</code> because we're kicking it old school for this
-post. Let's add our routes in <code>lib/Demo/App.rakumod</code>:</p>
-<div class="sourceCode" id="cb26"><pre
-class="sourceCode raku"><code class="sourceCode raku"><span id="cb26-1"><a href="#cb26-1" aria-hidden="true" tabindex="-1"></a>  get <span class="kw">-&gt;</span> <span class="dt">SessionVar</span> <span class="va">\session</span><span class="kw">,</span> <span class="ch">&#39;</span><span class="st">view</span><span class="ch">&#39;</span><span class="kw">,</span> <span class="va">$id</span> <span class="kw">{</span></span>
+<p>Cool. Now if you're logged in you'll see a form to respond to whatever post you're viewing. We're wrapping our post body in <code>&lt;pre&gt;</code> because we're kicking it old school for this post. Let's add our routes in <code>lib/Demo/App.rakumod</code>:</p>
+<div class="sourceCode" id="cb26"><pre class="sourceCode raku"><code class="sourceCode raku"><span id="cb26-1"><a href="#cb26-1" aria-hidden="true" tabindex="-1"></a>  get <span class="kw">-&gt;</span> <span class="dt">SessionVar</span> <span class="va">\session</span><span class="kw">,</span> <span class="ch">&#39;</span><span class="st">view</span><span class="ch">&#39;</span><span class="kw">,</span> <span class="va">$id</span> <span class="kw">{</span></span>
 <span id="cb26-2"><a href="#cb26-2" aria-hidden="true" tabindex="-1"></a>    <span class="co"># Build-post-hierarchy is doing some fun stuff to make our template code simple, more after the break</span></span>
 <span id="cb26-3"><a href="#cb26-3" aria-hidden="true" tabindex="-1"></a>    <span class="kw">my</span> <span class="va">$data</span> <span class="kw">=</span> build-post-hierarchy<span class="kw">(</span><span class="va">$id</span><span class="kw">)</span>;</span>
 <span id="cb26-4"><a href="#cb26-4" aria-hidden="true" tabindex="-1"></a>    <span class="cf">if</span> <span class="kw">!</span><span class="va">$data</span> <span class="kw">{</span></span>
@@ -639,13 +528,8 @@ class="sourceCode raku"><code class="sourceCode raku"><span id="cb26-1"><a href=
 <span id="cb26-53"><a href="#cb26-53" aria-hidden="true" tabindex="-1"></a>      <span class="kw">}</span></span>
 <span id="cb26-54"><a href="#cb26-54" aria-hidden="true" tabindex="-1"></a>    <span class="kw">}</span></span>
 <span id="cb26-55"><a href="#cb26-55" aria-hidden="true" tabindex="-1"></a>  <span class="kw">}</span></span></code></pre></div>
-<p>The <code>POST</code> route is very similar to the <code>post</code>
-route of the same method/name. It's doing essentially the same thing but
-adding a parent id to the post so that when we build the hierarchy we
-know exactly what to do. Let's take a look at that hierarchy builder (in
-<code>lib/Demo/App.rakumod</code>):</p>
-<div class="sourceCode" id="cb27"><pre
-class="sourceCode raku"><code class="sourceCode raku"><span id="cb27-1"><a href="#cb27-1" aria-hidden="true" tabindex="-1"></a><span class="co"># This sub is declared outside of our routes so we can use it in the GET/POST version</span></span>
+<p>The <code>POST</code> route is very similar to the <code>post</code> route of the same method/name. It's doing essentially the same thing but adding a parent id to the post so that when we build the hierarchy we know exactly what to do. Let's take a look at that hierarchy builder (in <code>lib/Demo/App.rakumod</code>):</p>
+<div class="sourceCode" id="cb27"><pre class="sourceCode raku"><code class="sourceCode raku"><span id="cb27-1"><a href="#cb27-1" aria-hidden="true" tabindex="-1"></a><span class="co"># This sub is declared outside of our routes so we can use it in the GET/POST version</span></span>
 <span id="cb27-2"><a href="#cb27-2" aria-hidden="true" tabindex="-1"></a><span class="bu">sub</span> build-post-hierarchy<span class="kw">(</span><span class="dt">Str</span><span class="kw">:</span><span class="at">D</span> <span class="va">$id</span><span class="kw">)</span> <span class="kw">{</span></span>
 <span id="cb27-3"><a href="#cb27-3" aria-hidden="true" tabindex="-1"></a>  <span class="co"># Ensure the post exists prior to building the hierarchy</span></span>
 <span id="cb27-4"><a href="#cb27-4" aria-hidden="true" tabindex="-1"></a>  <span class="kw">my</span> <span class="va">%post</span>    <span class="kw">=</span> <span class="va">$db</span><span class="kw">.</span>query<span class="kw">(</span><span class="ch">&#39;</span><span class="st">select p.id, p.title, p.body, u.name from posts p left join users u on u.id = p.author where p.id = ?;</span><span class="ch">&#39;</span><span class="kw">,</span> <span class="va">$id</span><span class="kw">).</span>hash;</span>
@@ -692,14 +576,9 @@ class="sourceCode raku"><code class="sourceCode raku"><span id="cb27-1"><a href=
 <span id="cb27-45"><a href="#cb27-45" aria-hidden="true" tabindex="-1"></a>  <span class="kw">}</span></span>
 <span id="cb27-46"><a href="#cb27-46" aria-hidden="true" tabindex="-1"></a>  <span class="cf">return</span> <span class="kw">{:</span><span class="va">%post</span><span class="kw">,</span> <span class="kw">:</span><span class="va">@levels</span><span class="kw">}</span>;</span>
 <span id="cb27-47"><a href="#cb27-47" aria-hidden="true" tabindex="-1"></a><span class="kw">}</span></span></code></pre></div>
-<p>Whew. That's definitely a mouth full. Likely your use cases will be
-more straightforward but easy tutorials usually leave out some crucial
-bit and this is intended to show some complication.</p>
-<p>All that's left at this point is making the homepage show top level
-posts so let's modify our home page's route (in
-<code>lib/Demo/App.rakumod</code>):</p>
-<div class="sourceCode" id="cb28"><pre
-class="sourceCode raku"><code class="sourceCode raku"><span id="cb28-1"><a href="#cb28-1" aria-hidden="true" tabindex="-1"></a>  get <span class="kw">-&gt;</span> <span class="dt">SessionVar</span> <span class="va">\session</span> <span class="kw">{</span></span>
+<p>Whew. That's definitely a mouth full. Likely your use cases will be more straightforward but easy tutorials usually leave out some crucial bit and this is intended to show some complication.</p>
+<p>All that's left at this point is making the homepage show top level posts so let's modify our home page's route (in <code>lib/Demo/App.rakumod</code>):</p>
+<div class="sourceCode" id="cb28"><pre class="sourceCode raku"><code class="sourceCode raku"><span id="cb28-1"><a href="#cb28-1" aria-hidden="true" tabindex="-1"></a>  get <span class="kw">-&gt;</span> <span class="dt">SessionVar</span> <span class="va">\session</span> <span class="kw">{</span></span>
 <span id="cb28-2"><a href="#cb28-2" aria-hidden="true" tabindex="-1"></a>    template <span class="ch">&#39;</span><span class="st">main.crotmp</span><span class="ch">&#39;</span><span class="kw">,</span> <span class="kw">{</span></span>
 <span id="cb28-3"><a href="#cb28-3" aria-hidden="true" tabindex="-1"></a>      user      <span class="kw">=&gt;</span> session<span class="kw">.</span>user<span class="kw">,</span></span>
 <span id="cb28-4"><a href="#cb28-4" aria-hidden="true" tabindex="-1"></a>      <span class="co"># Add posts !</span></span>
@@ -727,21 +606,15 @@ class="sourceCode raku"><code class="sourceCode raku"><span id="cb28-1"><a href=
     &lt;/@&gt;
   &lt;/body&gt;
 &lt;/html&gt;</code></pre>
-<p>Okay. That's it! You have a working cro app (or should)! Let's review
-what we've done in this app:</p>
+<p>Okay. That's it! You have a working cro app (or should)! Let's review what we've done in this app:</p>
 <ol>
 <li>Visitors can log in via OAuth</li>
 <li>Anyone can view posts/responses</li>
 <li>Registered users can create new posts and respond</li>
 </ol>
-<p>Seems like a lot of code for these three basic functions (and it is)
-but bulletin boards can get even more complicated very quickly.</p>
-<p>This is part one of building a cro application end to end including
-deployment and next week the topic will be configuring apache to reverse
-proxy to our cro app and configuring systemd to ensure our app is
-available.</p>
-<p>Note: the full code for this demo can be found <a
-href="https://github.com/tony-o/blog-cro">here</a></p>
+<p>Seems like a lot of code for these three basic functions (and it is) but bulletin boards can get even more complicated very quickly.</p>
+<p>This is part one of building a cro application end to end including deployment and next week the topic will be configuring apache to reverse proxy to our cro app and configuring systemd to ensure our app is available.</p>
+<p>Note: the full code for this demo can be found <a href="https://github.com/tony-o/blog-cro">here</a></p>
 
 
     </div>

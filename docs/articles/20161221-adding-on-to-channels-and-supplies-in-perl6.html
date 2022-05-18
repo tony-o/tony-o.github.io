@@ -20,23 +20,14 @@
       <h6>// <a href="https://deathbykeystroke.com/articles/20161221-adding-on-to-channels-and-supplies-in-perl6.html">perma</a></h6>
       <br/>
 
-      <p>Channels and supplies are perl6's way of implementing the Oberserver
-pattern. There's some significant differences behind the scenes of the
-two but both can be used to implement a <code>jQuery.on("event"</code>
-like experience for the user. Not a jQuery fan? Don't you worry your
-pretty little head because this is perl6 and it's much more fun than
-whatever you thought.</p>
+      <p>Channels and supplies are perl6's way of implementing the Oberserver pattern. There's some significant differences behind the scenes of the two but both can be used to implement a <code>jQuery.on("event"</code> like experience for the user. Not a jQuery fan? Don't you worry your pretty little head because this is perl6 and it's much more fun than whatever you thought.</p>
 <h2 id="why">Why?</h2>
 <p>Uhh, why do we want this?</p>
-<p>This adds some sugar to the basic reactive constructs and it makes
-the passing of messages a lot more friendly, readable, and
-manageable.</p>
-<h2 id="what-in-heck-does-that-look-like">What in Heck Does that Look
-Like?</h2>
+<p>This adds some sugar to the basic reactive constructs and it makes the passing of messages a lot more friendly, readable, and manageable.</p>
+<h2 id="what-in-heck-does-that-look-like">What in Heck Does that Look Like?</h2>
 <p>Let's have an example and then we'll dissect it.</p>
 <h3 id="a-basic-example">A Basic Example</h3>
-<div class="sourceCode" id="cb1"><pre
-class="sourceCode perl"><code class="sourceCode perl"><span id="cb1-1"><a href="#cb1-1" aria-hidden="true" tabindex="-1"></a><span class="fu">use</span> <span class="fu">Event::Emitter</span>;</span>
+<div class="sourceCode" id="cb1"><pre class="sourceCode perl"><code class="sourceCode perl"><span id="cb1-1"><a href="#cb1-1" aria-hidden="true" tabindex="-1"></a><span class="fu">use</span> <span class="fu">Event::Emitter</span>;</span>
 <span id="cb1-2"><a href="#cb1-2" aria-hidden="true" tabindex="-1"></a><span class="kw">my</span> <span class="fu">Event::Emitter</span> <span class="dt">$e</span> .= new;</span>
 <span id="cb1-3"><a href="#cb1-3" aria-hidden="true" tabindex="-1"></a></span>
 <span id="cb1-4"><a href="#cb1-4" aria-hidden="true" tabindex="-1"></a><span class="dt">$e</span>.on(<span class="ot">/</span><span class="ch">^^</span><span class="ot"> .</span><span class="ch">+</span><span class="ot"> </span><span class="wa">$$</span><span class="ot">/</span>, -&gt; <span class="dt">$data</span> {</span>
@@ -60,8 +51,7 @@ class="sourceCode perl"><code class="sourceCode perl"><span id="cb1-1"><a href="
 <span id="cb1-22"><a href="#cb1-22" aria-hidden="true" tabindex="-1"></a></span>
 <span id="cb1-23"><a href="#cb1-23" aria-hidden="true" tabindex="-1"></a><span class="ot">&#39;</span><span class="ss">abc</span><span class="ot">&#39;</span>.<span class="fu">say</span>;</span>
 <span id="cb1-24"><a href="#cb1-24" aria-hidden="true" tabindex="-1"></a><span class="dt">$e</span>.emit(<span class="ot">&quot;</span><span class="st">abc</span><span class="ot">&quot;</span>, { });</span></code></pre></div>
-<p><strong>Output</strong> <em>* this is the output for an emitter using
-<code>Supply</code>, more on this later</em></p>
+<p><strong>Output</strong> <em>* this is the output for an emitter using <code>Supply</code>, more on this later</em></p>
 <pre><code>event
   regex matches
   block matches
@@ -71,32 +61,16 @@ empty event
 abc
   regex matches
   block matches</code></pre>
-<p>Okay, that looks like a lot. It is, and it's much nicer to use than a
-large <code>given</code>/<code>when</code> combination. It also reduces
-indenting, so you have that going for you, which is nice.</p>
+<p>Okay, that looks like a lot. It is, and it's much nicer to use than a large <code>given</code>/<code>when</code> combination. It also reduces indenting, so you have that going for you, which is nice.</p>
 <p>Let's start with the simple <code>.on</code> blocks we have.</p>
-<div class="sourceCode" id="cb3"><pre
-class="sourceCode perl"><code class="sourceCode perl"><span id="cb3-1"><a href="#cb3-1" aria-hidden="true" tabindex="-1"></a>  <span class="dt">$e</span>.on(<span class="ot">/</span><span class="ch">^^</span><span class="ot"> .</span><span class="ch">+</span><span class="ot"> </span><span class="wa">$$</span><span class="ot">/</span>, -&gt; <span class="dt">$data</span> { ...</span></code></pre></div>
-<p>This is telling the emitter handler that whenever an event is
-received, run that regular expression against it and if it matches,
-execute the block (passed in as the second argument). As a note, and
-illustrated in the example above, the handler can match against a
-<code>Callable</code>, <code>Str</code>, or <code>Regex</code>. The
-<code>Callable</code> must return <code>True</code> or
-<code>False</code> to let the handler know whether or not to execute the
-block.</p>
-<p>If that seems pretty basic, it is. But little things like this add up
-over time and help keep things manageable. Prepare yourself for more
-convenience.</p>
+<div class="sourceCode" id="cb3"><pre class="sourceCode perl"><code class="sourceCode perl"><span id="cb3-1"><a href="#cb3-1" aria-hidden="true" tabindex="-1"></a>  <span class="dt">$e</span>.on(<span class="ot">/</span><span class="ch">^^</span><span class="ot"> .</span><span class="ch">+</span><span class="ot"> </span><span class="wa">$$</span><span class="ot">/</span>, -&gt; <span class="dt">$data</span> { ...</span></code></pre></div>
+<p>This is telling the emitter handler that whenever an event is received, run that regular expression against it and if it matches, execute the block (passed in as the second argument). As a note, and illustrated in the example above, the handler can match against a <code>Callable</code>, <code>Str</code>, or <code>Regex</code>. The <code>Callable</code> must return <code>True</code> or <code>False</code> to let the handler know whether or not to execute the block.</p>
+<p>If that seems pretty basic, it is. But little things like this add up over time and help keep things manageable. Prepare yourself for more convenience.</p>
 <h3 id="the-sugar">The Sugar</h3>
 <p><em>Do you want ants? This is how you get ants.</em></p>
-<p>So, now we're looking for more value in something like this. Here it
-is: you can inherit from the <code>Event::Emitter::Role::Template</code>
-(or roll your own) and then your classes will automatically inherit
-these <code>on</code> events.</p>
+<p>So, now we're looking for more value in something like this. Here it is: you can inherit from the <code>Event::Emitter::Role::Template</code> (or roll your own) and then your classes will automatically inherit these <code>on</code> events.</p>
 <h5 id="example">Example</h5>
-<div class="sourceCode" id="cb4"><pre
-class="sourceCode perl"><code class="sourceCode perl"><span id="cb4-1"><a href="#cb4-1" aria-hidden="true" tabindex="-1"></a><span class="fu">use</span> <span class="fu">Event::Emitter</span>::<span class="fu">Role</span>::<span class="fu">Template</span>;</span>
+<div class="sourceCode" id="cb4"><pre class="sourceCode perl"><code class="sourceCode perl"><span id="cb4-1"><a href="#cb4-1" aria-hidden="true" tabindex="-1"></a><span class="fu">use</span> <span class="fu">Event::Emitter</span>::<span class="fu">Role</span>::<span class="fu">Template</span>;</span>
 <span id="cb4-2"><a href="#cb4-2" aria-hidden="true" tabindex="-1"></a></span>
 <span id="cb4-3"><a href="#cb4-3" aria-hidden="true" tabindex="-1"></a>class ZefClass does <span class="fu">Event::Emitter</span>::<span class="fu">Role</span>::<span class="fu">Template</span> {</span>
 <span id="cb4-4"><a href="#cb4-4" aria-hidden="true" tabindex="-1"></a>  submethod TWEAK {</span>
@@ -105,49 +79,25 @@ class="sourceCode perl"><code class="sourceCode perl"><span id="cb4-1"><a href="
 <span id="cb4-7"><a href="#cb4-7" aria-hidden="true" tabindex="-1"></a>    });</span>
 <span id="cb4-8"><a href="#cb4-8" aria-hidden="true" tabindex="-1"></a>  }</span>
 <span id="cb4-9"><a href="#cb4-9" aria-hidden="true" tabindex="-1"></a>}</span></code></pre></div>
-<p>Then, further along in your application, whenever an object wants
-<code>ZefClass</code> to react to the <code>'fresh'</code> event, all it
-needs to do is:</p>
+<p>Then, further along in your application, whenever an object wants <code>ZefClass</code> to react to the <code>'fresh'</code> event, all it needs to do is:</p>
 <blockquote>
 <p><code>$zef-class-instance.emit('fresh');</code></p>
 </blockquote>
 <p>Pretty damn cool.</p>
-<p>Development time is reduced significantly for a few reasons right off
-the bat:</p>
+<p>Development time is reduced significantly for a few reasons right off the bat:</p>
 <ol>
-<li>Implementing <code>Supplier</code> (or <code>Channel</code>)
-methods, setup, and event handling becomes unnecessary</li>
+<li>Implementing <code>Supplier</code> (or <code>Channel</code>) methods, setup, and event handling becomes unnecessary</li>
 <li>Event naming or matching is handled so it's easy to debug</li>
-<li>Handling or adding new event handling functions during runtime
-(imagine a plugin that may want to add more events to handle - like an
-IRC client that implements a handler for channel parting messages)</li>
-<li>Messages can be multiplexed through one Channel or Supply rather
-easily</li>
+<li>Handling or adding new event handling functions during runtime (imagine a plugin that may want to add more events to handle - like an IRC client that implements a handler for channel parting messages)</li>
+<li>Messages can be multiplexed through one Channel or Supply rather easily</li>
 <li>Creates more readable code</li>
 </ol>
-<p>That last reason is a big one. Imagine going back into one of your
-modules 2 years from now and debugging an issue where a
-<code>Supplier</code> is given an event and some data and digging
-through that 600 lines of <code>given</code>/<code>when</code>.</p>
+<p>That last reason is a big one. Imagine going back into one of your modules 2 years from now and debugging an issue where a <code>Supplier</code> is given an event and some data and digging through that 600 lines of <code>given</code>/<code>when</code>.</p>
 <p>Worse, imagine debugging someone else's.</p>
-<h2 id="a-quick-note-on-channel-vs-supply">A Quick Note on
-<code>Channel</code> vs <code>Supply</code></h2>
-<p>The <code>Channel</code> and <code>Supply</code> thing can take some
-getting used to for newcomers. The quick and dirty is that a
-<code>Channel</code> will distribute the event to only
-<strong>one</strong> listener (chosen by the scheduler) and order isn't
-guaranteed while a <code>Supply</code> will distribute to all listeners
-and the order of the messages are distributed in the order received.
-Because the <code>Event::Emitter</code> <code>Channel</code> based
-handler executes the methods registered with it directly, when it
-receives a message <em>all</em> of your methods are called with the
-data.</p>
-<p>So, you've seen the example above as a <code>Supply</code> based
-event handler, check it out as a <code>Channel</code> based and note the
-difference in <code>.say</code> and the instantiation of the event
-handler.</p>
-<div class="sourceCode" id="cb5"><pre
-class="sourceCode perl"><code class="sourceCode perl"><span id="cb5-1"><a href="#cb5-1" aria-hidden="true" tabindex="-1"></a><span class="fu">use</span> <span class="fu">Event::Emitter</span>;</span>
+<h2 id="a-quick-note-on-channel-vs-supply">A Quick Note on <code>Channel</code> vs <code>Supply</code></h2>
+<p>The <code>Channel</code> and <code>Supply</code> thing can take some getting used to for newcomers. The quick and dirty is that a <code>Channel</code> will distribute the event to only <strong>one</strong> listener (chosen by the scheduler) and order isn't guaranteed while a <code>Supply</code> will distribute to all listeners and the order of the messages are distributed in the order received. Because the <code>Event::Emitter</code> <code>Channel</code> based handler executes the methods registered with it directly, when it receives a message <em>all</em> of your methods are called with the data.</p>
+<p>So, you've seen the example above as a <code>Supply</code> based event handler, check it out as a <code>Channel</code> based and note the difference in <code>.say</code> and the instantiation of the event handler.</p>
+<div class="sourceCode" id="cb5"><pre class="sourceCode perl"><code class="sourceCode perl"><span id="cb5-1"><a href="#cb5-1" aria-hidden="true" tabindex="-1"></a><span class="fu">use</span> <span class="fu">Event::Emitter</span>;</span>
 <span id="cb5-2"><a href="#cb5-2" aria-hidden="true" tabindex="-1"></a><span class="kw">my</span> <span class="fu">Event::Emitter</span> <span class="dt">$e</span> .= new(:threaded); <span class="co"># !important - this signifies a Channel based E:E</span></span>
 <span id="cb5-3"><a href="#cb5-3" aria-hidden="true" tabindex="-1"></a></span>
 <span id="cb5-4"><a href="#cb5-4" aria-hidden="true" tabindex="-1"></a><span class="dt">$e</span>.on(<span class="ot">/</span><span class="ch">^^</span><span class="ot"> .</span><span class="ch">+</span><span class="ot"> </span><span class="wa">$$</span><span class="ot">/</span>, -&gt; <span class="dt">$data</span> {</span>

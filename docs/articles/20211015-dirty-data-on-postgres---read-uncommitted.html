@@ -20,24 +20,14 @@
       <h6>// <a href="https://deathbykeystroke.com/articles/20211015-dirty-data-on-postgres---read-uncommitted.html">perma</a></h6>
       <br/>
 
-      <p>The problem: long running update transactions prevent users from
-retrieving data from your Postgres database while the lock is
-active.</p>
-<p>Solution: create a "highly available" proof of concept with Postgres
-that emulates MySQL's Read Uncommitted option.</p>
+      <p>The problem: long running update transactions prevent users from retrieving data from your Postgres database while the lock is active.</p>
+<p>Solution: create a "highly available" proof of concept with Postgres that emulates MySQL's Read Uncommitted option.</p>
 <h2 id="setup">Setup</h2>
-<p>We're going to use docker containers for this so if you're running on
-hardware you can skip some of the container image steps. While we go
-through this we'll verify that we can see the problem so that we know
-our solution actually works.</p>
+<p>We're going to use docker containers for this so if you're running on hardware you can skip some of the container image steps. While we go through this we'll verify that we can see the problem so that we know our solution actually works.</p>
 <h3 id="setup-a-postgres-containers">Setup a Postgres Containers</h3>
-<p>For this proof of concept we need a postgres primary and secondary.
-The primary will provide us with a writeable system of record. It will
-still respond to read queries but it is the only writeable connection
-for this exercise.</p>
+<p>For this proof of concept we need a postgres primary and secondary. The primary will provide us with a writeable system of record. It will still respond to read queries but it is the only writeable connection for this exercise.</p>
 <p>We're going to use <code>docker-compose</code>, here's the file:</p>
-<div class="sourceCode" id="cb1"><pre
-class="sourceCode yaml"><code class="sourceCode yaml"><span id="cb1-1"><a href="#cb1-1" aria-hidden="true" tabindex="-1"></a><span class="fu">version</span><span class="kw">:</span><span class="at"> </span><span class="st">&quot;3.9&quot;</span></span>
+<div class="sourceCode" id="cb1"><pre class="sourceCode yaml"><code class="sourceCode yaml"><span id="cb1-1"><a href="#cb1-1" aria-hidden="true" tabindex="-1"></a><span class="fu">version</span><span class="kw">:</span><span class="at"> </span><span class="st">&quot;3.9&quot;</span></span>
 <span id="cb1-2"><a href="#cb1-2" aria-hidden="true" tabindex="-1"></a><span class="fu">services</span><span class="kw">:</span></span>
 <span id="cb1-3"><a href="#cb1-3" aria-hidden="true" tabindex="-1"></a><span class="at">  </span><span class="fu">db-primary</span><span class="kw">:</span></span>
 <span id="cb1-4"><a href="#cb1-4" aria-hidden="true" tabindex="-1"></a><span class="at">    </span><span class="fu">build</span><span class="kw">:</span></span>
@@ -81,15 +71,10 @@ class="sourceCode yaml"><code class="sourceCode yaml"><span id="cb1-1"><a href="
 <span id="cb1-42"><a href="#cb1-42" aria-hidden="true" tabindex="-1"></a><span class="fu">volumes</span><span class="kw">:</span></span>
 <span id="cb1-43"><a href="#cb1-43" aria-hidden="true" tabindex="-1"></a><span class="at">  </span><span class="fu">data-secondary</span><span class="kw">:</span></span>
 <span id="cb1-44"><a href="#cb1-44" aria-hidden="true" tabindex="-1"></a><span class="at">  </span><span class="fu">data-primary</span><span class="kw">:</span></span></code></pre></div>
-<p>For more information about docker-compose, check that out <a
-href="https://docs.docker.com/compose/">here</a>.</p>
-<p>The important thing to note here is the <code>environment</code> and
-<code>build.args</code> keys in the file. Both of these are controlling
-the image and container in such a way that it runs as either the primary
-(write/read) or as a secondary (read-only).</p>
+<p>For more information about docker-compose, check that out <a href="https://docs.docker.com/compose/">here</a>.</p>
+<p>The important thing to note here is the <code>environment</code> and <code>build.args</code> keys in the file. Both of these are controlling the image and container in such a way that it runs as either the primary (write/read) or as a secondary (read-only).</p>
 <p>The <code>psql.dockerfile</code> boils down to this:</p>
-<div class="sourceCode" id="cb2"><pre
-class="sourceCode yaml"><code class="sourceCode yaml"><span id="cb2-1"><a href="#cb2-1" aria-hidden="true" tabindex="-1"></a><span class="at">FROM postgres:14</span></span>
+<div class="sourceCode" id="cb2"><pre class="sourceCode yaml"><code class="sourceCode yaml"><span id="cb2-1"><a href="#cb2-1" aria-hidden="true" tabindex="-1"></a><span class="at">FROM postgres:14</span></span>
 <span id="cb2-2"><a href="#cb2-2" aria-hidden="true" tabindex="-1"></a><span class="at">COPY postgres.defaults.conf /tmp/</span></span>
 <span id="cb2-3"><a href="#cb2-3" aria-hidden="true" tabindex="-1"></a><span class="at">ARG SECONDARY</span></span>
 <span id="cb2-4"><a href="#cb2-4" aria-hidden="true" tabindex="-1"></a><span class="at">ENV SECONDARY $SECONDARY</span></span>
@@ -108,24 +93,11 @@ class="sourceCode yaml"><code class="sourceCode yaml"><span id="cb2-1"><a href="
 <span id="cb2-17"><a href="#cb2-17" aria-hidden="true" tabindex="-1"></a><span class="at">    fi</span></span>
 <span id="cb2-18"><a href="#cb2-18" aria-hidden="true" tabindex="-1"></a></span>
 <span id="cb2-19"><a href="#cb2-19" aria-hidden="true" tabindex="-1"></a><span class="at">CMD [&quot;bash&quot;, &quot;-c&quot;, &quot;if [[ $SECONDARY = &#39;true&#39; ]]; then rm -Rf /var/lib/postgresql/data/*; su postgres -c &#39;pg_basebackup -h 172.16.1.200 -U replicator -p 5432 -D /var/lib/postgresql/data -Fp -Xs -P -R&#39;; fi; su postgres -c &#39;postgres -D /var/lib/postgresql/data&#39;&quot;]</span></span></code></pre></div>
-<p>If you're using this tutorial for production then do a little more
-research and use individual config files rather than mangling them with
-bash as we're doing here. This isn't a secure way of allowing
-replication.</p>
-<p>Now, if you run <code>docker-compose up</code> you should see the
-primary start and the secondary eventually start. Don't be worried about
-the secondary failing a few times during startup, this may happen
-because the primary may take a few minutes to start accepting
-connections.</p>
-<h2 id="now-build-the-dog-in-our-corn-dog">Now Build the Dog in Our Corn
-Dog</h2>
-<p>This is how we're going to allow users to get a dirty read from the
-secondary while the primary is updating. Let's add pgpool-II. You can
-read about it more in depth <a
-href="https://www.pgpool.net/mediawiki/index.php/Main_Page">here</a>.
-We're going to add the following service to our compose file:</p>
-<div class="sourceCode" id="cb3"><pre
-class="sourceCode yaml"><code class="sourceCode yaml"><span id="cb3-1"><a href="#cb3-1" aria-hidden="true" tabindex="-1"></a><span class="at">  </span><span class="fu">pgpool</span><span class="kw">:</span></span>
+<p>If you're using this tutorial for production then do a little more research and use individual config files rather than mangling them with bash as we're doing here. This isn't a secure way of allowing replication.</p>
+<p>Now, if you run <code>docker-compose up</code> you should see the primary start and the secondary eventually start. Don't be worried about the secondary failing a few times during startup, this may happen because the primary may take a few minutes to start accepting connections.</p>
+<h2 id="now-build-the-dog-in-our-corn-dog">Now Build the Dog in Our Corn Dog</h2>
+<p>This is how we're going to allow users to get a dirty read from the secondary while the primary is updating. Let's add pgpool-II. You can read about it more in depth <a href="https://www.pgpool.net/mediawiki/index.php/Main_Page">here</a>. We're going to add the following service to our compose file:</p>
+<div class="sourceCode" id="cb3"><pre class="sourceCode yaml"><code class="sourceCode yaml"><span id="cb3-1"><a href="#cb3-1" aria-hidden="true" tabindex="-1"></a><span class="at">  </span><span class="fu">pgpool</span><span class="kw">:</span></span>
 <span id="cb3-2"><a href="#cb3-2" aria-hidden="true" tabindex="-1"></a><span class="at">    </span><span class="fu">build</span><span class="kw">:</span></span>
 <span id="cb3-3"><a href="#cb3-3" aria-hidden="true" tabindex="-1"></a><span class="at">      </span><span class="fu">dockerfile</span><span class="kw">:</span><span class="at"> </span><span class="st">&#39;pgpool.dockerfile&#39;</span></span>
 <span id="cb3-4"><a href="#cb3-4" aria-hidden="true" tabindex="-1"></a><span class="at">      </span><span class="fu">context</span><span class="kw">:</span><span class="at"> </span><span class="st">&#39;.&#39;</span></span>
@@ -139,17 +111,14 @@ class="sourceCode yaml"><code class="sourceCode yaml"><span id="cb3-1"><a href="
 <span id="cb3-12"><a href="#cb3-12" aria-hidden="true" tabindex="-1"></a><span class="at">    </span><span class="fu">ports</span><span class="kw">:</span></span>
 <span id="cb3-13"><a href="#cb3-13" aria-hidden="true" tabindex="-1"></a><span class="at">      </span><span class="kw">-</span><span class="at"> </span><span class="st">&quot;5432:5432&quot;</span></span></code></pre></div>
 <p>With the <code>pgpool.dockerfile</code> containing:</p>
-<div class="sourceCode" id="cb4"><pre
-class="sourceCode yaml"><code class="sourceCode yaml"><span id="cb4-1"><a href="#cb4-1" aria-hidden="true" tabindex="-1"></a><span class="at">FROM alpine:3.13.6</span></span>
+<div class="sourceCode" id="cb4"><pre class="sourceCode yaml"><code class="sourceCode yaml"><span id="cb4-1"><a href="#cb4-1" aria-hidden="true" tabindex="-1"></a><span class="at">FROM alpine:3.13.6</span></span>
 <span id="cb4-2"><a href="#cb4-2" aria-hidden="true" tabindex="-1"></a><span class="at">COPY pgpool.conf /etc/pgpool/pgpool.conf</span></span>
 <span id="cb4-3"><a href="#cb4-3" aria-hidden="true" tabindex="-1"></a><span class="at">RUN apk update \</span></span>
 <span id="cb4-4"><a href="#cb4-4" aria-hidden="true" tabindex="-1"></a><span class="at"> </span><span class="ot">&amp;&amp;</span><span class="at"> apk add pgpool \</span></span>
 <span id="cb4-5"><a href="#cb4-5" aria-hidden="true" tabindex="-1"></a><span class="at"> </span><span class="ot">&amp;&amp;</span><span class="at"> mkdir /var/run/pgpool</span></span>
 <span id="cb4-6"><a href="#cb4-6" aria-hidden="true" tabindex="-1"></a></span>
 <span id="cb4-7"><a href="#cb4-7" aria-hidden="true" tabindex="-1"></a><span class="at">CMD [&quot;pgpool&quot;, &quot;-n&quot;]</span></span></code></pre></div>
-<p>In a <code>pgpool.conf</code> make sure you have these important bits
-along with other config info (a full sample can be found <a
-href="/f/pgpool.sample.conf">here</a>).</p>
+<p>In a <code>pgpool.conf</code> make sure you have these important bits along with other config info (a full sample can be found <a href="/f/pgpool.sample.conf">here</a>).</p>
 <pre><code> # - Backend Connection Settings -
  backend_hostname0 = &#39;172.16.1.200&#39; #primary
  backend_port0 = 5432
@@ -163,64 +132,36 @@ href="/f/pgpool.sample.conf">here</a>).</p>
  backend_data_directory1 = &#39;/data1&#39;
  backend_flag1 = &#39;ALLOW_TO_FAILOVER&#39;</code></pre>
 <p>Now we're all set.</p>
-<p>You can now query from postgres while something locks the table, you
-can test this by running <code>docker-compose up</code>, connecting your
-sql client and doing the following:</p>
+<p>You can now query from postgres while something locks the table, you can test this by running <code>docker-compose up</code>, connecting your sql client and doing the following:</p>
 <p>Client 1:</p>
-<div class="sourceCode" id="cb6"><pre
-class="sourceCode sql"><code class="sourceCode sql"><span id="cb6-1"><a href="#cb6-1" aria-hidden="true" tabindex="-1"></a><span class="kw">CREATE</span> <span class="kw">TABLE</span> test_lock (t text);</span>
+<div class="sourceCode" id="cb6"><pre class="sourceCode sql"><code class="sourceCode sql"><span id="cb6-1"><a href="#cb6-1" aria-hidden="true" tabindex="-1"></a><span class="kw">CREATE</span> <span class="kw">TABLE</span> test_lock (t text);</span>
 <span id="cb6-2"><a href="#cb6-2" aria-hidden="true" tabindex="-1"></a><span class="kw">INSERT</span> <span class="kw">INTO</span> test_lock (t) <span class="kw">VALUES</span> (<span class="st">&#39;this is only a test&#39;</span>);</span>
 <span id="cb6-3"><a href="#cb6-3" aria-hidden="true" tabindex="-1"></a><span class="cf">BEGIN</span> <span class="kw">WORK</span>;</span>
 <span id="cb6-4"><a href="#cb6-4" aria-hidden="true" tabindex="-1"></a><span class="kw">LOCK</span> test_lock <span class="kw">IN</span> <span class="kw">EXCLUSIVE</span> <span class="kw">MODE</span>;</span>
 <span id="cb6-5"><a href="#cb6-5" aria-hidden="true" tabindex="-1"></a><span class="co">-- leave this transaction open while you run in your second window</span></span></code></pre></div>
 <p>Client 2:</p>
-<div class="sourceCode" id="cb7"><pre
-class="sourceCode sql"><code class="sourceCode sql"><span id="cb7-1"><a href="#cb7-1" aria-hidden="true" tabindex="-1"></a><span class="kw">SELECT</span> <span class="op">*</span> <span class="kw">FROM</span> test_lock;</span>
+<div class="sourceCode" id="cb7"><pre class="sourceCode sql"><code class="sourceCode sql"><span id="cb7-1"><a href="#cb7-1" aria-hidden="true" tabindex="-1"></a><span class="kw">SELECT</span> <span class="op">*</span> <span class="kw">FROM</span> test_lock;</span>
 <span id="cb7-2"><a href="#cb7-2" aria-hidden="true" tabindex="-1"></a><span class="co">--    test</span></span>
 <span id="cb7-3"><a href="#cb7-3" aria-hidden="true" tabindex="-1"></a><span class="co">-- ----------</span></span>
 <span id="cb7-4"><a href="#cb7-4" aria-hidden="true" tabindex="-1"></a><span class="co">--  test str</span></span>
 <span id="cb7-5"><a href="#cb7-5" aria-hidden="true" tabindex="-1"></a>(<span class="dv">1</span> <span class="kw">row</span>)</span></code></pre></div>
-<p>Now you can issue the <code>END WORK;</code> in Client 1 to remove
-the lock</p>
-<p>Now, let's verify that our pgpool is <em>really</em> working and that
-it's actually allowing us to run queries.</p>
-<div class="sourceCode" id="cb8"><pre
-class="sourceCode bash"><code class="sourceCode bash"><span id="cb8-1"><a href="#cb8-1" aria-hidden="true" tabindex="-1"></a><span class="ex">docker-compose</span> up pgpool pg-primary</span></code></pre></div>
-<p>Now when you run your test above, Client 2 will block until you
-<code>END WORK;</code>.</p>
-<p>If you'd like to check this out as a repo all of the files for
-building can be found on <a
-href="https://github.com/tony-o/tony-o.github.io/tree/master/scratch/pgpool">github</a></p>
+<p>Now you can issue the <code>END WORK;</code> in Client 1 to remove the lock</p>
+<p>Now, let's verify that our pgpool is <em>really</em> working and that it's actually allowing us to run queries.</p>
+<div class="sourceCode" id="cb8"><pre class="sourceCode bash"><code class="sourceCode bash"><span id="cb8-1"><a href="#cb8-1" aria-hidden="true" tabindex="-1"></a><span class="ex">docker-compose</span> up pgpool pg-primary</span></code></pre></div>
+<p>Now when you run your test above, Client 2 will block until you <code>END WORK;</code>.</p>
+<p>If you'd like to check this out as a repo all of the files for building can be found on <a href="https://github.com/tony-o/tony-o.github.io/tree/master/scratch/pgpool">github</a></p>
 <h2 id="what-exactly-did-we-do">What Exactly Did We Do?</h2>
-<p>Well, we made dirty data available to consumers who don't require
-<em>exactly</em> correct data at read time. This can be something as
-simple as we're just showing a user some data that we know to be true at
-the time of request. Here's a couple of charts so we can see exactly
-what's going on.</p>
+<p>Well, we made dirty data available to consumers who don't require <em>exactly</em> correct data at read time. This can be something as simple as we're just showing a user some data that we know to be true at the time of request. Here's a couple of charts so we can see exactly what's going on.</p>
 <figure>
-<img src="/f/standalone-pg.svg" alt="Standalone Postgres" />
-<figcaption aria-hidden="true">Standalone Postgres</figcaption>
+<img src="/f/standalone-pg.svg" alt="Standalone Postgres" /><figcaption aria-hidden="true">Standalone Postgres</figcaption>
 </figure>
-<p>From this chart you can see the time that the action happens on the
-left and how much time has elapsed through the process. You'll notice
-that Client 2 becomes blocked for the entirety of the lock created by
-Client 1. This creates a pretty poor user experience if they have to
-wait 45 seconds just to view their own profile data while you run a
-migration.</p>
+<p>From this chart you can see the time that the action happens on the left and how much time has elapsed through the process. You'll notice that Client 2 becomes blocked for the entirety of the lock created by Client 1. This creates a pretty poor user experience if they have to wait 45 seconds just to view their own profile data while you run a migration.</p>
 <p>Conversely, this is how PGPool-II would handle this situation.</p>
 <figure>
-<img src="/f/pgpool-ii.svg" alt="PGPool-II" />
-<figcaption aria-hidden="true">PGPool-II</figcaption>
+<img src="/f/pgpool-ii.svg" alt="PGPool-II" /><figcaption aria-hidden="true">PGPool-II</figcaption>
 </figure>
-<p>From this you can see that PGPool is actually routing Client 2's read
-request to the replicated secondary and avoiding the lock on the primary
-postgres server. In doing so you're potentially giving the client data
-that is going to be different a second from now but you're also avoiding
-making your user wait until a long running table lock completes.</p>
-<p>From here you can move ahead to testing, proposing, and building out
-better configurations for all of these but this should get you started
-towards making your dreams come true or at least making them readable
-while you update them.</p>
+<p>From this you can see that PGPool is actually routing Client 2's read request to the replicated secondary and avoiding the lock on the primary postgres server. In doing so you're potentially giving the client data that is going to be different a second from now but you're also avoiding making your user wait until a long running table lock completes.</p>
+<p>From here you can move ahead to testing, proposing, and building out better configurations for all of these but this should get you started towards making your dreams come true or at least making them readable while you update them.</p>
 
 
     </div>

@@ -21,26 +21,15 @@
       <br/>
 
       <h2 id="json-headaches">JSON Headaches</h2>
-<p>In writing <code>zef</code>, a major bottleneck in the quest for
-speed was the <code>to-json</code> method provided by ecosystem modules
-and the built-in method. I wasn't prepared to wait 90 seconds (that's
-almost a minute and a half!) for the
-<code>CompUnitRepo::Local::Installation</code> (CURLI henceforth) to be
-rewritten to include newly installed modules/files.</p>
-<p>I'm an impatient man. I want JSON but I don't want to wait for it
-because waiting stinks.</p>
-<p>So, we'll begin our quest for speed on generating some JSON from a
-perl6 <code>Hash</code> or <code>Array</code>.</p>
-<p>For this article I'm going to be using <code>built-in</code>s,
-<code>JSON::Tiny</code> (<code>JSON::Fast</code> is a copy from
-<code>Tiny</code>), and <code>Bench</code>.</p>
+<p>In writing <code>zef</code>, a major bottleneck in the quest for speed was the <code>to-json</code> method provided by ecosystem modules and the built-in method. I wasn't prepared to wait 90 seconds (that's almost a minute and a half!) for the <code>CompUnitRepo::Local::Installation</code> (CURLI henceforth) to be rewritten to include newly installed modules/files.</p>
+<p>I'm an impatient man. I want JSON but I don't want to wait for it because waiting stinks.</p>
+<p>So, we'll begin our quest for speed on generating some JSON from a perl6 <code>Hash</code> or <code>Array</code>.</p>
+<p>For this article I'm going to be using <code>built-in</code>s, <code>JSON::Tiny</code> (<code>JSON::Fast</code> is a copy from <code>Tiny</code>), and <code>Bench</code>.</p>
 <h2 id="how-much-do-you-bench-bro">How much do you bench, bro?</h2>
-<p>I'll run 30 iterations of each, 3 in instances where I don't want to
-wait 4 hours for this to happen.</p>
+<p>I'll run 30 iterations of each, 3 in instances where I don't want to wait 4 hours for this to happen.</p>
 <h3 id="built-in-to-json">Built-in <code>to-json</code></h3>
 <h4 id="benchmark-code">Benchmark code</h4>
-<div class="sourceCode" id="cb1"><pre
-class="sourceCode perl"><code class="sourceCode perl"><span id="cb1-1"><a href="#cb1-1" aria-hidden="true" tabindex="-1"></a><span class="fu">use</span> Bench;</span>
+<div class="sourceCode" id="cb1"><pre class="sourceCode perl"><code class="sourceCode perl"><span id="cb1-1"><a href="#cb1-1" aria-hidden="true" tabindex="-1"></a><span class="fu">use</span> Bench;</span>
 <span id="cb1-2"><a href="#cb1-2" aria-hidden="true" tabindex="-1"></a></span>
 <span id="cb1-3"><a href="#cb1-3" aria-hidden="true" tabindex="-1"></a><span class="kw">my</span> <span class="dt">$json</span> = from-json(<span class="ot">&#39;</span><span class="ss">projects.json</span><span class="ot">&#39;</span>.IO.slurp);</span>
 <span id="cb1-4"><a href="#cb1-4" aria-hidden="true" tabindex="-1"></a></span>
@@ -48,12 +37,10 @@ class="sourceCode perl"><code class="sourceCode perl"><span id="cb1-1"><a href="
 <h4 id="results">Results</h4>
 <pre><code>  built-in: 297.9738 wallclock secs @ 0.0101/s (n=3)
                         (warning: too few iterations for a reliable count)</code></pre>
-<p>That's painfully slow. I couldn't wait longer than <code>n=3</code>
-before I lost interest.</p>
+<p>That's painfully slow. I couldn't wait longer than <code>n=3</code> before I lost interest.</p>
 <h3 id="jsonfast">JSON::Fast</h3>
 <h4 id="benchmark-code-1">Benchmark code</h4>
-<div class="sourceCode" id="cb3"><pre
-class="sourceCode perl"><code class="sourceCode perl"><span id="cb3-1"><a href="#cb3-1" aria-hidden="true" tabindex="-1"></a><span class="fu">use</span> Bench;</span>
+<div class="sourceCode" id="cb3"><pre class="sourceCode perl"><code class="sourceCode perl"><span id="cb3-1"><a href="#cb3-1" aria-hidden="true" tabindex="-1"></a><span class="fu">use</span> Bench;</span>
 <span id="cb3-2"><a href="#cb3-2" aria-hidden="true" tabindex="-1"></a><span class="fu">use</span> <span class="fu">JSON::Fast</span>;</span>
 <span id="cb3-3"><a href="#cb3-3" aria-hidden="true" tabindex="-1"></a></span>
 <span id="cb3-4"><a href="#cb3-4" aria-hidden="true" tabindex="-1"></a><span class="kw">my</span> <span class="dt">$json</span> = from-json(<span class="ot">&#39;</span><span class="ss">projects.json</span><span class="ot">&#39;</span>.IO.slurp);</span>
@@ -63,16 +50,12 @@ class="sourceCode perl"><code class="sourceCode perl"><span id="cb3-1"><a href="
 <pre><code> json-fast: 295.2473 wallclock secs @ 0.0102/s (n=3)
                         (warning: too few iterations for a reliable count)</code></pre>
 <h3 id="conclusion">Conclusion</h3>
-<p>Same. Too slow and I don't want to sit around waiting for this one to
-complete. 296 seconds is too long to wait.</p>
+<p>Same. Too slow and I don't want to sit around waiting for this one to complete. 296 seconds is too long to wait.</p>
 <p>I must do something about this.</p>
 <h2 id="what-i-wrote">What I wrote</h2>
-<p>I ended up writing a very simplistic recursive method as a
-comparative speed test. It turned out to be super fast on the first try
-(at least compared to <code>built-in</code> and <code>J:F</code>).</p>
+<p>I ended up writing a very simplistic recursive method as a comparative speed test. It turned out to be super fast on the first try (at least compared to <code>built-in</code> and <code>J:F</code>).</p>
 <p>Here is the code from the initial commit</p>
-<div class="sourceCode" id="cb5"><pre
-class="sourceCode perl"><code class="sourceCode perl"><span id="cb5-1"><a href="#cb5-1" aria-hidden="true" tabindex="-1"></a><span class="kw">sub </span><span class="fu">to</span>-json(<span class="dt">$obj</span>, Bool :<span class="dt">$pretty</span>? = True, Int :<span class="dt">$level</span>? = <span class="dv">0</span>, Int :<span class="dt">$spacing</span>? = <span class="dv">2</span>) is export {</span>
+<div class="sourceCode" id="cb5"><pre class="sourceCode perl"><code class="sourceCode perl"><span id="cb5-1"><a href="#cb5-1" aria-hidden="true" tabindex="-1"></a><span class="kw">sub </span><span class="fu">to</span>-json(<span class="dt">$obj</span>, Bool :<span class="dt">$pretty</span>? = True, Int :<span class="dt">$level</span>? = <span class="dv">0</span>, Int :<span class="dt">$spacing</span>? = <span class="dv">2</span>) is export {</span>
 <span id="cb5-2"><a href="#cb5-2" aria-hidden="true" tabindex="-1"></a>  CATCH { <span class="kw">default</span> { .<span class="fu">say</span>; } }</span>
 <span id="cb5-3"><a href="#cb5-3" aria-hidden="true" tabindex="-1"></a>  <span class="kw">return</span> <span class="ot">&quot;</span><span class="st">{</span><span class="dt">$obj</span><span class="st">}</span><span class="ot">&quot;</span>     <span class="kw">if</span> <span class="dt">$obj</span> ~~ Int || <span class="dt">$obj</span> ~~ Rat;</span>
 <span id="cb5-4"><a href="#cb5-4" aria-hidden="true" tabindex="-1"></a>  <span class="kw">return</span> <span class="ot">&quot;</span><span class="st">\&quot;{</span><span class="dt">$obj</span><span class="st">.subst(/&#39;</span><span class="ot">&quot;&#39;</span><span class="ss">/, </span><span class="ot">&#39;</span>\\<span class="ot">&quot;</span><span class="st">&#39;, :g)}\&quot;</span><span class="ot">&quot;</span> <span class="kw">if</span> <span class="dt">$obj</span> ~~ Str;</span>
@@ -104,17 +87,12 @@ class="sourceCode perl"><code class="sourceCode perl"><span id="cb5-1"><a href="
 <span id="cb5-30"><a href="#cb5-30" aria-hidden="true" tabindex="-1"></a>  <span class="dt">$out</span> ~= <span class="dt">$arr</span> ?? <span class="ot">&#39;</span><span class="ss">]</span><span class="ot">&#39;</span> !! <span class="ot">&#39;</span><span class="ss">}</span><span class="ot">&#39;</span>;</span>
 <span id="cb5-31"><a href="#cb5-31" aria-hidden="true" tabindex="-1"></a>  <span class="kw">return</span> <span class="dt">$out</span>;</span>
 <span id="cb5-32"><a href="#cb5-32" aria-hidden="true" tabindex="-1"></a>}</span></code></pre></div>
-<p>Yea, there are a few bugs that were discovered since and have been
-fixed. But the benchmark results of that were:</p>
+<p>Yea, there are a few bugs that were discovered since and have been fixed. But the benchmark results of that were:</p>
 <pre><code>json-faster: 5.9204 wallclock secs @ 0.5067/s (n=3)
                     (warning: too few iterations for a reliable count)</code></pre>
-<p>Not great, but that's 292 seconds you won't be sitting around
-cleaning your nose.</p>
+<p>Not great, but that's 292 seconds you won't be sitting around cleaning your nose.</p>
 <p>Awesome.</p>
-<p>PS A PR has been submitted to <code>JSON::Fast</code> to include the
-faster <code>to-json</code> method and includes the bug fixes. If you'd
-like to check that out, check <a
-href="https://github.com/timo/json_fast/pull/2">here</a></p>
+<p>PS A PR has been submitted to <code>JSON::Fast</code> to include the faster <code>to-json</code> method and includes the bug fixes. If you'd like to check that out, check <a href="https://github.com/timo/json_fast/pull/2">here</a></p>
 
 
     </div>
