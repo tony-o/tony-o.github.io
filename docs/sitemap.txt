@@ -23,8 +23,10 @@ docs/articles/20211222-the-life-of-raku-module-authoring.html
 docs/articles/20220106-real-macros-in-go.html
 docs/articles/20220224-building-a-cro-app-part-1.html
 docs/articles/20220517-business-processes-as-types-lets-explore.html
+docs/articles/20220914-building-a-cro-app-part-b.html
 docs/tags/database.html
 docs/tags/golang.html
 docs/tags/postgres.html
 docs/tags/programming.html
 docs/tags/rakudo.html
+docs/tags/systems.html

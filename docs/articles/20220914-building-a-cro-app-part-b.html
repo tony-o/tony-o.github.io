@@ -1,0 +1,209 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <title>dbks - Building a Cro App - Part B</title>
+   	<meta name="description" content="Building a Cro App - Part B" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta content="text/html;charset=utf-8" http-equiv="Content-Type" />
+    <meta content="utf-8" http-equiv="encoding" />
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.2.0/styles/base16/danqing.min.css" />
+    <link rel="stylesheet" href="/s/style.css" />
+  </head>
+  <body>
+    <div id="title">
+      <a href="/"><img alt="dbks logo" src="/i/dbks.png" /></a> <a href="/"><h1>deathbykeystroke</h1></a>
+    </div>
+    <div id="article">
+      <h1>Building a Cro App - Part B</h1>
+      <h6>// date:  2022-09-14</h6>
+      <h6>// filed: <a href="/tags/rakudo.html">rakudo</a>, <a href="/tags/programming.html">programming</a>, <a href="/tags/systems.html">systems</a></h6>
+      <h6>// <a href="https://deathbykeystroke.com/articles/20220914-building-a-cro-app-part-b.html">perma</a></h6>
+      <br/>
+
+      <p>We have our Cro app built, authenticating, and doing all kinds of fun
+stuff. Let's take a look at deploying this bad wamma jamma!</p>
+<p>To do so we'll do the follow:</p>
+<ul>
+<li>Create a systemd service file</li>
+<li>Configure apache2 to serve our app</li>
+<li>Set up SSL with apache2 for our service (with Let's Encrypt)</li>
+</ul>
+<h2 id="systemd">Systemd</h2>
+<p>This section is fairly straight forward but it requires some
+consideration:</p>
+<ol>
+<li>Systemd is not loading your user's environment</li>
+<li>Systemd is running as a different user than your own so your app
+root must have the right file permissions, by default this user is
+<code>root</code></li>
+</ol>
+<p>For the purpose of this article we're just going to assume you've put
+your app root in <code>/opt/my-app</code>, you have a working rakudo,
+that you have all of the dependencies for your app installed, and that
+the app is runnable on the machine you're installing the systemd file
+on.</p>
+<p>In your services file
+<code>/etc/systemd/system/my-app.service</code>:</p>
+<pre><code>[Unit]
+Description=My Cro App - A Tutorial
+DefaultDependencies=no
+After=network.target
+
+[Service]
+Type=simple
+WorkingDirectory=/opt/my-app
+ExecStart=/usr/bin/raku -I. /opt/my-app/bin/app
+Restart=on-failure
+
+[Install]
+WantedBy=multi-user.target</code></pre>
+<p>This is the most basic systemd file you can make, there are a lot of
+other options you can put in here including things like a restart
+backoff if the app is not starting. It is important to note that you
+should use the full path to binaries in the service file, make no
+assumptions, and take frequent breaks.</p>
+<p>Now, run <code>systemctl daemon-reload</code> so that systemd
+refreshes its cache, enable our service with
+<code>systemctl enable my-app</code>, and finally start the service with
+<code>systemctl start my-app</code>.</p>
+<p>You should now be able to hit port <code>8666</code> (if you haven't
+modified anything from part 1 or cloned the repo). You can test this by
+running <code>curl localhost:8666</code> - you should get a response
+from our app.</p>
+<p>If you're having issues and think that the app is not running, you
+can use <code>journalctl -u my-app.service</code> to see the logs and
+correct any errors the app is having getting started.</p>
+<p>That's all there really is in a basic systemd service. If you'd like
+to delve into service files more, <a
+href="https://www.freedesktop.org/software/systemd/man/systemd.service.html">this</a>
+is a hand resource. Onto to the tougher stuff.</p>
+<h2 id="configuring-apache">Configuring Apache</h2>
+<p>Getting the certificates with <code>certbot</code> prior to setting
+up apache is much easier but it's a headache when you have to renew the
+certs so we're going to make this work with apache running so there's no
+downtime when you renew.</p>
+<p>For this tutorial we're looking at Debian 11 so some of your install
+commands might be a bit different but installing apache2:</p>
+<pre><code># apt install apache2
+...
+# a2enmod rewrite
+...
+# a2enmod proxy
+...
+# a2enmod proxy_http
+...
+# systemctl restart apache2
+...</code></pre>
+<p>After getting apache installed we need to configure it to respond to
+our domain, so in your favorite version of vim load up
+<code>/etc/apache2/sites-available/000-default.conf</code> and make it
+look exactly like:</p>
+<pre><code>&lt;VirtualHost *:80&gt;
+    ServerName pm6.dev
+    ServerAlias www.pm6.dev
+    DocumentRoot /var/www
+
+    RewriteEngine On
+    RewriteCond %{HTTPS} off
+    RewriteCond %{REQUEST_URI} !^/\.well-known/
+    RewriteRule (.*) https://www.pm6.dev/$1 [R,L]
+&lt;/VirtualHost&gt;
+
+&lt;VirtualHost *:443&gt;
+    ServerName pm6.dev
+    ServerAlias www.pm6.dev
+    ProxyRequests     Off
+    ProxyPreserveHost On
+
+    ErrorLog ${APACHE_LOG_DIR}/error.log
+    CustomLog ${APACHE_LOG_DIR}/access.log combined
+
+    &lt;Proxy *&gt;
+        Order deny,allow
+        Allow from all
+    &lt;/Proxy&gt;
+    ProxyPass         /  http://localhost:8666/ nocanon
+    ProxyPassReverse  /  http://localhost:8666/
+&lt;/VirtualHost&gt;</code></pre>
+<p>Now we're ready to get certbot involved. The configuration above is
+using the hostname <code>pm6.dev</code>, you should replace that with
+whatever hostname you're looking to use. The other thing it does is
+redirects standard <code>http</code> requests to <code>https</code>
+<em>unless</em> the request is from certbot.</p>
+<pre><code># apt install certbot
+...</code></pre>
+<p>Now we're ready to set up the certificates, grab that shiny domain
+name and replace <code>{EMAIL}</code> and <code>{DOMAIN}</code> with
+your own!</p>
+<pre><code># systemctl restart apache2
+...
+# certbot certonly --webroot -w &#39;/var/www/&#39; -d &#39;www.{DOMAIN}&#39; -d &#39;{DOMAIN}&#39; -n --email &#39;{EMAIL}&#39; --agree-tos</code></pre>
+<p>So far we're looking fresh, if certbot succeeded then we're set up
+for a hands free renewal in the future. Let's put the certs to use by
+editing our apache2 config again in notepad++:</p>
+<pre><code># ...
+&lt;VirtualHost *:443&gt;
+   ServerName pm6.dev
+   ServerAlias www.pm6.dev
+   ProxyRequests     Off
+   ProxyPreserveHost On
+
+   SSLCertificateFile /etc/letsencrypt/live/www.pm6.dev/fullchain.pem
+   SSLCertificateKeyFile /etc/letsencrypt/live/www.pm6.dev/privkey.pem
+
+   ErrorLog ${APACHE_LOG_DIR}/error.log
+   CustomLog ${APACHE_LOG_DIR}/access.log combined
+
+# ...</code></pre>
+<p>The two new lines are the ones starting with
+<code>SSLCertificate</code>. Enable <code>ssl</code> on apache2 and then
+restart apache2:</p>
+<pre><code># a2enmod ssl
+...
+# systemctl restart apache2</code></pre>
+<p>Voila! That's it. That's all there is to it. If apache complains here
+then correct any errors and then restart this paragraph.</p>
+
+
+    </div>
+    <div id="footer">
+      <h6>// social twitter:<a href="https://twitter.com/oynoto">@oynoto</a>, patreon:<a href="https://www.patreon.com/oynot">@oynot</a>, github:<a href="https://github.com/tony-o">tony-o</a></h6>
+    </div>
+    <script src="//cdnjs.cloudflare.com/ajax/libs/highlight.js/11.2.0/highlight.min.js"></script>
+    <script src="/s/hljs-raku.js"></script>
+    <script>
+      hljs.registerLanguage("raku", hljs_raku);
+      (function(){
+        languages = {}
+        pres      = document.getElementsByTagName("pre");
+        for(i = 0; i < hljs.listLanguages().length; i++){
+          languages['language-' + hljs.listLanguages()[i]] = 1;
+        }
+        for(i = 0; i < pres.length; i++){
+          pre = pres[i];
+          cn  = 'language-plaintext';
+          ls  = (pre.getAttribute("class") || 'plaintext').split(' ');
+          for(j = 0; j < ls.length; j++){
+            if(languages['language-' + ls[j]]){
+              cn = 'language-' + ls[j];
+              break;
+            }
+          }
+          codes = pre.getElementsByTagName("code")
+          for(j = 0; j < codes.length; j++){
+            codes[j].setAttribute("class", (codes[j].getAttribute("class") + " hljs " + cn).trim())
+          }
+        }
+        hljs.highlightAll();
+      })();
+    </script>
+    <script async src="https://www.googletagmanager.com/gtag/js?id=G-FKJQZPJ2XK"></script>
+    <script>
+      window.dataLayer = window.dataLayer || [];
+      function gtag(){dataLayer.push(arguments);}
+      gtag('js', new Date());
+      gtag('config', 'G-FKJQZPJ2XK');
+    </script>
+
+  </body>
+</html>
