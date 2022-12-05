@@ -1,0 +1,160 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <title>dbks - Virtual Environments in Raku</title>
+   	<meta name="description" content="Virtual Environments in Raku" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta content="text/html;charset=utf-8" http-equiv="Content-Type" />
+    <meta content="utf-8" http-equiv="encoding" />
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.2.0/styles/base16/danqing.min.css" />
+    <link rel="stylesheet" href="/s/style.css" />
+  </head>
+  <body>
+    <div id="title">
+      <a href="/"><img alt="dbks logo" src="/i/dbks.png" /></a> <a href="/"><h1>deathbykeystroke</h1></a>
+    </div>
+    <div id="article">
+      <h1>Virtual Environments in Raku</h1>
+      <h6>// date:  2022-12-05</h6>
+      <h6>// filed: <a href="/tags/rakudo.html">rakudo</a>, <a href="/tags/programming.html">programming</a></h6>
+      <h6>// <a href="https://deathbykeystroke.com/articles/20221205-virtual-environments-in-raku.html">perma</a></h6>
+      <br/>
+
+      <h1 id="virtual-environments-in-raku">Virtual Environments in Raku</h1>
+<p>Envious? If not, run <code>zef install Envy</code> and let's start
+exploring virtual comp unit repositories.</p>
+<p>Hold the phone! What are we doing? We're going to explore using a
+module allowing us to have virtual module environments in our very
+favorite raku.</p>
+<p>Why do we want this? Many reasons but a few would include:</p>
+<ul>
+<li>development &amp; testing environments</li>
+<li>isolating module repositories by project/environment/something
+else</li>
+<li>using multiple versions of raku more safely</li>
+</ul>
+<p>Sold? Continue on!</p>
+<h2 id="getting-started">Getting Started</h2>
+<p>Installing the environment manager is easy enough with
+<code>zef install Envy</code>. Now for this tutorial we're going to
+build an interprocess worker pool that doesn't do anything but instead
+of installing everything globally, we'll get it done with a custom
+module repository.</p>
+<p>In <code>parent.raku</code> dump the following:</p>
+<div class="sourceCode" id="cb1"><pre
+class="sourceCode raku"><code class="sourceCode raku"><span id="cb1-1"><a href="#cb1-1" aria-hidden="true" tabindex="-1"></a><span class="kw">use</span> <span class="dt">Event</span><span class="kw">::</span><span class="at">Emitter</span><span class="kw">::</span><span class="at">Inter-Process</span>;</span>
+<span id="cb1-2"><a href="#cb1-2" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-3"><a href="#cb1-3" aria-hidden="true" tabindex="-1"></a><span class="kw">my</span> <span class="va">$event</span> <span class="kw">=</span> <span class="dt">Event</span><span class="kw">::</span><span class="at">Emitter</span><span class="kw">::</span><span class="at">Inter-Process</span><span class="kw">.</span>new;</span>
+<span id="cb1-4"><a href="#cb1-4" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-5"><a href="#cb1-5" aria-hidden="true" tabindex="-1"></a><span class="kw">my</span> <span class="dt">Proc</span><span class="kw">::</span><span class="at">Async</span> <span class="va">$child</span> <span class="kw">.=</span>new<span class="kw">(:</span><span class="at">w</span><span class="kw">,</span> <span class="ch">&#39;</span><span class="st">raku</span><span class="ch">&#39;</span><span class="kw">,</span> <span class="ch">&#39;</span><span class="st">-Ilib</span><span class="ch">&#39;</span><span class="kw">,</span> <span class="ch">&#39;</span><span class="st">child.raku</span><span class="ch">&#39;</span><span class="kw">)</span>;</span>
+<span id="cb1-6"><a href="#cb1-6" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-7"><a href="#cb1-7" aria-hidden="true" tabindex="-1"></a><span class="va">$event</span><span class="kw">.</span>hook<span class="kw">(</span><span class="va">$child</span><span class="kw">)</span>;</span>
+<span id="cb1-8"><a href="#cb1-8" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-9"><a href="#cb1-9" aria-hidden="true" tabindex="-1"></a><span class="va">$event</span><span class="kw">.</span>on<span class="kw">(</span><span class="ch">&#39;</span><span class="st">echo</span><span class="ch">&#39;</span><span class="kw">,</span> <span class="kw">-&gt;</span> <span class="va">$data</span> <span class="kw">{</span></span>
+<span id="cb1-10"><a href="#cb1-10" aria-hidden="true" tabindex="-1"></a>  <span class="co"># got $data from child;</span></span>
+<span id="cb1-11"><a href="#cb1-11" aria-hidden="true" tabindex="-1"></a>  <span class="kw">say</span> <span class="va">$data</span><span class="kw">.</span>decode;</span>
+<span id="cb1-12"><a href="#cb1-12" aria-hidden="true" tabindex="-1"></a><span class="kw">})</span>;</span>
+<span id="cb1-13"><a href="#cb1-13" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-14"><a href="#cb1-14" aria-hidden="true" tabindex="-1"></a><span class="va">$child</span><span class="kw">.</span>start;</span>
+<span id="cb1-15"><a href="#cb1-15" aria-hidden="true" tabindex="-1"></a>sleep <span class="dv">1</span>;</span>
+<span id="cb1-16"><a href="#cb1-16" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-17"><a href="#cb1-17" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-18"><a href="#cb1-18" aria-hidden="true" tabindex="-1"></a><span class="va">$event</span><span class="kw">.</span>emit<span class="kw">(</span><span class="ch">&#39;</span><span class="st">echo</span><span class="ch">&#39;</span><span class="kw">.</span>encode<span class="kw">,</span> <span class="ch">&#39;</span><span class="st">hello</span><span class="ch">&#39;</span><span class="kw">.</span>encode<span class="kw">)</span>;</span>
+<span id="cb1-19"><a href="#cb1-19" aria-hidden="true" tabindex="-1"></a><span class="va">$event</span><span class="kw">.</span>emit<span class="kw">(</span><span class="ch">&#39;</span><span class="st">echo</span><span class="ch">&#39;</span><span class="kw">.</span>encode<span class="kw">,</span> <span class="ch">&#39;</span><span class="st">world</span><span class="ch">&#39;</span><span class="kw">.</span>encode<span class="kw">)</span>;</span>
+<span id="cb1-20"><a href="#cb1-20" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-21"><a href="#cb1-21" aria-hidden="true" tabindex="-1"></a>sleep <span class="dv">5</span>;</span></code></pre></div>
+<p>And then in <code>child.raku</code>:</p>
+<div class="sourceCode" id="cb2"><pre
+class="sourceCode raku"><code class="sourceCode raku"><span id="cb2-1"><a href="#cb2-1" aria-hidden="true" tabindex="-1"></a><span class="kw">use</span> <span class="dt">Event</span><span class="kw">::</span><span class="at">Emitter</span><span class="kw">::</span><span class="at">Inter-Process</span>;</span>
+<span id="cb2-2"><a href="#cb2-2" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb2-3"><a href="#cb2-3" aria-hidden="true" tabindex="-1"></a><span class="kw">my</span> <span class="va">$event</span> <span class="kw">=</span> <span class="dt">Event</span><span class="kw">::</span><span class="at">Emitter</span><span class="kw">::</span><span class="at">Inter-Process</span><span class="kw">.</span>new<span class="kw">(:</span><span class="at">sub-process</span><span class="kw">)</span>;</span>
+<span id="cb2-4"><a href="#cb2-4" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb2-5"><a href="#cb2-5" aria-hidden="true" tabindex="-1"></a><span class="va">$event</span><span class="kw">.</span>on<span class="kw">(</span><span class="ch">&#39;</span><span class="st">echo</span><span class="ch">&#39;</span><span class="kw">,</span> <span class="kw">-&gt;</span> <span class="va">$data</span> <span class="kw">{</span></span>
+<span id="cb2-6"><a href="#cb2-6" aria-hidden="true" tabindex="-1"></a>  <span class="ch">&quot;</span><span class="st">child echo: {</span><span class="va">$data</span><span class="kw">.</span>decode<span class="st">}</span><span class="ch">&quot;</span><span class="kw">.say</span>;</span>
+<span id="cb2-7"><a href="#cb2-7" aria-hidden="true" tabindex="-1"></a>  <span class="va">$event</span><span class="kw">.</span>emit<span class="kw">(</span><span class="ch">&#39;</span><span class="st">echo</span><span class="ch">&#39;</span><span class="kw">.</span>encode<span class="kw">,</span> <span class="va">$data</span><span class="kw">)</span>;</span>
+<span id="cb2-8"><a href="#cb2-8" aria-hidden="true" tabindex="-1"></a><span class="kw">})</span>;</span>
+<span id="cb2-9"><a href="#cb2-9" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb2-10"><a href="#cb2-10" aria-hidden="true" tabindex="-1"></a>sleep <span class="dv">3</span>;</span></code></pre></div>
+<p>Okay, it's just the sample code but the program is not the focus. On
+to installing <code>Event::Emitter::Inter-Process</code> to a virtual
+repo.</p>
+<p>We need to create an environment and enable it before we can install
+our dependencies to it:</p>
+<pre><code>$ envy init tutorial
+==&gt; created tutorial
+    to install to this repo with zef use:
+      zef install --to=&#39;Envy#tutorial&#39; &lt;your modules&gt;
+$ envy enable tutorial
+==&gt; Enabled repositories: tutorial
+$ zef install --to=&#39;Envy#tutorial&#39; &#39;Event::Emitter::Inter-Process&#39;
+===&gt; Searching for: Event::Emitter::Inter-Process
+===&gt; Searching for missing dependencies: Event::Emitter
+===&gt; Testing: Event::Emitter:ver&lt;1.0.3&gt;:auth&lt;zef:tony-o&gt;
+===&gt; Testing [OK] for Event::Emitter:ver&lt;1.0.3&gt;:auth&lt;zef:tony-o&gt;
+===&gt; Testing: Event::Emitter::Inter-Process:ver&lt;1.0.1&gt;:auth&lt;zef:tony-o&gt;
+===&gt; Testing [OK] for Event::Emitter::Inter-Process:ver&lt;1.0.1&gt;:auth&lt;zef:tony-o&gt;
+===&gt; Installing: Event::Emitter:ver&lt;1.0.3&gt;:auth&lt;zef:tony-o&gt;
+===&gt; Installing: Event::Emitter::Inter-Process:ver&lt;1.0.1&gt;:auth&lt;zef:tony-o&gt;</code></pre>
+<p>Now you should be able to just run your app:</p>
+<pre><code>$ raku parent.raku
+child echo: hello
+child echo: world
+hello
+world</code></pre>
+<p>And then if you disable the environment:</p>
+<pre><code>$ envy disable tutorial
+==&gt; Disabled repositories: tutorial
+$ raku parent.raku
+===SORRY!=== Error while compiling /private/tmp/parent.raku
+Could not find Event::Emitter::Inter-Process in:
+    Envy&lt;3697577031872&gt;
+    ...
+at /private/tmp/parent.raku:1</code></pre>
+<h2 id="other-notes-about-envy">Other Notes About Envy</h2>
+<p>Envy is in beta, there's likely some things that don't work quite
+right. PRs are most welcome and bugs are appropriately welcome. Both can
+be submitted <a href="https://github.com/tony-o/envy/">here</a>.</p>
+
+
+    </div>
+    <div id="footer">
+      <h6>// social twitter:<a href="https://twitter.com/oynoto">@oynoto</a>, patreon:<a href="https://www.patreon.com/oynot">@oynot</a>, github:<a href="https://github.com/tony-o">tony-o</a></h6>
+    </div>
+    <script src="//cdnjs.cloudflare.com/ajax/libs/highlight.js/11.2.0/highlight.min.js"></script>
+    <script src="/s/hljs-raku.js"></script>
+    <script>
+      hljs.registerLanguage("raku", hljs_raku);
+      (function(){
+        languages = {}
+        pres      = document.getElementsByTagName("pre");
+        for(i = 0; i < hljs.listLanguages().length; i++){
+          languages['language-' + hljs.listLanguages()[i]] = 1;
+        }
+        for(i = 0; i < pres.length; i++){
+          pre = pres[i];
+          cn  = 'language-plaintext';
+          ls  = (pre.getAttribute("class") || 'plaintext').split(' ');
+          for(j = 0; j < ls.length; j++){
+            if(languages['language-' + ls[j]]){
+              cn = 'language-' + ls[j];
+              break;
+            }
+          }
+          codes = pre.getElementsByTagName("code")
+          for(j = 0; j < codes.length; j++){
+            codes[j].setAttribute("class", (codes[j].getAttribute("class") + " hljs " + cn).trim())
+          }
+        }
+        hljs.highlightAll();
+      })();
+    </script>
+    <script async src="https://www.googletagmanager.com/gtag/js?id=G-FKJQZPJ2XK"></script>
+    <script>
+      window.dataLayer = window.dataLayer || [];
+      function gtag(){dataLayer.push(arguments);}
+      gtag('js', new Date());
+      gtag('config', 'G-FKJQZPJ2XK');
+    </script>
+
+  </body>
+</html>
