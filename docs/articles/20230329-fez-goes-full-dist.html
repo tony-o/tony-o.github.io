@@ -1,0 +1,356 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <title>dbks - Fez Goes Full Dist</title>
+   	<meta name="description" content="Fez Goes Full Dist" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta content="text/html;charset=utf-8" http-equiv="Content-Type" />
+    <meta content="utf-8" http-equiv="encoding" />
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.2.0/styles/base16/danqing.min.css" />
+    <link rel="stylesheet" href="/s/style.css" />
+  </head>
+  <body>
+    <div id="title">
+      <a href="/"><img alt="dbks logo" src="/i/dbks.png" /></a> <a href="/"><h1>deathbykeystroke</h1></a>
+    </div>
+    <div id="article">
+      <h1>Fez Goes Full Dist</h1>
+      <h6>// date:  2023-03-29</h6>
+      <h6>// filed: <a href="/tags/rakudo.html">rakudo</a>, <a href="/tags/programming.html">programming</a></h6>
+      <h6>// <a href="https://deathbykeystroke.com/articles/20230329-fez-goes-full-dist.html">perma</a></h6>
+      <br/>
+
+      <h1 id="fez-goes-full-dist">Fez Goes Full Dist</h1>
+<p>SWEET! What does that mean?</p>
+<ul>
+<li>initialize dist skeletons with <code>init</code></li>
+<li>manage depends, build-depends, and resources</li>
+<li>add and run commands to the repo with <code>command</code></li>
+<li>better dist review with <code>review</code></li>
+<li>gitignore globbing</li>
+<li>better usage statements and command guessing for when you're stuck</li>
+<li>short commands and flags!</li>
+<li>fez goes full debug</li>
+</ul>
+<p>There exists a few dist management tools already so, where's the motivation to move this project into the dist management space? Well, <code>fez</code> is mostly a one-person show and features are added as time allows. Time has finally allowed and the main reason for not contributing to other modules is as one of the authors of zef and both of these tools aim for zero dependencies, sometimes with great effort. The effort always pays off for our users who don't have to watch their terminal history balloon as the dependency chain is calculated. It just downloads and installs. It's in mind that a zero dependency option <em>should</em> be available and it wasn't.</p>
+<p>Enough philosophy already let's get to the FEATURES!</p>
+<h2 id="fez-init-module"><code>fez init [&lt;module&gt;]</code></h2>
+<p>Running <code>fez init</code> will prompt you for a module name unless your provided one as an argument. This is asking for the initial module you'd like to create and generates a dist name for it:</p>
+<pre><code>$ fez init MyShiny::Module</code></pre>
+<pre><code>$ tree MyShiny--Module/
+MyShiny--Module/
+├── lib
+│   └── MyShiny
+│       └── Module.rakumod
+├── META6.json
+└── t
+    └── 00-use.rakutest
+
+3 directories, 3 files</code></pre>
+<pre><code>$ cat MyShiny--Module/META6.json
+{
+  &quot;auth&quot;: &quot;zef:tony-o&quot;,
+  &quot;build-depends&quot;: [
+  ],
+  &quot;depends&quot;: [
+  ],
+  &quot;description&quot;: &quot;A brand new and very nice module&quot;,
+  &quot;name&quot;: &quot;MyShiny--Module&quot;,
+  &quot;provides&quot;: {
+    &quot;MyShiny::Module&quot;: &quot;lib/MyShiny/Module.rakumod&quot;
+  },
+  &quot;resources&quot;: [
+  ],
+  &quot;version&quot;: &quot;0.0.1&quot;
+}</code></pre>
+<p>The rest of the examples are going to use this repo and update that meta.</p>
+<h2 id="manage-depends-build-depends-and-resource">Manage Depends, Build-Depends, and Resource</h2>
+<p>Let's say we're developing and BOOM, suddenly we need FNV hashing. We can add that dependency to the META with the command:</p>
+<pre><code>$ fez depends Digest::FNV
+&gt;&gt;= Digest::FNV was not found in depends so it was added
+</code></pre>
+<pre><code>$ cat META6.json
+{
+  &quot;auth&quot;: &quot;zef:tony-o&quot;,
+  &quot;build-depends&quot;: [
+  ],
+  &quot;depends&quot;: [
+    &quot;Digest::FNV&quot;
+  ],
+  &quot;description&quot;: &quot;A brand new and very nice module&quot;,
+  &quot;name&quot;: &quot;MyShiny--Module&quot;,
+  &quot;provides&quot;: {
+    &quot;MyShiny::Module&quot;: &quot;lib/MyShiny/Module.rakumod&quot;
+  },
+  &quot;resources&quot;: [
+  ],
+  &quot;version&quot;: &quot;0.0.1&quot;
+}</code></pre>
+<p>That's it. That's all there is to it.</p>
+<h3 id="build-depends">Build Depends</h3>
+<p>To add a build depends you'd just pass the flag <code>-b</code> or <code>--build</code>:</p>
+<pre><code>$ fez depends -b Test
+&gt;&gt;= Test was not found in build-depends so it was added</code></pre>
+<pre><code>$ cat META6.json
+{
+  &quot;auth&quot;: &quot;zef:tony-o&quot;,
+  &quot;build-depends&quot;: [
+    &quot;Test&quot;
+  ],
+  &quot;depends&quot;: [
+    &quot;Digest::FNV&quot;
+  ],
+  &quot;description&quot;: &quot;A brand new and very nice module&quot;,
+  &quot;name&quot;: &quot;MyShiny--Module&quot;,
+  &quot;provides&quot;: {
+    &quot;MyShiny::Module&quot;: &quot;lib/MyShiny/Module.rakumod&quot;
+  },
+  &quot;resources&quot;: [
+  ],
+  &quot;version&quot;: &quot;0.0.1&quot;
+}</code></pre>
+<h3 id="resources">Resources</h3>
+<p>And, for resources, it's as simple as:</p>
+<pre><code>$ fez resource templates/abc
+&gt;&gt;= Resource is not in META, adding it
+$ fez resource templates/123
+&gt;&gt;= Resource is not in META, adding it</code></pre>
+<pre><code>$ cat META6.json
+{
+  &quot;auth&quot;: &quot;zef:tony-o&quot;,
+  &quot;build-depends&quot;: [
+    &quot;Test&quot;
+  ],
+  &quot;depends&quot;: [
+    &quot;Digest::FNV&quot;
+  ],
+  &quot;description&quot;: &quot;A brand new and very nice module&quot;,
+  &quot;name&quot;: &quot;MyShiny--Module&quot;,
+  &quot;provides&quot;: {
+    &quot;MyShiny::Module&quot;: &quot;lib/MyShiny/Module.rakumod&quot;
+  },
+  &quot;resources&quot;: [
+    &quot;templates/abc&quot;,
+    &quot;templates/123&quot;
+  ],
+  &quot;version&quot;: &quot;0.0.1&quot;
+}</code></pre>
+<pre><code>$ tree resources/
+resources/
+└── templates
+    ├── abc
+    └── 123
+
+1 directory, 2 files</code></pre>
+<p>Note that we didn't have to specify <code>resources</code> as a directory in the resource we needed and we also didn't have to manually create any directories.</p>
+<h2 id="commands">Commands</h2>
+<p>To view available commands and what they do:</p>
+<pre><code>$ fez command
+&gt;&gt;= test: zef test .</code></pre>
+<p>Note: this will create a <code>.zef</code> file in the repo that will also be mentioned later. You can use this file to add other commands.</p>
+<p>This shows that running <code>fez run test</code> will shell out <code>zef test .</code>:</p>
+<pre><code>$ fez run test
+&gt;&gt;= INFO: ===&gt; Testing: MyShiny--Module:ver&lt;0.0.1&gt;:auth&lt;zef:tony-o&gt;
+&gt;&gt;= INFO: ===&gt; Testing [OK] for MyShiny--Module:ver&lt;0.0.1&gt;:auth&lt;zef:tony-o&gt;</code></pre>
+<h2 id="review">Review</h2>
+<p><code>fez review</code> can be used to inspect the current repo. This command no longer looks at dist files, it inspects what's on disk and what fez would bundle. If we run it right now then we'll see it does in fact catch a weird case, we've added <code>Digest::FNV</code> to our depends but don't actually use it in the code:</p>
+<pre><code>$ fez review
+&gt;&gt;= Bundle manifest:
+      .zef
+      lib/MyShiny/Module.rakumod
+      META6.json
+      resources/templates/template1
+      resources/templates/template2
+      t/00-use.rakutest
+&gt;&gt;= Build depends ok
+&gt;&gt;= Depends not ok
+&gt;&gt;=   in meta but unexpected:
+        Digest::FNV
+&gt;&gt;= Provides ok
+&gt;&gt;= Resources ok</code></pre>
+<p>Cool. But what if i want it to be a depends anyway and not have fez complain about it? You can now control what fez gripes about with the <code>.zef</code> config file. We'll need an entry in that file:</p>
+<div class="sourceCode" id="cb14"><pre class="sourceCode json"><code class="sourceCode json"><span id="cb14-1"><a href="#cb14-1" aria-hidden="true"></a><span class="fu">{</span></span>
+<span id="cb14-2"><a href="#cb14-2" aria-hidden="true"></a>  <span class="er">...</span><span class="fu">,</span></span>
+<span id="cb14-3"><a href="#cb14-3" aria-hidden="true"></a>  <span class="dt">&quot;ignore-depends&quot;</span><span class="fu">:</span> <span class="ot">[</span><span class="st">&quot;Digest::FNV&quot;</span><span class="ot">]</span></span>
+<span id="cb14-4"><a href="#cb14-4" aria-hidden="true"></a><span class="fu">}</span></span></code></pre></div>
+<p>Now, fez does what we want:</p>
+<pre><code>$ fez review
+&gt;&gt;= Bundle manifest:
+      .zef
+      lib/MyShiny/Module.rakumod
+      META6.json
+      resources/templates/template1
+      resources/templates/template2
+      t/00-use.rakutest
+&gt;&gt;= Build depends ok
+&gt;&gt;= Depends ok
+&gt;&gt;= Provides ok
+&gt;&gt;= Resources ok</code></pre>
+<p>The key in that .zef file is <code>ignore-&lt;META6 key&gt;</code> so all of the following work: <code>ignore-depends</code>, <code>ignore-resources</code>, <code>ignore-provides</code>, and <code>ignore-build-depends</code>. The odd one out is <code>ignore-provides</code> as that is the only hash, this one works on the key of that hash.</p>
+<p>Why not fix <code>checkbuild</code>?</p>
+<p><code>fez checkbuild</code> has been buggy for a while. It was designed to work with varying methods of compression including <code>git archive</code>, <code>tar | gzip</code>, and manual methods. There is a lot of code around extracting (in memory) and inspecting and a lot of confusion about the different methods used in packaging the dist. What you saw wasn't always what you got. <code>checkbuild</code> did its best to navigate that chaos but as <code>fez</code> simplified its bundling strategies the checkbuild command became more and more stale or too complicated for the problem. Better to tear it out and give it a better name.</p>
+<h2 id="gitignore-globbing">GitIgnore Globbing</h2>
+<p>The globber that shipped around v38 was a strict type globber. After some fiddling it's much closer to what you'd get from a .gitignore file and can be used either way. This shipped in v45 so please update if you've been manually bundling and give the new globber a go.</p>
+<h2 id="usage-statements-and-short-commandsflags">Usage Statements and Short Commands/Flags</h2>
+<p><code>fez</code> used to just spit out generic USAGE. NOT ANYMORE, PEOPLE. Some examples:</p>
+<h3 id="command-guessing">Command Guessing</h3>
+<pre><code>$ fez org
+Fez - Raku dist manager
+
+Did you mean any of the following?
+  fez org
+  fez org accept
+  fez org create
+  fez org invite
+  fez org leave
+  fez org list
+  fez org members
+  fez org meta
+  fez org modify
+  fez org pending</code></pre>
+<pre><code>$ fez me
+Fez - Raku dist manager
+
+Did you mean any of the following?
+  fez meta
+  fez org members
+  fez org meta</code></pre>
+<h3 id="better-help-for-specific-commands">Better Help for Specific Commands</h3>
+<p>Each command also gets short flags/commands. They can be seen in the usage statements for those commands:</p>
+<pre><code>$ fez run -h
+Fez - Raku dist manager
+
+USAGE
+
+  fez r &lt;command&gt; [-t]
+
+  fez run &lt;command&gt; [--timeout=300]
+
+FLAGS
+
+  OPTIONAL
+
+  -t|--timeout            number of seconds the command will be allowed to run
+                          for prior to fez attempting to kill the process.
+
+Runs a command with timeout. Available commands can be shown with `fez command`</code></pre>
+<p>Enjoy.</p>
+<h2 id="full-debug">Full Debug</h2>
+<p>Another added a feature that should help both with bug reports and your understanding of <code>fez</code> is the magical <code>-v</code> flag. This flag is universal and will produce a large output in most cases but you'll see exactly what's happening and when:</p>
+<pre><code>$ fez -v upload
+&gt;&gt;= INFO: setting log level: DEBUG
+&gt;&gt;= DEBUG: found META6.json in .
+&gt;&gt;= DEBUG: scanning files in lib
+&gt;&gt;= DEBUG: manifest:
+             lib/MyShiny/Module.rakumod
+&gt;&gt;= DEBUG: looking for modules/classes in those files
+&gt;&gt;= DEBUG: [lib/MyShiny/Module.rakumod]: provides: MyShiny::Module
+&gt;&gt;= DEBUG: depends:
+&gt;&gt;= DEBUG: lib-files:
+             lib/MyShiny/Module.rakumod =&gt; [1]
+&gt;&gt;= DEBUG: provides:
+             MyShiny::Module =&gt; [lib/MyShiny/Module.rakumod]
+&gt;&gt;= DEBUG: use:
+&gt;&gt;= DEBUG: {
+             &quot;auth&quot;: &quot;zef:tony-o&quot;,
+             &quot;build-depends&quot;: [
+               &quot;Test&quot;
+             ],
+             &quot;depends&quot;: [
+             ],
+             &quot;description&quot;: &quot;A brand new and very nice module&quot;,
+             &quot;name&quot;: &quot;MyShiny--Module&quot;,
+             &quot;provides&quot;: {
+               &quot;MyShiny::Module&quot;: &quot;lib/MyShiny/Module.rakumod&quot;
+             },
+             &quot;resources&quot;: [
+               &quot;templates/template1&quot;,
+               &quot;templates/template2&quot;
+             ],
+             &quot;version&quot;: &quot;0.0.1&quot;
+           }
+&gt;&gt;= Bundle manifest:
+      .zef
+      lib/MyShiny/Module.rakumod
+      META6.json
+      resources/templates/template1
+      resources/templates/template2
+      t/00-use.rakutest
+&gt;&gt;= Build depends ok
+&gt;&gt;= Depends ok
+&gt;&gt;= Provides ok
+&gt;&gt;= Resources ok
+&gt;&gt;= DEBUG: Tarring manifest:
+             .zef
+             sdist
+             META6.json
+             resources/templates/template2
+             resources/templates/template1
+             t/00-use.rakutest
+             lib/MyShiny/Module.rakumod
+&gt;&gt;= DEBUG: tarred data 6656 bytes
+&gt;&gt;= DEBUG: zlib: opening /tmp/MyShiny--Module/sdist/WMwlHtCq.tar.gz for writing
+&gt;&gt;= DEBUG: [WGET:starting]
+&gt;&gt;= DEBUG: [WGET:out] {&quot;success&quot;: true, &quot;key&quot;: &quot;https://zef360&lt;snip&gt;&quot;}
+&gt;&gt;= DEBUG: [WGET:exit 0]
+&gt;&gt;= DEBUG: [WGET:starting]
+&gt;&gt;= DEBUG: [WGET:err] --2023-03-29 08:52:46--  https://zef360&lt;snip&gt;
+           Resolving zef360&lt;snip&gt; (zef360&lt;snip&gt;)... 3.5.87.140, 52.92.165.130, 52.92.165.162, ...
+           Connecting to zef360&lt;snip&gt; (zef360&lt;snip&gt;)|3.5.87.140|:443... connected.
+           HTTP request sent, awaiting response... 200 OK
+           Length: 0
+           Saving to: ‘STDOUT’
+
+                0K                                                        0.00 =0s
+
+           2023-03-29 08:52:47 (0.00 B/s) - written to stdout [0/0]
+&gt;&gt;= DEBUG: [WGET:exit 0]
+&gt;&gt;= Hey! You did it! Your dist will be indexed shortly.</code></pre>
+<p>Here we can inspect what's happening in <code>fez</code>. It's using zlib to package the modules, wget to distribute, etc etc.</p>
+<p>PLEASE include this output in bug reports moving forward.</p>
+<h2 id="end">End</h2>
+<p>That's it for today.</p>
+
+
+    </div>
+    <div id="footer">
+      <h6>// social twitter:<a href="https://twitter.com/oynoto">@oynoto</a>, patreon:<a href="https://www.patreon.com/oynot">@oynot</a>, github:<a href="https://github.com/tony-o">tony-o</a></h6>
+    </div>
+    <script src="//cdnjs.cloudflare.com/ajax/libs/highlight.js/11.2.0/highlight.min.js"></script>
+    <script src="/s/hljs-raku.js"></script>
+    <script>
+      hljs.registerLanguage("raku", hljs_raku);
+      (function(){
+        languages = {}
+        pres      = document.getElementsByTagName("pre");
+        for(i = 0; i < hljs.listLanguages().length; i++){
+          languages['language-' + hljs.listLanguages()[i]] = 1;
+        }
+        for(i = 0; i < pres.length; i++){
+          pre = pres[i];
+          cn  = 'language-plaintext';
+          ls  = (pre.getAttribute("class") || 'plaintext').split(' ');
+          for(j = 0; j < ls.length; j++){
+            if(languages['language-' + ls[j]]){
+              cn = 'language-' + ls[j];
+              break;
+            }
+          }
+          codes = pre.getElementsByTagName("code")
+          for(j = 0; j < codes.length; j++){
+            codes[j].setAttribute("class", (codes[j].getAttribute("class") + " hljs " + cn).trim())
+          }
+        }
+        hljs.highlightAll();
+      })();
+    </script>
+    <script async src="https://www.googletagmanager.com/gtag/js?id=G-FKJQZPJ2XK"></script>
+    <script>
+      window.dataLayer = window.dataLayer || [];
+      function gtag(){dataLayer.push(arguments);}
+      gtag('js', new Date());
+      gtag('config', 'G-FKJQZPJ2XK');
+    </script>
+
+  </body>
+</html>
