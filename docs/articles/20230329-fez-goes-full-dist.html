@@ -147,7 +147,7 @@ resources/
 <p>To view available commands and what they do:</p>
 <pre><code>$ fez command
 &gt;&gt;= test: zef test .</code></pre>
-<p>Note: this will create a <code>.zef</code> file in the repo that will also be mentioned later. You can use this file to add other commands.</p>
+<p>Note: this will create a <code>.fez</code> file in the repo that will also be mentioned later. You can use this file to add other commands.</p>
 <p>This shows that running <code>fez run test</code> will shell out <code>zef test .</code>:</p>
 <pre><code>$ fez run test
 &gt;&gt;= INFO: ===&gt; Testing: MyShiny--Module:ver&lt;0.0.1&gt;:auth&lt;zef:tony-o&gt;
@@ -156,7 +156,7 @@ resources/
 <p><code>fez review</code> can be used to inspect the current repo. This command no longer looks at dist files, it inspects what's on disk and what fez would bundle. If we run it right now then we'll see it does in fact catch a weird case, we've added <code>Digest::FNV</code> to our depends but don't actually use it in the code:</p>
 <pre><code>$ fez review
 &gt;&gt;= Bundle manifest:
-      .zef
+      .fez
       lib/MyShiny/Module.rakumod
       META6.json
       resources/templates/template1
@@ -168,7 +168,7 @@ resources/
         Digest::FNV
 &gt;&gt;= Provides ok
 &gt;&gt;= Resources ok</code></pre>
-<p>Cool. But what if i want it to be a depends anyway and not have fez complain about it? You can now control what fez gripes about with the <code>.zef</code> config file. We'll need an entry in that file:</p>
+<p>Cool. But what if i want it to be a depends anyway and not have fez complain about it? You can now control what fez gripes about with the <code>.fez</code> config file. We'll need an entry in that file:</p>
 <div class="sourceCode" id="cb14"><pre class="sourceCode json"><code class="sourceCode json"><span id="cb14-1"><a href="#cb14-1" aria-hidden="true"></a><span class="fu">{</span></span>
 <span id="cb14-2"><a href="#cb14-2" aria-hidden="true"></a>  <span class="er">...</span><span class="fu">,</span></span>
 <span id="cb14-3"><a href="#cb14-3" aria-hidden="true"></a>  <span class="dt">&quot;ignore-depends&quot;</span><span class="fu">:</span> <span class="ot">[</span><span class="st">&quot;Digest::FNV&quot;</span><span class="ot">]</span></span>
@@ -176,7 +176,7 @@ resources/
 <p>Now, fez does what we want:</p>
 <pre><code>$ fez review
 &gt;&gt;= Bundle manifest:
-      .zef
+      .fez
       lib/MyShiny/Module.rakumod
       META6.json
       resources/templates/template1
@@ -186,9 +186,9 @@ resources/
 &gt;&gt;= Depends ok
 &gt;&gt;= Provides ok
 &gt;&gt;= Resources ok</code></pre>
-<p>The key in that .zef file is <code>ignore-&lt;META6 key&gt;</code> so all of the following work: <code>ignore-depends</code>, <code>ignore-resources</code>, <code>ignore-provides</code>, and <code>ignore-build-depends</code>. The odd one out is <code>ignore-provides</code> as that is the only hash, this one works on the key of that hash.</p>
+<p>The key in that .fez file is <code>ignore-&lt;META6 key&gt;</code> so all of the following work: <code>ignore-depends</code>, <code>ignore-resources</code>, <code>ignore-provides</code>, and <code>ignore-build-depends</code>. The odd one out is <code>ignore-provides</code> as that is the only hash, this one works on the key of that hash.</p>
 <p>Why not fix <code>checkbuild</code>?</p>
-<p><code>fez checkbuild</code> has been buggy for a while. It was designed to work with varying methods of compression including <code>git archive</code>, <code>tar | gzip</code>, and manual methods. There is a lot of code around extracting (in memory) and inspecting and a lot of confusion about the different methods used in packaging the dist. What you saw wasn't always what you got. <code>checkbuild</code> did its best to navigate that chaos but as <code>fez</code> simplified its bundling strategies the checkbuild command became more and more stale or too complicated for the problem. Better to tear it out and give it a better name.</p>
+<p><code>fez checkbuild</code> has been buggy for a while. It was designed to work with varying methods of compression including <code>git archive</code>, <code>tar | gzip</code>, and manual methods. There is a lot of code around extracting (in memory) and inspecting and a lot of confusion about the different methods used in packaging the dist. What you saw wasn't always what you got. <code>checkbuild</code> did its best to navigate that chaos but as <code>fez</code> simplified its bundling strategies the <code>checkbuild</code> command was solving an increasingly different problem. Better to tear it out and give it a better name and focus.</p>
 <h2 id="gitignore-globbing">GitIgnore Globbing</h2>
 <p>The globber that shipped around v38 was a strict type globber. After some fiddling it's much closer to what you'd get from a .gitignore file and can be used either way. This shipped in v45 so please update if you've been manually bundling and give the new globber a go.</p>
 <h2 id="usage-statements-and-short-commandsflags">Usage Statements and Short Commands/Flags</h2>
@@ -270,7 +270,7 @@ Runs a command with timeout. Available commands can be shown with `fez command`<
              &quot;version&quot;: &quot;0.0.1&quot;
            }
 &gt;&gt;= Bundle manifest:
-      .zef
+      .fez
       lib/MyShiny/Module.rakumod
       META6.json
       resources/templates/template1
@@ -281,7 +281,7 @@ Runs a command with timeout. Available commands can be shown with `fez command`<
 &gt;&gt;= Provides ok
 &gt;&gt;= Resources ok
 &gt;&gt;= DEBUG: Tarring manifest:
-             .zef
+             .fez
              sdist
              META6.json
              resources/templates/template2
@@ -308,8 +308,6 @@ Runs a command with timeout. Available commands can be shown with `fez command`<
 &gt;&gt;= Hey! You did it! Your dist will be indexed shortly.</code></pre>
 <p>Here we can inspect what's happening in <code>fez</code>. It's using zlib to package the modules, wget to distribute, etc etc.</p>
 <p>PLEASE include this output in bug reports moving forward.</p>
-<h2 id="end">End</h2>
-<p>That's it for today.</p>
 
 
     </div>

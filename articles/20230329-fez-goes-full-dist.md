@@ -179,7 +179,7 @@ $ fez command
 >>= test: zef test .
 ```
 
-Note: this will create a `.zef` file in the repo that will also be mentioned later. You can use this file to add other commands.
+Note: this will create a `.fez` file in the repo that will also be mentioned later. You can use this file to add other commands.
 
 This shows that running `fez run test` will shell out `zef test .`:
 
@@ -196,7 +196,7 @@ $ fez run test
 ```
 $ fez review
 >>= Bundle manifest:
-      .zef
+      .fez
       lib/MyShiny/Module.rakumod
       META6.json
       resources/templates/template1
@@ -210,7 +210,7 @@ $ fez review
 >>= Resources ok
 ```
 
-Cool. But what if i want it to be a depends anyway and not have fez complain about it?  You can now control what fez gripes about with the `.zef` config file. We'll need an entry in that file:
+Cool. But what if i want it to be a depends anyway and not have fez complain about it?  You can now control what fez gripes about with the `.fez` config file. We'll need an entry in that file:
 
 ```json
 {
@@ -224,7 +224,7 @@ Now, fez does what we want:
 ```
 $ fez review
 >>= Bundle manifest:
-      .zef
+      .fez
       lib/MyShiny/Module.rakumod
       META6.json
       resources/templates/template1
@@ -236,7 +236,7 @@ $ fez review
 >>= Resources ok
 ```
 
-The key in that .zef file is `ignore-<META6 key>` so all of the following work: `ignore-depends`, `ignore-resources`, `ignore-provides`, and `ignore-build-depends`.  The odd one out is `ignore-provides` as that is the only hash, this one works on the key of that hash.
+The key in that .fez file is `ignore-<META6 key>` so all of the following work: `ignore-depends`, `ignore-resources`, `ignore-provides`, and `ignore-build-depends`.  The odd one out is `ignore-provides` as that is the only hash, this one works on the key of that hash.
 
 
 Why not fix `checkbuild`?
@@ -344,7 +344,7 @@ $ fez -v upload
              "version": "0.0.1"
            }
 >>= Bundle manifest:
-      .zef
+      .fez
       lib/MyShiny/Module.rakumod
       META6.json
       resources/templates/template1
@@ -355,7 +355,7 @@ $ fez -v upload
 >>= Provides ok
 >>= Resources ok
 >>= DEBUG: Tarring manifest:
-             .zef
+             .fez
              sdist
              META6.json
              resources/templates/template2
