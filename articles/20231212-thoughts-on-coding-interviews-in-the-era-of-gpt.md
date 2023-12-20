@@ -24,7 +24,10 @@ A couple of reasonable options for interviewing in the era of GPT that we'll dis
 An interesting option is generating prompts during the interview and using that as an interview starter.  The prompt:
 
 ```
-i want you to act a technical programming interviewing assistant, we're going to be interviewing a senior engineer in python i'd like you to generate 50 lines of code with two difficult to spot bugs and provide a solution to those bugs
+i want you to act as technical programming interviewing assistant, we're going
+to be interviewing a senior engineer in python i'd like you to generate 50
+lines of code with two difficult to spot bugs and provide a solution to those
+bugs
 ```
 
 The result:
