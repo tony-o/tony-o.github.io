@@ -20,8 +20,7 @@
       <h6>// <a href="https://deathbykeystroke.com/articles/20220923-building-a-cro-app-part-b.html">perma</a></h6>
       <br/>
 
-      <p>We have our Cro app built, authenticating, and doing all kinds of fun
-stuff. Let's take a look at deploying this bad wamma jamma!</p>
+      <p>We have our Cro app built, authenticating, and doing all kinds of fun stuff. Let's take a look at deploying this bad wamma jamma!</p>
 <p>To do so we'll do the follow:</p>
 <ul>
 <li>Create a systemd service file</li>
@@ -29,21 +28,13 @@ stuff. Let's take a look at deploying this bad wamma jamma!</p>
 <li>Set up SSL with apache2 for our service (with Let's Encrypt)</li>
 </ul>
 <h2 id="systemd">Systemd</h2>
-<p>This section is fairly straight forward but it requires some
-consideration:</p>
+<p>This section is fairly straight forward but it requires some consideration:</p>
 <ol>
 <li>Systemd is not loading your user's environment</li>
-<li>Systemd is running as a different user than your own so your app
-root must have the right file permissions, by default this user is
-<code>root</code></li>
+<li>Systemd is running as a different user than your own so your app root must have the right file permissions, by default this user is <code>root</code></li>
 </ol>
-<p>For the purpose of this article we're just going to assume you've put
-your app root in <code>/opt/my-app</code>, you have a working rakudo,
-that you have all of the dependencies for your app installed, and that
-the app is runnable on the machine you're installing the systemd file
-on.</p>
-<p>In your services file
-<code>/etc/systemd/system/my-app.service</code>:</p>
+<p>For the purpose of this article we're just going to assume you've put your app root in <code>/opt/my-app</code>, you have a working rakudo, that you have all of the dependencies for your app installed, and that the app is runnable on the machine you're installing the systemd file on.</p>
+<p>In your services file <code>/etc/systemd/system/my-app.service</code>:</p>
 <pre><code>[Unit]
 Description=My Cro App - A Tutorial
 DefaultDependencies=no
@@ -57,33 +48,14 @@ Restart=on-failure
 
 [Install]
 WantedBy=multi-user.target</code></pre>
-<p>This is the most basic systemd file you can make, there are a lot of
-other options you can put in here including things like a restart
-backoff if the app is not starting. It is important to note that you
-should use the full path to binaries in the service file, make no
-assumptions, and take frequent breaks.</p>
-<p>Now, run <code>systemctl daemon-reload</code> so that systemd
-refreshes its cache, enable our service with
-<code>systemctl enable my-app</code>, and finally start the service with
-<code>systemctl start my-app</code>.</p>
-<p>You should now be able to hit port <code>8666</code> (if you haven't
-modified anything from part 1 or cloned the repo). You can test this by
-running <code>curl localhost:8666</code> - you should get a response
-from our app.</p>
-<p>If you're having issues and think that the app is not running, you
-can use <code>journalctl -u my-app.service</code> to see the logs and
-correct any errors the app is having getting started.</p>
-<p>That's all there really is in a basic systemd service. If you'd like
-to delve into service files more, <a
-href="https://www.freedesktop.org/software/systemd/man/systemd.service.html">this</a>
-is a hand resource. Onto to the tougher stuff.</p>
+<p>This is the most basic systemd file you can make, there are a lot of other options you can put in here including things like a restart backoff if the app is not starting. It is important to note that you should use the full path to binaries in the service file, make no assumptions, and take frequent breaks.</p>
+<p>Now, run <code>systemctl daemon-reload</code> so that systemd refreshes its cache, enable our service with <code>systemctl enable my-app</code>, and finally start the service with <code>systemctl start my-app</code>.</p>
+<p>You should now be able to hit port <code>8666</code> (if you haven't modified anything from part 1 or cloned the repo). You can test this by running <code>curl localhost:8666</code> - you should get a response from our app.</p>
+<p>If you're having issues and think that the app is not running, you can use <code>journalctl -u my-app.service</code> to see the logs and correct any errors the app is having getting started.</p>
+<p>That's all there really is in a basic systemd service. If you'd like to delve into service files more, <a href="https://www.freedesktop.org/software/systemd/man/systemd.service.html">this</a> is a hand resource. Onto to the tougher stuff.</p>
 <h2 id="configuring-apache">Configuring Apache</h2>
-<p>Getting the certificates with <code>certbot</code> prior to setting
-up apache is much easier but it's a headache when you have to renew the
-certs so we're going to make this work with apache running so there's no
-downtime when you renew.</p>
-<p>For this tutorial we're looking at Debian 11 so some of your install
-commands might be a bit different but installing apache2:</p>
+<p>Getting the certificates with <code>certbot</code> prior to setting up apache is much easier but it's a headache when you have to renew the certs so we're going to make this work with apache running so there's no downtime when you renew.</p>
+<p>For this tutorial we're looking at Debian 11 so some of your install commands might be a bit different but installing apache2:</p>
 <pre><code># apt install apache2
 ...
 # a2enmod rewrite
@@ -94,10 +66,7 @@ commands might be a bit different but installing apache2:</p>
 ...
 # systemctl restart apache2
 ...</code></pre>
-<p>After getting apache installed we need to configure it to respond to
-our domain, so in your favorite version of vim load up
-<code>/etc/apache2/sites-available/000-default.conf</code> and make it
-look exactly like:</p>
+<p>After getting apache installed we need to configure it to respond to our domain, so in your favorite version of vim load up <code>/etc/apache2/sites-available/000-default.conf</code> and make it look exactly like:</p>
 <pre><code>&lt;VirtualHost *:80&gt;
     ServerName pm6.dev
     ServerAlias www.pm6.dev
@@ -125,22 +94,14 @@ look exactly like:</p>
     ProxyPass         /  http://localhost:8666/ nocanon
     ProxyPassReverse  /  http://localhost:8666/
 &lt;/VirtualHost&gt;</code></pre>
-<p>Now we're ready to get certbot involved. The configuration above is
-using the hostname <code>pm6.dev</code>, you should replace that with
-whatever hostname you're looking to use. The other thing it does is
-redirects standard <code>http</code> requests to <code>https</code>
-<em>unless</em> the request is from certbot.</p>
+<p>Now we're ready to get certbot involved. The configuration above is using the hostname <code>pm6.dev</code>, you should replace that with whatever hostname you're looking to use. The other thing it does is redirects standard <code>http</code> requests to <code>https</code> <em>unless</em> the request is from certbot.</p>
 <pre><code># apt install certbot
 ...</code></pre>
-<p>Now we're ready to set up the certificates, grab that shiny domain
-name and replace <code>{EMAIL}</code> and <code>{DOMAIN}</code> with
-your own!</p>
+<p>Now we're ready to set up the certificates, grab that shiny domain name and replace <code>{EMAIL}</code> and <code>{DOMAIN}</code> with your own!</p>
 <pre><code># systemctl restart apache2
 ...
 # certbot certonly --webroot -w &#39;/var/www/&#39; -d &#39;www.{DOMAIN}&#39; -d &#39;{DOMAIN}&#39; -n --email &#39;{EMAIL}&#39; --agree-tos</code></pre>
-<p>So far we're looking fresh, if certbot succeeded then we're set up
-for a hands free renewal in the future. Let's put the certs to use by
-editing our apache2 config again in notepad++:</p>
+<p>So far we're looking fresh, if certbot succeeded then we're set up for a hands free renewal in the future. Let's put the certs to use by editing our apache2 config again in notepad++:</p>
 <pre><code># ...
 &lt;VirtualHost *:443&gt;
    ServerName pm6.dev
@@ -155,14 +116,11 @@ editing our apache2 config again in notepad++:</p>
    CustomLog ${APACHE_LOG_DIR}/access.log combined
 
 # ...</code></pre>
-<p>The two new lines are the ones starting with
-<code>SSLCertificate</code>. Enable <code>ssl</code> on apache2 and then
-restart apache2:</p>
+<p>The two new lines are the ones starting with <code>SSLCertificate</code>. Enable <code>ssl</code> on apache2 and then restart apache2:</p>
 <pre><code># a2enmod ssl
 ...
 # systemctl restart apache2</code></pre>
-<p>Voila! That's it. That's all there is to it. If apache complains here
-then correct any errors and then restart this paragraph.</p>
+<p>Voila! That's it. That's all there is to it. If apache complains here then correct any errors and then restart this paragraph.</p>
 
 
     </div>

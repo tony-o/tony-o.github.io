@@ -20,111 +20,68 @@
       <h6>// <a href="https://deathbykeystroke.com/articles/20190925-rakudo-nightly--faster-ci.html">perma</a></h6>
       <br/>
 
-      <p>This article is going to walk through using a docker image to CI
-little modules on Circle CI and Travis CI - tl;dr just copy the
-appropriate config files for your choice of CI and modify for system
-dependencies.</p>
-<p>The major benefit of using the image is speed and an ancillary
-benefit is the module can be tested against the latest rakudo build plus
-regression tested against whatever tags you find in the
-tonyodell/rakudo-nightly repo.</p>
+      <p>This article is going to walk through using a docker image to CI little modules on Circle CI and Travis CI - tl;dr just copy the appropriate config files for your choice of CI and modify for system dependencies.</p>
+<p>The major benefit of using the image is speed and an ancillary benefit is the module can be tested against the latest rakudo build plus regression tested against whatever tags you find in the tonyodell/rakudo-nightly repo.</p>
 <h2 id="docker">docker</h2>
-<p>In the event that you're unfamiliar with docker: docker falls
-somewhere between a jail and virtual machine. You don't really need to
-know much about docker to follow along and the options used to make
-certain things work a certain way will be explained the situations
-below.</p>
-<p>For the rest of the tutorial we'll use (this
-repo)[https://hub.docker.com/r/tonyodell/rakudo-nightly] for rakudo
-nightly.</p>
+<p>In the event that you're unfamiliar with docker: docker falls somewhere between a jail and virtual machine. You don't really need to know much about docker to follow along and the options used to make certain things work a certain way will be explained the situations below.</p>
+<p>For the rest of the tutorial we'll use (this repo)[https://hub.docker.com/r/tonyodell/rakudo-nightly] for rakudo nightly.</p>
 <h2 id="travis-ci">travis ci</h2>
-<div class="sourceCode" id="cb1"><pre
-class="sourceCode yaml"><code class="sourceCode yaml"><span id="cb1-1"><a href="#cb1-1" aria-hidden="true" tabindex="-1"></a><span class="fu">language</span><span class="kw">:</span><span class="at"> minimal</span></span>
-<span id="cb1-2"><a href="#cb1-2" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb1-3"><a href="#cb1-3" aria-hidden="true" tabindex="-1"></a><span class="fu">services</span><span class="kw">:</span><span class="at"> docker</span></span>
-<span id="cb1-4"><a href="#cb1-4" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb1-5"><a href="#cb1-5" aria-hidden="true" tabindex="-1"></a><span class="fu">before_install</span><span class="kw">:</span></span>
-<span id="cb1-6"><a href="#cb1-6" aria-hidden="true" tabindex="-1"></a><span class="kw">-</span><span class="at"> docker pull tonyodell/rakudo-nightly:latest</span></span>
-<span id="cb1-7"><a href="#cb1-7" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb1-8"><a href="#cb1-8" aria-hidden="true" tabindex="-1"></a><span class="fu">script</span><span class="kw">:</span></span>
-<span id="cb1-9"><a href="#cb1-9" aria-hidden="true" tabindex="-1"></a><span class="kw">-</span><span class="at"> docker run</span></span>
-<span id="cb1-10"><a href="#cb1-10" aria-hidden="true" tabindex="-1"></a><span class="at">  -v $(pwd):/tmp/test:rw</span></span>
-<span id="cb1-11"><a href="#cb1-11" aria-hidden="true" tabindex="-1"></a><span class="at">  -w /tmp/test</span></span>
-<span id="cb1-12"><a href="#cb1-12" aria-hidden="true" tabindex="-1"></a><span class="at">  tonyodell/rakudo-nightly:latest</span></span>
-<span id="cb1-13"><a href="#cb1-13" aria-hidden="true" tabindex="-1"></a><span class="at">  bash -c &#39;apt update; apt install -y ca-certificates; zef install -v --deps-only . &amp;&amp; zef test .&#39;</span></span></code></pre></div>
+<div class="sourceCode" id="cb1"><pre class="sourceCode yaml"><code class="sourceCode yaml"><span id="cb1-1"><a href="#cb1-1" aria-hidden="true"></a><span class="fu">language</span><span class="kw">:</span><span class="at"> minimal</span></span>
+<span id="cb1-2"><a href="#cb1-2" aria-hidden="true"></a></span>
+<span id="cb1-3"><a href="#cb1-3" aria-hidden="true"></a><span class="fu">services</span><span class="kw">:</span><span class="at"> docker</span></span>
+<span id="cb1-4"><a href="#cb1-4" aria-hidden="true"></a></span>
+<span id="cb1-5"><a href="#cb1-5" aria-hidden="true"></a><span class="fu">before_install</span><span class="kw">:</span></span>
+<span id="cb1-6"><a href="#cb1-6" aria-hidden="true"></a><span class="kw">-</span><span class="at"> docker pull tonyodell/rakudo-nightly:latest</span></span>
+<span id="cb1-7"><a href="#cb1-7" aria-hidden="true"></a></span>
+<span id="cb1-8"><a href="#cb1-8" aria-hidden="true"></a><span class="fu">script</span><span class="kw">:</span></span>
+<span id="cb1-9"><a href="#cb1-9" aria-hidden="true"></a><span class="kw">-</span><span class="at"> docker run</span></span>
+<span id="cb1-10"><a href="#cb1-10" aria-hidden="true"></a><span class="at">  -v $(pwd):/tmp/test:rw</span></span>
+<span id="cb1-11"><a href="#cb1-11" aria-hidden="true"></a><span class="at">  -w /tmp/test</span></span>
+<span id="cb1-12"><a href="#cb1-12" aria-hidden="true"></a><span class="at">  tonyodell/rakudo-nightly:latest</span></span>
+<span id="cb1-13"><a href="#cb1-13" aria-hidden="true"></a><span class="at">  bash -c &#39;apt update; apt install -y ca-certificates; zef install -v --deps-only . &amp;&amp; zef test .&#39;</span></span></code></pre></div>
 <h2 id="language-minimal">language: minimal</h2>
-<p>Usually in travis-ci we'd use <code>language: perl6</code> as it's
-been available for quite some time. Because we're using a prefab image
-and don't want to build rakudo on every CI cycle, we don't need much on
-the host so we'll stick with the minimal image.</p>
+<p>Usually in travis-ci we'd use <code>language: perl6</code> as it's been available for quite some time. Because we're using a prefab image and don't want to build rakudo on every CI cycle, we don't need much on the host so we'll stick with the minimal image.</p>
 <h2 id="services-docker">services: docker</h2>
 <p>Let Travis know we want to use docker on this run.</p>
 <h2 id="dockerpull..">before_install:</h2>
-<p>Pull down a recent image of rakudo-nightly so we can test inside of
-the container later. If you need a specific version of rakudo-nightly
-then this is the first of two places to change the tag. Multiple
-versions can be pulled here; perhaps testing against a nightly and a
-known supported release.</p>
+<p>Pull down a recent image of rakudo-nightly so we can test inside of the container later. If you need a specific version of rakudo-nightly then this is the first of two places to change the tag. Multiple versions can be pulled here; perhaps testing against a nightly and a known supported release.</p>
 <h2 id="dockerrun..">script:</h2>
 <blockquote>
 <p>... -v $(pwd):/tmp/test:rw ...</p>
 </blockquote>
-<p>This will mount the current directory as <code>/tmp/test</code>
-read/writeable to the container. The <code>$(pwd)</code> works in this
-case as Travis takes care of putting us into the repository's checkout
-directory before we get to this point.</p>
+<p>This will mount the current directory as <code>/tmp/test</code> read/writeable to the container. The <code>$(pwd)</code> works in this case as Travis takes care of putting us into the repository's checkout directory before we get to this point.</p>
 <blockquote>
 <p>... -w /tmp/test ...</p>
 </blockquote>
-<p>Sets the working directory for whatever it is we're about to do, in
-this case we're doing this here so we don't need to <code>cd</code>
-anywhere or use long paths once we start testing.</p>
+<p>Sets the working directory for whatever it is we're about to do, in this case we're doing this here so we don't need to <code>cd</code> anywhere or use long paths once we start testing.</p>
 <blockquote>
 <p>... tonyodell/rakudo-nightly:latest bash -c ...</p>
 </blockquote>
-<p>This is the second place to change the tag if you want to use a
-specific nightly for testing. Check out the repo under the
-<em>Docker</em> heading above for a list of available tags.</p>
-<p>The rest of this is fairly straightforward. Update <code>apt</code>,
-install the ca-certificates package so curl can store the ca certs while
-updating zef mirrors (if you need system level dependencies like libcsv
-or whatever else then this is the place to install them), install the
-dependencies in the <code>META6.json</code> for the module, and then
-test the module.</p>
-<p>It's as easy as that, now your Travis test builds should take far
-less time. The Bench module ran CI in a little over a minute compared to
-around five and a half minutes. It ran in 50s when fully optimized for
-that module.</p>
+<p>This is the second place to change the tag if you want to use a specific nightly for testing. Check out the repo under the <em>Docker</em> heading above for a list of available tags.</p>
+<p>The rest of this is fairly straightforward. Update <code>apt</code>, install the ca-certificates package so curl can store the ca certs while updating zef mirrors (if you need system level dependencies like libcsv or whatever else then this is the place to install them), install the dependencies in the <code>META6.json</code> for the module, and then test the module.</p>
+<p>It's as easy as that, now your Travis test builds should take far less time. The Bench module ran CI in a little over a minute compared to around five and a half minutes. It ran in 50s when fully optimized for that module.</p>
 <h2 id="circle-ci">Circle CI</h2>
-<div class="sourceCode" id="cb2"><pre
-class="sourceCode yaml"><code class="sourceCode yaml"><span id="cb2-1"><a href="#cb2-1" aria-hidden="true" tabindex="-1"></a><span class="fu">version</span><span class="kw">:</span><span class="at"> </span><span class="dv">2</span></span>
-<span id="cb2-2"><a href="#cb2-2" aria-hidden="true" tabindex="-1"></a><span class="fu">jobs</span><span class="kw">:</span></span>
-<span id="cb2-3"><a href="#cb2-3" aria-hidden="true" tabindex="-1"></a><span class="at">  </span><span class="fu">build</span><span class="kw">:</span></span>
-<span id="cb2-4"><a href="#cb2-4" aria-hidden="true" tabindex="-1"></a><span class="at">    </span><span class="fu">docker</span><span class="kw">:</span></span>
-<span id="cb2-5"><a href="#cb2-5" aria-hidden="true" tabindex="-1"></a><span class="at">      </span><span class="kw">-</span><span class="at"> </span><span class="fu">image</span><span class="kw">:</span><span class="at"> tonyodell/rakudo-nightly:latest</span></span>
-<span id="cb2-6"><a href="#cb2-6" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb2-7"><a href="#cb2-7" aria-hidden="true" tabindex="-1"></a><span class="at">    </span><span class="fu">working_directory</span><span class="kw">:</span><span class="at"> </span><span class="ch">~</span></span>
-<span id="cb2-8"><a href="#cb2-8" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb2-9"><a href="#cb2-9" aria-hidden="true" tabindex="-1"></a><span class="at">    </span><span class="fu">steps</span><span class="kw">:</span></span>
-<span id="cb2-10"><a href="#cb2-10" aria-hidden="true" tabindex="-1"></a><span class="at">      </span><span class="kw">-</span><span class="at"> checkout</span></span>
-<span id="cb2-11"><a href="#cb2-11" aria-hidden="true" tabindex="-1"></a><span class="at">      </span><span class="kw">-</span><span class="at"> </span><span class="fu">run</span><span class="kw">:</span></span>
-<span id="cb2-12"><a href="#cb2-12" aria-hidden="true" tabindex="-1"></a><span class="at">          </span><span class="fu">name</span><span class="kw">:</span><span class="at"> install build deps</span></span>
-<span id="cb2-13"><a href="#cb2-13" aria-hidden="true" tabindex="-1"></a><span class="fu">          command</span><span class="kw">: </span><span class="ch">|</span></span>
-<span id="cb2-14"><a href="#cb2-14" aria-hidden="true" tabindex="-1"></a>              apt install -y libsqlite3-dev</span>
-<span id="cb2-15"><a href="#cb2-15" aria-hidden="true" tabindex="-1"></a>              zef install --deps-only .</span>
-<span id="cb2-16"><a href="#cb2-16" aria-hidden="true" tabindex="-1"></a><span class="at">      </span><span class="kw">-</span><span class="at"> </span><span class="fu">run</span><span class="kw">:</span></span>
-<span id="cb2-17"><a href="#cb2-17" aria-hidden="true" tabindex="-1"></a><span class="at">          </span><span class="fu">name</span><span class="kw">:</span><span class="at"> test</span></span>
-<span id="cb2-18"><a href="#cb2-18" aria-hidden="true" tabindex="-1"></a><span class="fu">          command</span><span class="kw">: </span><span class="ch">|</span></span>
-<span id="cb2-19"><a href="#cb2-19" aria-hidden="true" tabindex="-1"></a>              zef test .</span></code></pre></div>
-<p>Circle CI is a little more straight forward because it runs the
-checkout and commands directly inside of your container. The example
-above is letting circle know that you'd like to use the rakudo-nightly
-to test, installing dependencies using apt (because this image is based
-upon Ubuntu), installing dependencies, and then finally testing your
-module.</p>
-<p>If you have questions, find anything broken, or would like more
-topics covered around testing modules with travis or circle (or ??) with
-docker, feel free to hit me up in freenode#perl6 @tony-o</p>
+<div class="sourceCode" id="cb2"><pre class="sourceCode yaml"><code class="sourceCode yaml"><span id="cb2-1"><a href="#cb2-1" aria-hidden="true"></a><span class="fu">version</span><span class="kw">:</span><span class="at"> </span><span class="dv">2</span></span>
+<span id="cb2-2"><a href="#cb2-2" aria-hidden="true"></a><span class="fu">jobs</span><span class="kw">:</span></span>
+<span id="cb2-3"><a href="#cb2-3" aria-hidden="true"></a><span class="at">  </span><span class="fu">build</span><span class="kw">:</span></span>
+<span id="cb2-4"><a href="#cb2-4" aria-hidden="true"></a><span class="at">    </span><span class="fu">docker</span><span class="kw">:</span></span>
+<span id="cb2-5"><a href="#cb2-5" aria-hidden="true"></a><span class="at">      </span><span class="kw">-</span><span class="at"> </span><span class="fu">image</span><span class="kw">:</span><span class="at"> tonyodell/rakudo-nightly:latest</span></span>
+<span id="cb2-6"><a href="#cb2-6" aria-hidden="true"></a></span>
+<span id="cb2-7"><a href="#cb2-7" aria-hidden="true"></a><span class="at">    </span><span class="fu">working_directory</span><span class="kw">:</span><span class="at"> </span><span class="ch">~</span></span>
+<span id="cb2-8"><a href="#cb2-8" aria-hidden="true"></a></span>
+<span id="cb2-9"><a href="#cb2-9" aria-hidden="true"></a><span class="at">    </span><span class="fu">steps</span><span class="kw">:</span></span>
+<span id="cb2-10"><a href="#cb2-10" aria-hidden="true"></a><span class="at">      </span><span class="kw">-</span><span class="at"> checkout</span></span>
+<span id="cb2-11"><a href="#cb2-11" aria-hidden="true"></a><span class="at">      </span><span class="kw">-</span><span class="at"> </span><span class="fu">run</span><span class="kw">:</span></span>
+<span id="cb2-12"><a href="#cb2-12" aria-hidden="true"></a><span class="at">          </span><span class="fu">name</span><span class="kw">:</span><span class="at"> install build deps</span></span>
+<span id="cb2-13"><a href="#cb2-13" aria-hidden="true"></a><span class="fu">          command</span><span class="kw">: </span><span class="ch">|</span></span>
+<span id="cb2-14"><a href="#cb2-14" aria-hidden="true"></a>              apt install -y libsqlite3-dev</span>
+<span id="cb2-15"><a href="#cb2-15" aria-hidden="true"></a>              zef install --deps-only .</span>
+<span id="cb2-16"><a href="#cb2-16" aria-hidden="true"></a><span class="at">      </span><span class="kw">-</span><span class="at"> </span><span class="fu">run</span><span class="kw">:</span></span>
+<span id="cb2-17"><a href="#cb2-17" aria-hidden="true"></a><span class="at">          </span><span class="fu">name</span><span class="kw">:</span><span class="at"> test</span></span>
+<span id="cb2-18"><a href="#cb2-18" aria-hidden="true"></a><span class="fu">          command</span><span class="kw">: </span><span class="ch">|</span></span>
+<span id="cb2-19"><a href="#cb2-19" aria-hidden="true"></a>              zef test .</span></code></pre></div>
+<p>Circle CI is a little more straight forward because it runs the checkout and commands directly inside of your container. The example above is letting circle know that you'd like to use the rakudo-nightly to test, installing dependencies using apt (because this image is based upon Ubuntu), installing dependencies, and then finally testing your module.</p>
+<p>If you have questions, find anything broken, or would like more topics covered around testing modules with travis or circle (or ??) with docker, feel free to hit me up in freenode#perl6 @tony-o</p>
 
 
     </div>

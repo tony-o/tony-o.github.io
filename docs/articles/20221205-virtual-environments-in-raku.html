@@ -21,65 +21,52 @@
       <br/>
 
       <h1 id="virtual-environments-in-raku">Virtual Environments in Raku</h1>
-<p>Envious? If not, run <code>zef install Envy</code> and let's start
-exploring virtual comp unit repositories.</p>
-<p>Hold the phone! What are we doing? We're going to explore using a
-module allowing us to have virtual module environments in our very
-favorite raku.</p>
+<p>Envious? If not, run <code>zef install Envy</code> and let's start exploring virtual comp unit repositories.</p>
+<p>Hold the phone! What are we doing? We're going to explore using a module allowing us to have virtual module environments in our very favorite raku.</p>
 <p>Why do we want this? Many reasons but a few would include:</p>
 <ul>
 <li>development &amp; testing environments</li>
-<li>isolating module repositories by project/environment/something
-else</li>
+<li>isolating module repositories by project/environment/something else</li>
 <li>using multiple versions of raku more safely</li>
 </ul>
 <p>Sold? Continue on!</p>
 <h2 id="getting-started">Getting Started</h2>
-<p>Installing the environment manager is easy enough with
-<code>zef install Envy</code>. Now for this tutorial we're going to
-build an interprocess worker pool that doesn't do anything but instead
-of installing everything globally, we'll get it done with a custom
-module repository.</p>
+<p>Installing the environment manager is easy enough with <code>zef install Envy</code>. Now for this tutorial we're going to build an interprocess worker pool that doesn't do anything but instead of installing everything globally, we'll get it done with a custom module repository.</p>
 <p>In <code>parent.raku</code> dump the following:</p>
-<div class="sourceCode" id="cb1"><pre
-class="sourceCode raku"><code class="sourceCode raku"><span id="cb1-1"><a href="#cb1-1" aria-hidden="true" tabindex="-1"></a><span class="kw">use</span> <span class="dt">Event</span><span class="kw">::</span><span class="at">Emitter</span><span class="kw">::</span><span class="at">Inter-Process</span>;</span>
-<span id="cb1-2"><a href="#cb1-2" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb1-3"><a href="#cb1-3" aria-hidden="true" tabindex="-1"></a><span class="kw">my</span> <span class="va">$event</span> <span class="kw">=</span> <span class="dt">Event</span><span class="kw">::</span><span class="at">Emitter</span><span class="kw">::</span><span class="at">Inter-Process</span><span class="kw">.</span>new;</span>
-<span id="cb1-4"><a href="#cb1-4" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb1-5"><a href="#cb1-5" aria-hidden="true" tabindex="-1"></a><span class="kw">my</span> <span class="dt">Proc</span><span class="kw">::</span><span class="at">Async</span> <span class="va">$child</span> <span class="kw">.=</span>new<span class="kw">(:</span><span class="at">w</span><span class="kw">,</span> <span class="ch">&#39;</span><span class="st">raku</span><span class="ch">&#39;</span><span class="kw">,</span> <span class="ch">&#39;</span><span class="st">-Ilib</span><span class="ch">&#39;</span><span class="kw">,</span> <span class="ch">&#39;</span><span class="st">child.raku</span><span class="ch">&#39;</span><span class="kw">)</span>;</span>
-<span id="cb1-6"><a href="#cb1-6" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb1-7"><a href="#cb1-7" aria-hidden="true" tabindex="-1"></a><span class="va">$event</span><span class="kw">.</span>hook<span class="kw">(</span><span class="va">$child</span><span class="kw">)</span>;</span>
-<span id="cb1-8"><a href="#cb1-8" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb1-9"><a href="#cb1-9" aria-hidden="true" tabindex="-1"></a><span class="va">$event</span><span class="kw">.</span>on<span class="kw">(</span><span class="ch">&#39;</span><span class="st">echo</span><span class="ch">&#39;</span><span class="kw">,</span> <span class="kw">-&gt;</span> <span class="va">$data</span> <span class="kw">{</span></span>
-<span id="cb1-10"><a href="#cb1-10" aria-hidden="true" tabindex="-1"></a>  <span class="co"># got $data from child;</span></span>
-<span id="cb1-11"><a href="#cb1-11" aria-hidden="true" tabindex="-1"></a>  <span class="kw">say</span> <span class="va">$data</span><span class="kw">.</span>decode;</span>
-<span id="cb1-12"><a href="#cb1-12" aria-hidden="true" tabindex="-1"></a><span class="kw">})</span>;</span>
-<span id="cb1-13"><a href="#cb1-13" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb1-14"><a href="#cb1-14" aria-hidden="true" tabindex="-1"></a><span class="va">$child</span><span class="kw">.</span>start;</span>
-<span id="cb1-15"><a href="#cb1-15" aria-hidden="true" tabindex="-1"></a>sleep <span class="dv">1</span>;</span>
-<span id="cb1-16"><a href="#cb1-16" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb1-17"><a href="#cb1-17" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb1-18"><a href="#cb1-18" aria-hidden="true" tabindex="-1"></a><span class="va">$event</span><span class="kw">.</span>emit<span class="kw">(</span><span class="ch">&#39;</span><span class="st">echo</span><span class="ch">&#39;</span><span class="kw">.</span>encode<span class="kw">,</span> <span class="ch">&#39;</span><span class="st">hello</span><span class="ch">&#39;</span><span class="kw">.</span>encode<span class="kw">)</span>;</span>
-<span id="cb1-19"><a href="#cb1-19" aria-hidden="true" tabindex="-1"></a><span class="va">$event</span><span class="kw">.</span>emit<span class="kw">(</span><span class="ch">&#39;</span><span class="st">echo</span><span class="ch">&#39;</span><span class="kw">.</span>encode<span class="kw">,</span> <span class="ch">&#39;</span><span class="st">world</span><span class="ch">&#39;</span><span class="kw">.</span>encode<span class="kw">)</span>;</span>
-<span id="cb1-20"><a href="#cb1-20" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb1-21"><a href="#cb1-21" aria-hidden="true" tabindex="-1"></a>sleep <span class="dv">5</span>;</span></code></pre></div>
+<pre class="raku"><code>use Event::Emitter::Inter-Process;
+
+my $event = Event::Emitter::Inter-Process.new;
+
+my Proc::Async $child .=new(:w, &#39;raku&#39;, &#39;-Ilib&#39;, &#39;child.raku&#39;);
+
+$event.hook($child);
+
+$event.on(&#39;echo&#39;, -&gt; $data {
+  # got $data from child;
+  say $data.decode;
+});
+
+$child.start;
+sleep 1;
+
+
+$event.emit(&#39;echo&#39;.encode, &#39;hello&#39;.encode);
+$event.emit(&#39;echo&#39;.encode, &#39;world&#39;.encode);
+
+sleep 5;</code></pre>
 <p>And then in <code>child.raku</code>:</p>
-<div class="sourceCode" id="cb2"><pre
-class="sourceCode raku"><code class="sourceCode raku"><span id="cb2-1"><a href="#cb2-1" aria-hidden="true" tabindex="-1"></a><span class="kw">use</span> <span class="dt">Event</span><span class="kw">::</span><span class="at">Emitter</span><span class="kw">::</span><span class="at">Inter-Process</span>;</span>
-<span id="cb2-2"><a href="#cb2-2" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb2-3"><a href="#cb2-3" aria-hidden="true" tabindex="-1"></a><span class="kw">my</span> <span class="va">$event</span> <span class="kw">=</span> <span class="dt">Event</span><span class="kw">::</span><span class="at">Emitter</span><span class="kw">::</span><span class="at">Inter-Process</span><span class="kw">.</span>new<span class="kw">(:</span><span class="at">sub-process</span><span class="kw">)</span>;</span>
-<span id="cb2-4"><a href="#cb2-4" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb2-5"><a href="#cb2-5" aria-hidden="true" tabindex="-1"></a><span class="va">$event</span><span class="kw">.</span>on<span class="kw">(</span><span class="ch">&#39;</span><span class="st">echo</span><span class="ch">&#39;</span><span class="kw">,</span> <span class="kw">-&gt;</span> <span class="va">$data</span> <span class="kw">{</span></span>
-<span id="cb2-6"><a href="#cb2-6" aria-hidden="true" tabindex="-1"></a>  <span class="ch">&quot;</span><span class="st">child echo: {</span><span class="va">$data</span><span class="kw">.</span>decode<span class="st">}</span><span class="ch">&quot;</span><span class="kw">.say</span>;</span>
-<span id="cb2-7"><a href="#cb2-7" aria-hidden="true" tabindex="-1"></a>  <span class="va">$event</span><span class="kw">.</span>emit<span class="kw">(</span><span class="ch">&#39;</span><span class="st">echo</span><span class="ch">&#39;</span><span class="kw">.</span>encode<span class="kw">,</span> <span class="va">$data</span><span class="kw">)</span>;</span>
-<span id="cb2-8"><a href="#cb2-8" aria-hidden="true" tabindex="-1"></a><span class="kw">})</span>;</span>
-<span id="cb2-9"><a href="#cb2-9" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb2-10"><a href="#cb2-10" aria-hidden="true" tabindex="-1"></a>sleep <span class="dv">3</span>;</span></code></pre></div>
-<p>Okay, it's just the sample code but the program is not the focus. On
-to installing <code>Event::Emitter::Inter-Process</code> to a virtual
-repo.</p>
-<p>We need to create an environment and enable it before we can install
-our dependencies to it:</p>
+<pre class="raku"><code>use Event::Emitter::Inter-Process;
+
+my $event = Event::Emitter::Inter-Process.new(:sub-process);
+
+$event.on(&#39;echo&#39;, -&gt; $data {
+  &quot;child echo: {$data.decode}&quot;.say;
+  $event.emit(&#39;echo&#39;.encode, $data);
+});
+
+sleep 3;</code></pre>
+<p>Okay, it's just the sample code but the program is not the focus. On to installing <code>Event::Emitter::Inter-Process</code> to a virtual repo.</p>
+<p>We need to create an environment and enable it before we can install our dependencies to it:</p>
 <pre><code>$ envy init tutorial
 ==&gt; created tutorial
     to install to this repo with zef use:
@@ -111,9 +98,7 @@ Could not find Event::Emitter::Inter-Process in:
     ...
 at /private/tmp/parent.raku:1</code></pre>
 <h2 id="other-notes-about-envy">Other Notes About Envy</h2>
-<p>Envy is in beta, there's likely some things that don't work quite
-right. PRs are most welcome and bugs are appropriately welcome. Both can
-be submitted <a href="https://github.com/tony-o/envy/">here</a>.</p>
+<p>Envy is in beta, there's likely some things that don't work quite right. PRs are most welcome and bugs are appropriately welcome. Both can be submitted <a href="https://github.com/tony-o/envy/">here</a>.</p>
 
 
     </div>

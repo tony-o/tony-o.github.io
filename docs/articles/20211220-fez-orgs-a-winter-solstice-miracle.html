@@ -20,55 +20,35 @@
       <h6>// <a href="https://deathbykeystroke.com/articles/20211220-fez-orgs-a-winter-solstice-miracle.html">perma</a></h6>
       <br/>
 
-      <p>Fez now has orgs, it happened over the weekend. Let's take a look at
-how to get started with them:</p>
+      <p>Fez now has orgs, it happened over the weekend. Let's take a look at how to get started with them:</p>
 <h2 id="creating-an-org">Creating an Org</h2>
-<p>Take it easy: <code>fez org create &lt;org-name&gt;</code>. If a user
-or org with that name already exists then this will fail but the skies
-the limit here. When you create the org you're automatically assigned
-the role of <code>admin</code>, more on this in the next section.</p>
+<p>Take it easy: <code>fez org create &lt;org-name&gt;</code>. If a user or org with that name already exists then this will fail but the skies the limit here. When you create the org you're automatically assigned the role of <code>admin</code>, more on this in the next section.</p>
 <h2 id="managing-your-org">Managing Your Org</h2>
-<p>Great, you're an admin. Now what? Do you have release managers or
-people you want to allow to upload modules on behalf of
-<code>org</code>? Fez has two roles:</p>
+<p>Great, you're an admin. Now what? Do you have release managers or people you want to allow to upload modules on behalf of <code>org</code>? Fez has two roles:</p>
 <ul>
-<li>Admin - can upload modules, can invite, and manage roles of other
-users</li>
+<li>Admin - can upload modules, can invite, and manage roles of other users</li>
 <li>Member - can upload modules</li>
 </ul>
 <p>Assign your members accordingly:</p>
 <h3 id="inviting-users-to-your-org">Inviting Users to Your Org</h3>
-<p><code>fez org invite &lt;org-name&gt; &lt;role&gt; &lt;username&gt;</code>.
-So if I were inviting <code>ugexe</code> to my <code>Zef</code> org then
-I'd run <code>fez org invite Zef admin ugexe</code> and he'd get an
-email letting him know about how awesome his life is about to be.</p>
-<h3 id="listing-and-accepting-your-open-invites">Listing and Accepting
-Your Open Invites</h3>
+<p><code>fez org invite &lt;org-name&gt; &lt;role&gt; &lt;username&gt;</code>. So if I were inviting <code>ugexe</code> to my <code>Zef</code> org then I'd run <code>fez org invite Zef admin ugexe</code> and he'd get an email letting him know about how awesome his life is about to be.</p>
+<h3 id="listing-and-accepting-your-open-invites">Listing and Accepting Your Open Invites</h3>
 <pre><code>$ fez org pending
 &gt;&gt;= R Org
 &gt;&gt;= a Zen
 &gt;&gt;= m zef</code></pre>
-<p>I've been invited to <code>zef</code> as a <code>member</code> and to
-<code>Zen</code> as an <code>admin</code>. I accept (and the command is
-the same for both):</p>
+<p>I've been invited to <code>zef</code> as a <code>member</code> and to <code>Zen</code> as an <code>admin</code>. I accept (and the command is the same for both):</p>
 <pre><code>$ fez org accept Zen
 &gt;&gt;= You&#39;re now a very nice member of Zen</code></pre>
 <h3 id="modify-a-users-role">Modify a User's Role</h3>
-<p>Ugexe has done a stellar job in <code>zef</code>, let's promote him
-to admin:</p>
+<p>Ugexe has done a stellar job in <code>zef</code>, let's promote him to admin:</p>
 <pre><code>$ fez org mod zef admin ugexe
 &gt;&gt;= User&#39;s role was modified</code></pre>
-<p>WHAT??? I just won the lotto! Now I want to leave my orgs because I
-don't have time :(</p>
+<p>WHAT??? I just won the lotto! Now I want to leave my orgs because I don't have time :(</p>
 <h2 id="leaving-an-org">Leaving an Org</h2>
 <pre><code>$ fez org leave Zen
 &gt;&gt;= You&#39;re no longer in Zen</code></pre>
-<p>This action will fail if you're the last remaining admin in the org.
-Why? Leaving the org as the last admin will essentially abandon it so
-this is designed in a way that you must be very intentional in this
-action so you must first run
-<code>fez org mod &lt;org&gt; member &lt;your username&gt;</code> and
-then <code>leave</code>.</p>
+<p>This action will fail if you're the last remaining admin in the org. Why? Leaving the org as the last admin will essentially abandon it so this is designed in a way that you must be very intentional in this action so you must first run <code>fez org mod &lt;org&gt; member &lt;your username&gt;</code> and then <code>leave</code>.</p>
 <p>Now you can manage your entire group!</p>
 <h2 id="bonus-round">Bonus Round</h2>
 <p>A couple of other actions you may or may not find useful:</p>
@@ -82,9 +62,7 @@ then <code>leave</code>.</p>
 &gt;&gt;= R Org Name
 &gt;&gt;= a zef</code></pre>
 <h2 id="finale">Finale</h2>
-<p>That's basically all and if you need a reminder then of course
-<code>fez org -h</code> will give you the command <code>USAGE</code>.
-Have fun!</p>
+<p>That's basically all and if you need a reminder then of course <code>fez org -h</code> will give you the command <code>USAGE</code>. Have fun!</p>
 
 
     </div>
