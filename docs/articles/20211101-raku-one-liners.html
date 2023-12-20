@@ -21,12 +21,17 @@
       <br/>
 
       <p>This page will get updated once in a while</p>
-<h3 id="array-elements-in-another-array">Array elements in another array</h3>
-<pre class="raku"><code>say [&amp;&amp;] ([||] $_ ∈ (1,2,3) for (1, 2));</code></pre>
-<h3 id="all-filesfolders-in-directory">All files/folders in directory</h3>
-<pre class="raku"><code>my @files = -&gt; IO() $a { my &amp;s = &amp;?BLOCK; |($_.d ?? |($_,s($_)) !! $_ for $a.dir) }(&#39;/tmp&#39;);</code></pre>
+<h3 id="array-elements-in-another-array">Array elements in another
+array</h3>
+<div class="sourceCode" id="cb1"><pre
+class="sourceCode raku"><code class="sourceCode raku"><span id="cb1-1"><a href="#cb1-1" aria-hidden="true" tabindex="-1"></a><span class="kw">say</span> <span class="kw">[&amp;&amp;]</span> <span class="kw">([||]</span> <span class="va">$_</span> ∈ <span class="kw">(</span><span class="dv">1</span><span class="kw">,</span><span class="dv">2</span><span class="kw">,</span><span class="dv">3</span><span class="kw">)</span> <span class="cf">for</span> <span class="kw">(</span><span class="dv">1</span><span class="kw">,</span> <span class="dv">2</span><span class="kw">))</span>;</span></code></pre></div>
+<h3 id="all-filesfolders-in-directory">All files/folders in
+directory</h3>
+<div class="sourceCode" id="cb2"><pre
+class="sourceCode raku"><code class="sourceCode raku"><span id="cb2-1"><a href="#cb2-1" aria-hidden="true" tabindex="-1"></a><span class="kw">my</span> <span class="va">@files</span> <span class="kw">=</span> <span class="kw">-&gt;</span> <span class="dt">IO</span><span class="kw">()</span> <span class="va">$a</span> <span class="kw">{</span> <span class="kw">my</span> <span class="va">&amp;s</span> <span class="kw">=</span> <span class="va">&amp;</span><span class="at">?</span><span class="va">BLOCK</span>; <span class="kw">|(</span><span class="va">$_</span><span class="kw">.</span>d <span class="kw">??</span> <span class="kw">|(</span><span class="va">$_</span><span class="kw">,</span>s<span class="kw">(</span><span class="va">$_</span><span class="kw">))</span> <span class="kw">!!</span> <span class="va">$_</span> <span class="cf">for</span> <span class="va">$a</span><span class="kw">.</span>dir<span class="kw">)</span> <span class="kw">}(</span><span class="ch">&#39;</span><span class="st">/tmp</span><span class="ch">&#39;</span><span class="kw">)</span>;</span></code></pre></div>
 <h4 id="just-files">Just files</h4>
-<pre class="raku"><code>my @files = -&gt; IO() $a { my &amp;s = &amp;?BLOCK; |($_.d ?? |s($_) !! $_ for $a.dir) }(&#39;/tmp&#39;);</code></pre>
+<div class="sourceCode" id="cb3"><pre
+class="sourceCode raku"><code class="sourceCode raku"><span id="cb3-1"><a href="#cb3-1" aria-hidden="true" tabindex="-1"></a><span class="kw">my</span> <span class="va">@files</span> <span class="kw">=</span> <span class="kw">-&gt;</span> <span class="dt">IO</span><span class="kw">()</span> <span class="va">$a</span> <span class="kw">{</span> <span class="kw">my</span> <span class="va">&amp;s</span> <span class="kw">=</span> <span class="va">&amp;</span><span class="at">?</span><span class="va">BLOCK</span>; <span class="kw">|(</span><span class="va">$_</span><span class="kw">.</span>d <span class="kw">??</span> <span class="kw">|</span>s<span class="kw">(</span><span class="va">$_</span><span class="kw">)</span> <span class="kw">!!</span> <span class="va">$_</span> <span class="cf">for</span> <span class="va">$a</span><span class="kw">.</span>dir<span class="kw">)</span> <span class="kw">}(</span><span class="ch">&#39;</span><span class="st">/tmp</span><span class="ch">&#39;</span><span class="kw">)</span>;</span></code></pre></div>
 
 
     </div>

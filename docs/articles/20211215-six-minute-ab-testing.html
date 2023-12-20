@@ -20,124 +20,167 @@
       <h6>// <a href="https://deathbykeystroke.com/articles/20211215-six-minute-ab-testing.html">perma</a></h6>
       <br/>
 
-      <p>So, you want to roll features out slowly or maybe you just want to dip your toes in the water to try out that shiny new button. Great! AB testing has multitudes of methodologies, articles, and optometrists working on the problem. Let's roll our own and then explore the edge cases, problems, and considerations involved with AB testing.</p>
+      <p>So, you want to roll features out slowly or maybe you just want to
+dip your toes in the water to try out that shiny new button. Great! AB
+testing has multitudes of methodologies, articles, and optometrists
+working on the problem. Let's roll our own and then explore the edge
+cases, problems, and considerations involved with AB testing.</p>
 <h2 id="ab-testing">AB Testing</h2>
-<p>There's all kinds of ways to do AB testing, some using DB functions, others using hashing methods, and some are as simple as just <code>mod</code>ing an id. Each have their benefits and draw backs but we'll aim for speed and even distribution even with small sample sizes. Even distribution with a small sample size is doable but complex with just a plain old <code>mod</code> so we'll use hashing for the initial setup.</p>
+<p>There's all kinds of ways to do AB testing, some using DB functions,
+others using hashing methods, and some are as simple as just
+<code>mod</code>ing an id. Each have their benefits and draw backs but
+we'll aim for speed and even distribution even with small sample sizes.
+Even distribution with a small sample size is doable but complex with
+just a plain old <code>mod</code> so we'll use hashing for the initial
+setup.</p>
 <p>Initial considerations:</p>
 <ol>
-<li>Determinism. A user should <em>always</em> be shown the same bucket they initially saw</li>
+<li>Determinism. A user should <em>always</em> be shown the same bucket
+they initially saw</li>
 <li>Even bucket distribution</li>
 <li>Bucketing should never use or require more than one query</li>
-<li>Tests can contain more than two buckets and each bucket can be weighted</li>
-<li>Tests can be updated and buckets may disappear, handle gracefully</li>
+<li>Tests can contain more than two buckets and each bucket can be
+weighted</li>
+<li>Tests can be updated and buckets may disappear, handle
+gracefully</li>
 </ol>
-<p>Point one is fairly self explanatory. It'd be a pretty poor customer experience if every time you visited your favorite search engine (probably alta vista) the search bar was moved around.</p>
-<p>To discuss <code>mod</code> a little further, the basic idea is that you take the remainder of the id divided by how many buckets the test contains, with consideration their weights, and then choose the bucket corresponding with the remainder. You can do funny stuff to make this distribute more evenly distributed without hashing but this isn't a math lesson, we're talking about AB testing and we just wanna hash, man.</p>
-<p>If the bucketing only matters over the lifetime of the app then no queries should ever be necessary. If you have a distributed system or many things bucketing entities then you may end up storing bucket details in a database of some sort and memoizing locally.</p>
+<p>Point one is fairly self explanatory. It'd be a pretty poor customer
+experience if every time you visited your favorite search engine
+(probably alta vista) the search bar was moved around.</p>
+<p>To discuss <code>mod</code> a little further, the basic idea is that
+you take the remainder of the id divided by how many buckets the test
+contains, with consideration their weights, and then choose the bucket
+corresponding with the remainder. You can do funny stuff to make this
+distribute more evenly distributed without hashing but this isn't a math
+lesson, we're talking about AB testing and we just wanna hash, man.</p>
+<p>If the bucketing only matters over the lifetime of the app then no
+queries should ever be necessary. If you have a distributed system or
+many things bucketing entities then you may end up storing bucket
+details in a database of some sort and memoizing locally.</p>
 <p>Let's define some types:</p>
-<div class="sourceCode" id="cb1"><pre class="sourceCode go"><code class="sourceCode go"><span id="cb1-1"><a href="#cb1-1" aria-hidden="true"></a><span class="co">// This is a bare AB Test</span></span>
-<span id="cb1-2"><a href="#cb1-2" aria-hidden="true"></a><span class="kw">type</span> Test <span class="kw">struct</span> {</span>
-<span id="cb1-3"><a href="#cb1-3" aria-hidden="true"></a>  Buckets     []<span class="dt">string</span></span>
-<span id="cb1-4"><a href="#cb1-4" aria-hidden="true"></a>  Weights     []<span class="dt">int</span></span>
-<span id="cb1-5"><a href="#cb1-5" aria-hidden="true"></a>  totalWeight <span class="dt">uint32</span></span>
-<span id="cb1-6"><a href="#cb1-6" aria-hidden="true"></a>}</span>
-<span id="cb1-7"><a href="#cb1-7" aria-hidden="true"></a></span>
-<span id="cb1-8"><a href="#cb1-8" aria-hidden="true"></a><span class="co">// This is our directory of AB Tests</span></span>
-<span id="cb1-9"><a href="#cb1-9" aria-hidden="true"></a><span class="kw">type</span> ABTests <span class="kw">map</span>[<span class="dt">string</span>][]Test</span></code></pre></div>
-<p>First thing to notice, type <code>Test</code> contains no stateful information. It doesn't keep track of ids bucketed or what type of overall AB test it belongs to.</p>
-<p>We're off to a blazing start and have satisfied no criterion we've designated for success.</p>
-<p>Let's add the bucketing receiver so we can add <code>Test</code>s to <code>ABTests</code>:</p>
-<div class="sourceCode" id="cb2"><pre class="sourceCode go"><code class="sourceCode go"><span id="cb2-1"><a href="#cb2-1" aria-hidden="true"></a><span class="kw">func</span> (a ABTest) AddTest(testName <span class="dt">string</span>, t Test) <span class="dt">bool</span> {</span>
-<span id="cb2-2"><a href="#cb2-2" aria-hidden="true"></a>    <span class="kw">if</span> _, ok := a[testName]; !ok {</span>
-<span id="cb2-3"><a href="#cb2-3" aria-hidden="true"></a>        a[testName] = []Test{}</span>
-<span id="cb2-4"><a href="#cb2-4" aria-hidden="true"></a>    }</span>
-<span id="cb2-5"><a href="#cb2-5" aria-hidden="true"></a>    <span class="kw">for</span> idx := <span class="kw">range</span> t.Weights {</span>
-<span id="cb2-6"><a href="#cb2-6" aria-hidden="true"></a>        t.totalWeight += <span class="dt">uint32</span>(t.Weights[idx])</span>
-<span id="cb2-7"><a href="#cb2-7" aria-hidden="true"></a>    }</span>
-<span id="cb2-8"><a href="#cb2-8" aria-hidden="true"></a>    a[testName] = <span class="bu">append</span>(a[testName], t)</span>
-<span id="cb2-9"><a href="#cb2-9" aria-hidden="true"></a>    <span class="kw">return</span> <span class="ot">true</span></span>
-<span id="cb2-10"><a href="#cb2-10" aria-hidden="true"></a>}</span></code></pre></div>
-<p>One thing to note here is that <code>AddTest</code> is calculating the <code>totalWeight</code> for the test here rather than during bucketing so we don't have to recalculate each time we want to know something about the test.</p>
+<div class="sourceCode" id="cb1"><pre class="sourceCode go"><code class="sourceCode go"><span id="cb1-1"><a href="#cb1-1" aria-hidden="true" tabindex="-1"></a><span class="co">// This is a bare AB Test</span></span>
+<span id="cb1-2"><a href="#cb1-2" aria-hidden="true" tabindex="-1"></a><span class="kw">type</span> Test <span class="kw">struct</span> <span class="op">{</span></span>
+<span id="cb1-3"><a href="#cb1-3" aria-hidden="true" tabindex="-1"></a>  Buckets     <span class="op">[]</span><span class="dt">string</span></span>
+<span id="cb1-4"><a href="#cb1-4" aria-hidden="true" tabindex="-1"></a>  Weights     <span class="op">[]</span><span class="dt">int</span></span>
+<span id="cb1-5"><a href="#cb1-5" aria-hidden="true" tabindex="-1"></a>  totalWeight <span class="dt">uint32</span></span>
+<span id="cb1-6"><a href="#cb1-6" aria-hidden="true" tabindex="-1"></a><span class="op">}</span></span>
+<span id="cb1-7"><a href="#cb1-7" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-8"><a href="#cb1-8" aria-hidden="true" tabindex="-1"></a><span class="co">// This is our directory of AB Tests</span></span>
+<span id="cb1-9"><a href="#cb1-9" aria-hidden="true" tabindex="-1"></a><span class="kw">type</span> ABTests <span class="kw">map</span><span class="op">[</span><span class="dt">string</span><span class="op">][]</span>Test</span></code></pre></div>
+<p>First thing to notice, type <code>Test</code> contains no stateful
+information. It doesn't keep track of ids bucketed or what type of
+overall AB test it belongs to.</p>
+<p>We're off to a blazing start and have satisfied no criterion we've
+designated for success.</p>
+<p>Let's add the bucketing receiver so we can add <code>Test</code>s to
+<code>ABTests</code>:</p>
+<div class="sourceCode" id="cb2"><pre class="sourceCode go"><code class="sourceCode go"><span id="cb2-1"><a href="#cb2-1" aria-hidden="true" tabindex="-1"></a><span class="kw">func</span> <span class="op">(</span>a ABTest<span class="op">)</span> AddTest<span class="op">(</span>testName <span class="dt">string</span><span class="op">,</span> t Test<span class="op">)</span> <span class="dt">bool</span> <span class="op">{</span></span>
+<span id="cb2-2"><a href="#cb2-2" aria-hidden="true" tabindex="-1"></a>    <span class="cf">if</span> _<span class="op">,</span> ok <span class="op">:=</span> a<span class="op">[</span>testName<span class="op">];</span> <span class="op">!</span>ok <span class="op">{</span></span>
+<span id="cb2-3"><a href="#cb2-3" aria-hidden="true" tabindex="-1"></a>        a<span class="op">[</span>testName<span class="op">]</span> <span class="op">=</span> <span class="op">[]</span>Test<span class="op">{}</span></span>
+<span id="cb2-4"><a href="#cb2-4" aria-hidden="true" tabindex="-1"></a>    <span class="op">}</span></span>
+<span id="cb2-5"><a href="#cb2-5" aria-hidden="true" tabindex="-1"></a>    <span class="cf">for</span> idx <span class="op">:=</span> <span class="kw">range</span> t<span class="op">.</span>Weights <span class="op">{</span></span>
+<span id="cb2-6"><a href="#cb2-6" aria-hidden="true" tabindex="-1"></a>        t<span class="op">.</span>totalWeight <span class="op">+=</span> <span class="dt">uint32</span><span class="op">(</span>t<span class="op">.</span>Weights<span class="op">[</span>idx<span class="op">])</span></span>
+<span id="cb2-7"><a href="#cb2-7" aria-hidden="true" tabindex="-1"></a>    <span class="op">}</span></span>
+<span id="cb2-8"><a href="#cb2-8" aria-hidden="true" tabindex="-1"></a>    a<span class="op">[</span>testName<span class="op">]</span> <span class="op">=</span> <span class="bu">append</span><span class="op">(</span>a<span class="op">[</span>testName<span class="op">],</span> t<span class="op">)</span></span>
+<span id="cb2-9"><a href="#cb2-9" aria-hidden="true" tabindex="-1"></a>    <span class="cf">return</span> <span class="ot">true</span></span>
+<span id="cb2-10"><a href="#cb2-10" aria-hidden="true" tabindex="-1"></a><span class="op">}</span></span></code></pre></div>
+<p>One thing to note here is that <code>AddTest</code> is calculating
+the <code>totalWeight</code> for the test here rather than during
+bucketing so we don't have to recalculate each time we want to know
+something about the test.</p>
 <p>Cool, now we can do something like this in <code>main.go</code>:</p>
-<div class="sourceCode" id="cb3"><pre class="sourceCode go"><code class="sourceCode go"><span id="cb3-1"><a href="#cb3-1" aria-hidden="true"></a><span class="kw">func</span> main() {</span>
-<span id="cb3-2"><a href="#cb3-2" aria-hidden="true"></a>    tests := ABTest{}</span>
-<span id="cb3-3"><a href="#cb3-3" aria-hidden="true"></a>    tests.AddTest(<span class="st">&quot;test1&quot;</span>, Test{</span>
-<span id="cb3-4"><a href="#cb3-4" aria-hidden="true"></a>        Buckets: []<span class="dt">string</span>{<span class="st">&quot;control&quot;</span>, <span class="st">&quot;a&quot;</span>, <span class="st">&quot;b&quot;</span>},</span>
-<span id="cb3-5"><a href="#cb3-5" aria-hidden="true"></a>        Weights: []<span class="dt">int</span>{<span class="dv">2</span>, <span class="dv">1</span>, <span class="dv">1</span>}, <span class="co">// 50% 25% 25%</span></span>
-<span id="cb3-6"><a href="#cb3-6" aria-hidden="true"></a>    })</span>
-<span id="cb3-7"><a href="#cb3-7" aria-hidden="true"></a></span>
-<span id="cb3-8"><a href="#cb3-8" aria-hidden="true"></a>  <span class="co">//...</span></span>
-<span id="cb3-9"><a href="#cb3-9" aria-hidden="true"></a>}</span></code></pre></div>
-<p>Aaaand, we still have none of the success criteria being met. Let's at least do some bucketing so we can make progress towards our goals.</p>
-<div class="sourceCode" id="cb4"><pre class="sourceCode go"><code class="sourceCode go"><span id="cb4-1"><a href="#cb4-1" aria-hidden="true"></a><span class="kw">func</span> (t Test) getBucket(initialWeight <span class="dt">int64</span>) (<span class="dt">string</span>, <span class="dt">bool</span>) {</span>
-<span id="cb4-2"><a href="#cb4-2" aria-hidden="true"></a>    <span class="kw">for</span> idx, ui := <span class="kw">range</span> t.Weights {</span>
-<span id="cb4-3"><a href="#cb4-3" aria-hidden="true"></a>        initialWeight -= <span class="dt">int64</span>(ui)</span>
-<span id="cb4-4"><a href="#cb4-4" aria-hidden="true"></a>        <span class="kw">if</span> initialWeight &lt; <span class="dv">0</span> {</span>
-<span id="cb4-5"><a href="#cb4-5" aria-hidden="true"></a>            <span class="kw">return</span> t.Buckets[idx], idx == <span class="dv">0</span></span>
-<span id="cb4-6"><a href="#cb4-6" aria-hidden="true"></a>        }</span>
-<span id="cb4-7"><a href="#cb4-7" aria-hidden="true"></a>    }</span>
-<span id="cb4-8"><a href="#cb4-8" aria-hidden="true"></a>    <span class="kw">return</span> t.Buckets[<span class="dv">0</span>], <span class="ot">true</span></span>
-<span id="cb4-9"><a href="#cb4-9" aria-hidden="true"></a>}</span>
-<span id="cb4-10"><a href="#cb4-10" aria-hidden="true"></a></span>
-<span id="cb4-11"><a href="#cb4-11" aria-hidden="true"></a><span class="kw">func</span> (a ABTest) GetBucket(testName, id <span class="dt">string</span>) (<span class="dt">string</span>, <span class="dt">error</span>) {</span>
-<span id="cb4-12"><a href="#cb4-12" aria-hidden="true"></a>    <span class="kw">var</span> t Test</span>
-<span id="cb4-13"><a href="#cb4-13" aria-hidden="true"></a>    <span class="kw">if</span> ts, ok := a[testName]; !ok || <span class="bu">len</span>(ts) == <span class="dv">0</span> {</span>
-<span id="cb4-14"><a href="#cb4-14" aria-hidden="true"></a>        <span class="kw">return</span> <span class="st">&quot;&quot;</span>, errors.New(fmt.Sprintf(<span class="st">&quot;cannot find test name %s&quot;</span>, testName))</span>
-<span id="cb4-15"><a href="#cb4-15" aria-hidden="true"></a>    } <span class="kw">else</span> {</span>
-<span id="cb4-16"><a href="#cb4-16" aria-hidden="true"></a>        t = ts[<span class="bu">len</span>(ts)-<span class="dv">1</span>]</span>
-<span id="cb4-17"><a href="#cb4-17" aria-hidden="true"></a>    }</span>
-<span id="cb4-18"><a href="#cb4-18" aria-hidden="true"></a></span>
-<span id="cb4-19"><a href="#cb4-19" aria-hidden="true"></a>  key := id + <span class="st">&quot;:&quot;</span> + testName</span>
-<span id="cb4-20"><a href="#cb4-20" aria-hidden="true"></a>    bucket, _ := t.getBucket(<span class="dt">int64</span>(hash(key) % t.totalWeight))</span>
-<span id="cb4-21"><a href="#cb4-21" aria-hidden="true"></a>    <span class="kw">return</span> bucket, <span class="ot">nil</span></span>
-<span id="cb4-22"><a href="#cb4-22" aria-hidden="true"></a>}</span></code></pre></div>
-<p>The keen observer will notice that this could be just one function. It could be but having it as two methods allows us to do other little tricks later on and makes it a little clearer whose responsibility it is for what part of the action.</p>
-<p>Our <code>GetBucket</code> function takes a test name and entity id, looks for a test by that name, verifies it has more than zero tests to its name, hashes the id with the test name, retrieves the bucket from the test and returns this.</p>
-<p>You might also notice that we are still using <code>mod</code> (or <code>%</code> in go). Hashing is just one method of randomizing the order of the buckets distribution. Don't believe it? Agreed, sounds a little too mathy to let that sleeping dog lie.</p>
+<div class="sourceCode" id="cb3"><pre class="sourceCode go"><code class="sourceCode go"><span id="cb3-1"><a href="#cb3-1" aria-hidden="true" tabindex="-1"></a><span class="kw">func</span> main<span class="op">()</span> <span class="op">{</span></span>
+<span id="cb3-2"><a href="#cb3-2" aria-hidden="true" tabindex="-1"></a>    tests <span class="op">:=</span> ABTest<span class="op">{}</span></span>
+<span id="cb3-3"><a href="#cb3-3" aria-hidden="true" tabindex="-1"></a>    tests<span class="op">.</span>AddTest<span class="op">(</span><span class="st">&quot;test1&quot;</span><span class="op">,</span> Test<span class="op">{</span></span>
+<span id="cb3-4"><a href="#cb3-4" aria-hidden="true" tabindex="-1"></a>        Buckets<span class="op">:</span> <span class="op">[]</span><span class="dt">string</span><span class="op">{</span><span class="st">&quot;control&quot;</span><span class="op">,</span> <span class="st">&quot;a&quot;</span><span class="op">,</span> <span class="st">&quot;b&quot;</span><span class="op">},</span></span>
+<span id="cb3-5"><a href="#cb3-5" aria-hidden="true" tabindex="-1"></a>        Weights<span class="op">:</span> <span class="op">[]</span><span class="dt">int</span><span class="op">{</span><span class="dv">2</span><span class="op">,</span> <span class="dv">1</span><span class="op">,</span> <span class="dv">1</span><span class="op">},</span> <span class="co">// 50% 25% 25%</span></span>
+<span id="cb3-6"><a href="#cb3-6" aria-hidden="true" tabindex="-1"></a>    <span class="op">})</span></span>
+<span id="cb3-7"><a href="#cb3-7" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb3-8"><a href="#cb3-8" aria-hidden="true" tabindex="-1"></a>  <span class="co">//...</span></span>
+<span id="cb3-9"><a href="#cb3-9" aria-hidden="true" tabindex="-1"></a><span class="op">}</span></span></code></pre></div>
+<p>Aaaand, we still have none of the success criteria being met. Let's
+at least do some bucketing so we can make progress towards our
+goals.</p>
+<div class="sourceCode" id="cb4"><pre class="sourceCode go"><code class="sourceCode go"><span id="cb4-1"><a href="#cb4-1" aria-hidden="true" tabindex="-1"></a><span class="kw">func</span> <span class="op">(</span>t Test<span class="op">)</span> getBucket<span class="op">(</span>initialWeight <span class="dt">int64</span><span class="op">)</span> <span class="op">(</span><span class="dt">string</span><span class="op">,</span> <span class="dt">bool</span><span class="op">)</span> <span class="op">{</span></span>
+<span id="cb4-2"><a href="#cb4-2" aria-hidden="true" tabindex="-1"></a>    <span class="cf">for</span> idx<span class="op">,</span> ui <span class="op">:=</span> <span class="kw">range</span> t<span class="op">.</span>Weights <span class="op">{</span></span>
+<span id="cb4-3"><a href="#cb4-3" aria-hidden="true" tabindex="-1"></a>        initialWeight <span class="op">-=</span> <span class="dt">int64</span><span class="op">(</span>ui<span class="op">)</span></span>
+<span id="cb4-4"><a href="#cb4-4" aria-hidden="true" tabindex="-1"></a>        <span class="cf">if</span> initialWeight <span class="op">&lt;</span> <span class="dv">0</span> <span class="op">{</span></span>
+<span id="cb4-5"><a href="#cb4-5" aria-hidden="true" tabindex="-1"></a>            <span class="cf">return</span> t<span class="op">.</span>Buckets<span class="op">[</span>idx<span class="op">],</span> idx <span class="op">==</span> <span class="dv">0</span></span>
+<span id="cb4-6"><a href="#cb4-6" aria-hidden="true" tabindex="-1"></a>        <span class="op">}</span></span>
+<span id="cb4-7"><a href="#cb4-7" aria-hidden="true" tabindex="-1"></a>    <span class="op">}</span></span>
+<span id="cb4-8"><a href="#cb4-8" aria-hidden="true" tabindex="-1"></a>    <span class="cf">return</span> t<span class="op">.</span>Buckets<span class="op">[</span><span class="dv">0</span><span class="op">],</span> <span class="ot">true</span></span>
+<span id="cb4-9"><a href="#cb4-9" aria-hidden="true" tabindex="-1"></a><span class="op">}</span></span>
+<span id="cb4-10"><a href="#cb4-10" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb4-11"><a href="#cb4-11" aria-hidden="true" tabindex="-1"></a><span class="kw">func</span> <span class="op">(</span>a ABTest<span class="op">)</span> GetBucket<span class="op">(</span>testName<span class="op">,</span> id <span class="dt">string</span><span class="op">)</span> <span class="op">(</span><span class="dt">string</span><span class="op">,</span> <span class="dt">error</span><span class="op">)</span> <span class="op">{</span></span>
+<span id="cb4-12"><a href="#cb4-12" aria-hidden="true" tabindex="-1"></a>    <span class="kw">var</span> t Test</span>
+<span id="cb4-13"><a href="#cb4-13" aria-hidden="true" tabindex="-1"></a>    <span class="cf">if</span> ts<span class="op">,</span> ok <span class="op">:=</span> a<span class="op">[</span>testName<span class="op">];</span> <span class="op">!</span>ok <span class="op">||</span> <span class="bu">len</span><span class="op">(</span>ts<span class="op">)</span> <span class="op">==</span> <span class="dv">0</span> <span class="op">{</span></span>
+<span id="cb4-14"><a href="#cb4-14" aria-hidden="true" tabindex="-1"></a>        <span class="cf">return</span> <span class="st">&quot;&quot;</span><span class="op">,</span> errors<span class="op">.</span>New<span class="op">(</span>fmt<span class="op">.</span>Sprintf<span class="op">(</span><span class="st">&quot;cannot find test name %s&quot;</span><span class="op">,</span> testName<span class="op">))</span></span>
+<span id="cb4-15"><a href="#cb4-15" aria-hidden="true" tabindex="-1"></a>    <span class="op">}</span> <span class="cf">else</span> <span class="op">{</span></span>
+<span id="cb4-16"><a href="#cb4-16" aria-hidden="true" tabindex="-1"></a>        t <span class="op">=</span> ts<span class="op">[</span><span class="bu">len</span><span class="op">(</span>ts<span class="op">)-</span><span class="dv">1</span><span class="op">]</span></span>
+<span id="cb4-17"><a href="#cb4-17" aria-hidden="true" tabindex="-1"></a>    <span class="op">}</span></span>
+<span id="cb4-18"><a href="#cb4-18" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb4-19"><a href="#cb4-19" aria-hidden="true" tabindex="-1"></a>  key <span class="op">:=</span> id <span class="op">+</span> <span class="st">&quot;:&quot;</span> <span class="op">+</span> testName</span>
+<span id="cb4-20"><a href="#cb4-20" aria-hidden="true" tabindex="-1"></a>    bucket<span class="op">,</span> _ <span class="op">:=</span> t<span class="op">.</span>getBucket<span class="op">(</span><span class="dt">int64</span><span class="op">(</span>hash<span class="op">(</span>key<span class="op">)</span> <span class="op">%</span> t<span class="op">.</span>totalWeight<span class="op">))</span></span>
+<span id="cb4-21"><a href="#cb4-21" aria-hidden="true" tabindex="-1"></a>    <span class="cf">return</span> bucket<span class="op">,</span> <span class="ot">nil</span></span>
+<span id="cb4-22"><a href="#cb4-22" aria-hidden="true" tabindex="-1"></a><span class="op">}</span></span></code></pre></div>
+<p>The keen observer will notice that this could be just one function.
+It could be but having it as two methods allows us to do other little
+tricks later on and makes it a little clearer whose responsibility it is
+for what part of the action.</p>
+<p>Our <code>GetBucket</code> function takes a test name and entity id,
+looks for a test by that name, verifies it has more than zero tests to
+its name, hashes the id with the test name, retrieves the bucket from
+the test and returns this.</p>
+<p>You might also notice that we are still using <code>mod</code> (or
+<code>%</code> in go). Hashing is just one method of randomizing the
+order of the buckets distribution. Don't believe it? Agreed, sounds a
+little too mathy to let that sleeping dog lie.</p>
 <p>Let's test it, in <code>main.go</code> add:</p>
-<div class="sourceCode" id="cb5"><pre class="sourceCode go"><code class="sourceCode go"><span id="cb5-1"><a href="#cb5-1" aria-hidden="true"></a><span class="kw">const</span> ACCEPTABLE_THRESHOLD = <span class="fl">.01</span> <span class="co">// 1%</span></span>
-<span id="cb5-2"><a href="#cb5-2" aria-hidden="true"></a><span class="kw">const</span> POOL_SIZE            = <span class="dv">100000</span></span></code></pre></div>
+<div class="sourceCode" id="cb5"><pre class="sourceCode go"><code class="sourceCode go"><span id="cb5-1"><a href="#cb5-1" aria-hidden="true" tabindex="-1"></a><span class="kw">const</span> ACCEPTABLE_THRESHOLD <span class="op">=</span> <span class="op">.</span><span class="dv">01</span> <span class="co">// 1%</span></span>
+<span id="cb5-2"><a href="#cb5-2" aria-hidden="true" tabindex="-1"></a><span class="kw">const</span> POOL_SIZE            <span class="op">=</span> <span class="dv">100000</span></span></code></pre></div>
 <p>and in <code>main.go:main()</code> add:</p>
-<div class="sourceCode" id="cb6"><pre class="sourceCode go"><code class="sourceCode go"><span id="cb6-1"><a href="#cb6-1" aria-hidden="true"></a><span class="kw">func</span> (t Test) SampleSize(bucket <span class="dt">string</span>, pool <span class="dt">uint64</span>) (<span class="dt">float64</span>, <span class="dt">error</span>) {</span>
-<span id="cb6-2"><a href="#cb6-2" aria-hidden="true"></a>    <span class="kw">for</span> idx, bs := <span class="kw">range</span> t.Buckets {</span>
-<span id="cb6-3"><a href="#cb6-3" aria-hidden="true"></a>        <span class="kw">if</span> bs == bucket {</span>
-<span id="cb6-4"><a href="#cb6-4" aria-hidden="true"></a>            <span class="kw">return</span> <span class="dt">float64</span>(pool) * (<span class="dt">float64</span>(t.Weights[idx]) / <span class="dt">float64</span>(t.totalWeight)), <span class="ot">nil</span></span>
-<span id="cb6-5"><a href="#cb6-5" aria-hidden="true"></a>        }</span>
-<span id="cb6-6"><a href="#cb6-6" aria-hidden="true"></a>    }</span>
-<span id="cb6-7"><a href="#cb6-7" aria-hidden="true"></a>    <span class="kw">return</span> <span class="dv">0</span>, errors.New(fmt.Sprintf(<span class="st">&quot;bucket %s not found&quot;</span>, bucket))</span>
-<span id="cb6-8"><a href="#cb6-8" aria-hidden="true"></a>}</span>
-<span id="cb6-9"><a href="#cb6-9" aria-hidden="true"></a></span>
-<span id="cb6-10"><a href="#cb6-10" aria-hidden="true"></a><span class="kw">func</span> main() {</span>
-<span id="cb6-11"><a href="#cb6-11" aria-hidden="true"></a>  <span class="co">// ...</span></span>
-<span id="cb6-12"><a href="#cb6-12" aria-hidden="true"></a></span>
-<span id="cb6-13"><a href="#cb6-13" aria-hidden="true"></a>    <span class="co">// test bucketing distribution</span></span>
-<span id="cb6-14"><a href="#cb6-14" aria-hidden="true"></a>    buckets := <span class="kw">map</span>[<span class="dt">string</span>]<span class="dt">uint32</span>{}</span>
-<span id="cb6-15"><a href="#cb6-15" aria-hidden="true"></a>    <span class="kw">for</span> i := <span class="dv">0</span>; i &lt; POOL_SIZE; i++ {</span>
-<span id="cb6-16"><a href="#cb6-16" aria-hidden="true"></a>        b, err := tests.GetBucket(<span class="st">&quot;test1&quot;</span>, fmt.Sprintf(<span class="st">&quot;%d&quot;</span>, i))</span>
-<span id="cb6-17"><a href="#cb6-17" aria-hidden="true"></a>        <span class="kw">if</span> err != <span class="ot">nil</span> {</span>
-<span id="cb6-18"><a href="#cb6-18" aria-hidden="true"></a>            fmt.Printf(<span class="st">&quot;err=%v</span><span class="ch">\n</span><span class="st">&quot;</span>, err)</span>
-<span id="cb6-19"><a href="#cb6-19" aria-hidden="true"></a>        }</span>
-<span id="cb6-20"><a href="#cb6-20" aria-hidden="true"></a>        buckets[b]++</span>
-<span id="cb6-21"><a href="#cb6-21" aria-hidden="true"></a>    }</span>
-<span id="cb6-22"><a href="#cb6-22" aria-hidden="true"></a>    <span class="kw">for</span> _, bkt := <span class="kw">range</span> tests[<span class="st">&quot;test1&quot;</span>][<span class="dv">0</span>].Buckets {</span>
-<span id="cb6-23"><a href="#cb6-23" aria-hidden="true"></a>        ss, err := tests[<span class="st">&quot;test1&quot;</span>][<span class="dv">0</span>].SampleSize(bkt, POOL_SIZE)</span>
-<span id="cb6-24"><a href="#cb6-24" aria-hidden="true"></a>        <span class="kw">if</span> err != <span class="ot">nil</span> {</span>
-<span id="cb6-25"><a href="#cb6-25" aria-hidden="true"></a>            fmt.Printf(<span class="st">&quot;err=%v</span><span class="ch">\n</span><span class="st">&quot;</span>)</span>
-<span id="cb6-26"><a href="#cb6-26" aria-hidden="true"></a>            <span class="kw">return</span></span>
-<span id="cb6-27"><a href="#cb6-27" aria-hidden="true"></a>        }</span>
-<span id="cb6-28"><a href="#cb6-28" aria-hidden="true"></a>        min := math.Floor(ss * (<span class="dv">1</span> - ACCEPTABLE_THRESHOLD))</span>
-<span id="cb6-29"><a href="#cb6-29" aria-hidden="true"></a>        max := math.Ceil(ss * (<span class="dv">1</span> + ACCEPTABLE_THRESHOLD))</span>
-<span id="cb6-30"><a href="#cb6-30" aria-hidden="true"></a>        <span class="kw">if</span> a, ok := buckets[bkt]; !ok || <span class="dt">float64</span>(a) &gt; max || <span class="dt">float64</span>(a) &lt; min {</span>
-<span id="cb6-31"><a href="#cb6-31" aria-hidden="true"></a>            fmt.Printf(<span class="st">&quot;bucket %s is not within the right range, expected=%0.3f&lt;=x&lt;=%0.3f,got=%0.3f</span><span class="ch">\n</span><span class="st">&quot;</span>, bkt, min, max, <span class="dt">float64</span>(a))</span>
-<span id="cb6-32"><a href="#cb6-32" aria-hidden="true"></a>        } <span class="kw">else</span> {</span>
-<span id="cb6-33"><a href="#cb6-33" aria-hidden="true"></a>            fmt.Printf(<span class="st">&quot;bucket %s is within the right range, expected=%0.3f&lt;=x&lt;=%0.3f,got=%0.3f</span><span class="ch">\n</span><span class="st">&quot;</span>, bkt, min, max, <span class="dt">float64</span>(a))</span>
-<span id="cb6-34"><a href="#cb6-34" aria-hidden="true"></a>        }</span>
-<span id="cb6-35"><a href="#cb6-35" aria-hidden="true"></a>    }</span></code></pre></div>
-<p>Now, upon running this hog, we should get some cool messages from golang letting us know our distribution is within the city limits.</p>
+<div class="sourceCode" id="cb6"><pre class="sourceCode go"><code class="sourceCode go"><span id="cb6-1"><a href="#cb6-1" aria-hidden="true" tabindex="-1"></a><span class="kw">func</span> <span class="op">(</span>t Test<span class="op">)</span> SampleSize<span class="op">(</span>bucket <span class="dt">string</span><span class="op">,</span> pool <span class="dt">uint64</span><span class="op">)</span> <span class="op">(</span><span class="dt">float64</span><span class="op">,</span> <span class="dt">error</span><span class="op">)</span> <span class="op">{</span></span>
+<span id="cb6-2"><a href="#cb6-2" aria-hidden="true" tabindex="-1"></a>    <span class="cf">for</span> idx<span class="op">,</span> bs <span class="op">:=</span> <span class="kw">range</span> t<span class="op">.</span>Buckets <span class="op">{</span></span>
+<span id="cb6-3"><a href="#cb6-3" aria-hidden="true" tabindex="-1"></a>        <span class="cf">if</span> bs <span class="op">==</span> bucket <span class="op">{</span></span>
+<span id="cb6-4"><a href="#cb6-4" aria-hidden="true" tabindex="-1"></a>            <span class="cf">return</span> <span class="dt">float64</span><span class="op">(</span>pool<span class="op">)</span> <span class="op">*</span> <span class="op">(</span><span class="dt">float64</span><span class="op">(</span>t<span class="op">.</span>Weights<span class="op">[</span>idx<span class="op">])</span> <span class="op">/</span> <span class="dt">float64</span><span class="op">(</span>t<span class="op">.</span>totalWeight<span class="op">)),</span> <span class="ot">nil</span></span>
+<span id="cb6-5"><a href="#cb6-5" aria-hidden="true" tabindex="-1"></a>        <span class="op">}</span></span>
+<span id="cb6-6"><a href="#cb6-6" aria-hidden="true" tabindex="-1"></a>    <span class="op">}</span></span>
+<span id="cb6-7"><a href="#cb6-7" aria-hidden="true" tabindex="-1"></a>    <span class="cf">return</span> <span class="dv">0</span><span class="op">,</span> errors<span class="op">.</span>New<span class="op">(</span>fmt<span class="op">.</span>Sprintf<span class="op">(</span><span class="st">&quot;bucket %s not found&quot;</span><span class="op">,</span> bucket<span class="op">))</span></span>
+<span id="cb6-8"><a href="#cb6-8" aria-hidden="true" tabindex="-1"></a><span class="op">}</span></span>
+<span id="cb6-9"><a href="#cb6-9" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb6-10"><a href="#cb6-10" aria-hidden="true" tabindex="-1"></a><span class="kw">func</span> main<span class="op">()</span> <span class="op">{</span></span>
+<span id="cb6-11"><a href="#cb6-11" aria-hidden="true" tabindex="-1"></a>  <span class="co">// ...</span></span>
+<span id="cb6-12"><a href="#cb6-12" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb6-13"><a href="#cb6-13" aria-hidden="true" tabindex="-1"></a>    <span class="co">// test bucketing distribution</span></span>
+<span id="cb6-14"><a href="#cb6-14" aria-hidden="true" tabindex="-1"></a>    buckets <span class="op">:=</span> <span class="kw">map</span><span class="op">[</span><span class="dt">string</span><span class="op">]</span><span class="dt">uint32</span><span class="op">{}</span></span>
+<span id="cb6-15"><a href="#cb6-15" aria-hidden="true" tabindex="-1"></a>    <span class="cf">for</span> i <span class="op">:=</span> <span class="dv">0</span><span class="op">;</span> i <span class="op">&lt;</span> POOL_SIZE<span class="op">;</span> i<span class="op">++</span> <span class="op">{</span></span>
+<span id="cb6-16"><a href="#cb6-16" aria-hidden="true" tabindex="-1"></a>        b<span class="op">,</span> err <span class="op">:=</span> tests<span class="op">.</span>GetBucket<span class="op">(</span><span class="st">&quot;test1&quot;</span><span class="op">,</span> fmt<span class="op">.</span>Sprintf<span class="op">(</span><span class="st">&quot;%d&quot;</span><span class="op">,</span> i<span class="op">))</span></span>
+<span id="cb6-17"><a href="#cb6-17" aria-hidden="true" tabindex="-1"></a>        <span class="cf">if</span> err <span class="op">!=</span> <span class="ot">nil</span> <span class="op">{</span></span>
+<span id="cb6-18"><a href="#cb6-18" aria-hidden="true" tabindex="-1"></a>            fmt<span class="op">.</span>Printf<span class="op">(</span><span class="st">&quot;err=%v</span><span class="ch">\n</span><span class="st">&quot;</span><span class="op">,</span> err<span class="op">)</span></span>
+<span id="cb6-19"><a href="#cb6-19" aria-hidden="true" tabindex="-1"></a>        <span class="op">}</span></span>
+<span id="cb6-20"><a href="#cb6-20" aria-hidden="true" tabindex="-1"></a>        buckets<span class="op">[</span>b<span class="op">]++</span></span>
+<span id="cb6-21"><a href="#cb6-21" aria-hidden="true" tabindex="-1"></a>    <span class="op">}</span></span>
+<span id="cb6-22"><a href="#cb6-22" aria-hidden="true" tabindex="-1"></a>    <span class="cf">for</span> _<span class="op">,</span> bkt <span class="op">:=</span> <span class="kw">range</span> tests<span class="op">[</span><span class="st">&quot;test1&quot;</span><span class="op">][</span><span class="dv">0</span><span class="op">].</span>Buckets <span class="op">{</span></span>
+<span id="cb6-23"><a href="#cb6-23" aria-hidden="true" tabindex="-1"></a>        ss<span class="op">,</span> err <span class="op">:=</span> tests<span class="op">[</span><span class="st">&quot;test1&quot;</span><span class="op">][</span><span class="dv">0</span><span class="op">].</span>SampleSize<span class="op">(</span>bkt<span class="op">,</span> POOL_SIZE<span class="op">)</span></span>
+<span id="cb6-24"><a href="#cb6-24" aria-hidden="true" tabindex="-1"></a>        <span class="cf">if</span> err <span class="op">!=</span> <span class="ot">nil</span> <span class="op">{</span></span>
+<span id="cb6-25"><a href="#cb6-25" aria-hidden="true" tabindex="-1"></a>            fmt<span class="op">.</span>Printf<span class="op">(</span><span class="st">&quot;err=%v</span><span class="ch">\n</span><span class="st">&quot;</span><span class="op">)</span></span>
+<span id="cb6-26"><a href="#cb6-26" aria-hidden="true" tabindex="-1"></a>            <span class="cf">return</span></span>
+<span id="cb6-27"><a href="#cb6-27" aria-hidden="true" tabindex="-1"></a>        <span class="op">}</span></span>
+<span id="cb6-28"><a href="#cb6-28" aria-hidden="true" tabindex="-1"></a>        min <span class="op">:=</span> math<span class="op">.</span>Floor<span class="op">(</span>ss <span class="op">*</span> <span class="op">(</span><span class="dv">1</span> <span class="op">-</span> ACCEPTABLE_THRESHOLD<span class="op">))</span></span>
+<span id="cb6-29"><a href="#cb6-29" aria-hidden="true" tabindex="-1"></a>        max <span class="op">:=</span> math<span class="op">.</span>Ceil<span class="op">(</span>ss <span class="op">*</span> <span class="op">(</span><span class="dv">1</span> <span class="op">+</span> ACCEPTABLE_THRESHOLD<span class="op">))</span></span>
+<span id="cb6-30"><a href="#cb6-30" aria-hidden="true" tabindex="-1"></a>        <span class="cf">if</span> a<span class="op">,</span> ok <span class="op">:=</span> buckets<span class="op">[</span>bkt<span class="op">];</span> <span class="op">!</span>ok <span class="op">||</span> <span class="dt">float64</span><span class="op">(</span>a<span class="op">)</span> <span class="op">&gt;</span> max <span class="op">||</span> <span class="dt">float64</span><span class="op">(</span>a<span class="op">)</span> <span class="op">&lt;</span> min <span class="op">{</span></span>
+<span id="cb6-31"><a href="#cb6-31" aria-hidden="true" tabindex="-1"></a>            fmt<span class="op">.</span>Printf<span class="op">(</span><span class="st">&quot;bucket %s is not within the right range, expected=%0.3f&lt;=x&lt;=%0.3f,got=%0.3f</span><span class="ch">\n</span><span class="st">&quot;</span><span class="op">,</span> bkt<span class="op">,</span> min<span class="op">,</span> max<span class="op">,</span> <span class="dt">float64</span><span class="op">(</span>a<span class="op">))</span></span>
+<span id="cb6-32"><a href="#cb6-32" aria-hidden="true" tabindex="-1"></a>        <span class="op">}</span> <span class="cf">else</span> <span class="op">{</span></span>
+<span id="cb6-33"><a href="#cb6-33" aria-hidden="true" tabindex="-1"></a>            fmt<span class="op">.</span>Printf<span class="op">(</span><span class="st">&quot;bucket %s is within the right range, expected=%0.3f&lt;=x&lt;=%0.3f,got=%0.3f</span><span class="ch">\n</span><span class="st">&quot;</span><span class="op">,</span> bkt<span class="op">,</span> min<span class="op">,</span> max<span class="op">,</span> <span class="dt">float64</span><span class="op">(</span>a<span class="op">))</span></span>
+<span id="cb6-34"><a href="#cb6-34" aria-hidden="true" tabindex="-1"></a>        <span class="op">}</span></span>
+<span id="cb6-35"><a href="#cb6-35" aria-hidden="true" tabindex="-1"></a>    <span class="op">}</span></span></code></pre></div>
+<p>Now, upon running this hog, we should get some cool messages from
+golang letting us know our distribution is within the city limits.</p>
 <pre><code>bucket control is within the right range, expected=49500&lt;=x&lt;=50500,got=50000
 bucket a is within the right range, expected=24750&lt;=x&lt;=25250,got=25001
 bucket b is within the right range, expected=24750&lt;=x&lt;=25250,got=24999</code></pre>
-<p>Woohoo, point two is done and dusted. Great distribution. If you play around and make the pool size only 10, we should still be OK.</p>
+<p>Woohoo, point two is done and dusted. Great distribution. If you play
+around and make the pool size only 10, we should still be OK.</p>
 <pre><code>bucket control is within the right range, expected=4&lt;=x&lt;=6,got=5
 bucket a is within the right range, expected=2&lt;=x&lt;=3,got=3
 bucket b is within the right range, expected=2&lt;=x&lt;=3,got=2</code></pre>
@@ -145,124 +188,155 @@ bucket b is within the right range, expected=2&lt;=x&lt;=3,got=2</code></pre>
 <pre><code>bucket control is within the right range, expected=1&lt;=x&lt;=2,got=2
 bucket a is within the right range, expected=0&lt;=x&lt;=1,got=1
 bucket b is within the right range, expected=0&lt;=x&lt;=1,got=0</code></pre>
-<p>Bingo! Okay, for the rest of this article we're going to use the OG pool size of <code>100000</code> and we'll consider our even distribution problem solved.</p>
-<p>Now to test point one, remember point one? Determinism. Let's get after it:</p>
-<div class="sourceCode" id="cb10"><pre class="sourceCode go"><code class="sourceCode go"><span id="cb10-1"><a href="#cb10-1" aria-hidden="true"></a>    testBucket, _ := tests.GetBucket(<span class="st">&quot;test1&quot;</span>, <span class="st">&quot;hello, world!&quot;</span>)</span>
-<span id="cb10-2"><a href="#cb10-2" aria-hidden="true"></a>    misses := <span class="dv">0</span></span>
-<span id="cb10-3"><a href="#cb10-3" aria-hidden="true"></a>    <span class="kw">for</span> i := <span class="dv">0</span>; i &lt; POOL_SIZE; i++ {</span>
-<span id="cb10-4"><a href="#cb10-4" aria-hidden="true"></a>        <span class="kw">if</span> tb, _ := tests.GetBucket(<span class="st">&quot;test1&quot;</span>, <span class="st">&quot;hello, world!&quot;</span>); tb != testBucket {</span>
-<span id="cb10-5"><a href="#cb10-5" aria-hidden="true"></a>            misses++</span>
-<span id="cb10-6"><a href="#cb10-6" aria-hidden="true"></a>        }</span>
-<span id="cb10-7"><a href="#cb10-7" aria-hidden="true"></a>    }</span>
-<span id="cb10-8"><a href="#cb10-8" aria-hidden="true"></a>    <span class="kw">if</span> misses &gt; <span class="dv">0</span> {</span>
-<span id="cb10-9"><a href="#cb10-9" aria-hidden="true"></a>        fmt.Printf(<span class="st">&quot;Determinism misses: %d</span><span class="ch">\n</span><span class="st">&quot;</span>, misses)</span>
-<span id="cb10-10"><a href="#cb10-10" aria-hidden="true"></a>  }</span></code></pre></div>
-<p>No messages about misses, great. That half solves point one. If you later add another <code>Test</code> to that test name with a different distribution then you're really asking for trouble. Users that saw you were giving away $1m to anyone who saw the message and were on the fence about it may no longer see that message and then you'll have some very unhappy users (but only some of them).</p>
-<p>Let's add on some memoization, more on this after the next heading. For this article we're going to pretend that the determinism is only required for the duration of this process. You might consider a database for a more highly distributed system and this is the only acceptable query our process should perform to maintain integrity. Here we're only going to use a local variable:</p>
+<p>Bingo! Okay, for the rest of this article we're going to use the OG
+pool size of <code>100000</code> and we'll consider our even
+distribution problem solved.</p>
+<p>Now to test point one, remember point one? Determinism. Let's get
+after it:</p>
+<div class="sourceCode" id="cb10"><pre
+class="sourceCode go"><code class="sourceCode go"><span id="cb10-1"><a href="#cb10-1" aria-hidden="true" tabindex="-1"></a>    testBucket<span class="op">,</span> _ <span class="op">:=</span> tests<span class="op">.</span>GetBucket<span class="op">(</span><span class="st">&quot;test1&quot;</span><span class="op">,</span> <span class="st">&quot;hello, world!&quot;</span><span class="op">)</span></span>
+<span id="cb10-2"><a href="#cb10-2" aria-hidden="true" tabindex="-1"></a>    misses <span class="op">:=</span> <span class="dv">0</span></span>
+<span id="cb10-3"><a href="#cb10-3" aria-hidden="true" tabindex="-1"></a>    <span class="cf">for</span> i <span class="op">:=</span> <span class="dv">0</span><span class="op">;</span> i <span class="op">&lt;</span> POOL_SIZE<span class="op">;</span> i<span class="op">++</span> <span class="op">{</span></span>
+<span id="cb10-4"><a href="#cb10-4" aria-hidden="true" tabindex="-1"></a>        <span class="cf">if</span> tb<span class="op">,</span> _ <span class="op">:=</span> tests<span class="op">.</span>GetBucket<span class="op">(</span><span class="st">&quot;test1&quot;</span><span class="op">,</span> <span class="st">&quot;hello, world!&quot;</span><span class="op">);</span> tb <span class="op">!=</span> testBucket <span class="op">{</span></span>
+<span id="cb10-5"><a href="#cb10-5" aria-hidden="true" tabindex="-1"></a>            misses<span class="op">++</span></span>
+<span id="cb10-6"><a href="#cb10-6" aria-hidden="true" tabindex="-1"></a>        <span class="op">}</span></span>
+<span id="cb10-7"><a href="#cb10-7" aria-hidden="true" tabindex="-1"></a>    <span class="op">}</span></span>
+<span id="cb10-8"><a href="#cb10-8" aria-hidden="true" tabindex="-1"></a>    <span class="cf">if</span> misses <span class="op">&gt;</span> <span class="dv">0</span> <span class="op">{</span></span>
+<span id="cb10-9"><a href="#cb10-9" aria-hidden="true" tabindex="-1"></a>        fmt<span class="op">.</span>Printf<span class="op">(</span><span class="st">&quot;Determinism misses: %d</span><span class="ch">\n</span><span class="st">&quot;</span><span class="op">,</span> misses<span class="op">)</span></span>
+<span id="cb10-10"><a href="#cb10-10" aria-hidden="true" tabindex="-1"></a>  <span class="op">}</span></span></code></pre></div>
+<p>No messages about misses, great. That half solves point one. If you
+later add another <code>Test</code> to that test name with a different
+distribution then you're really asking for trouble. Users that saw you
+were giving away $1m to anyone who saw the message and were on the fence
+about it may no longer see that message and then you'll have some very
+unhappy users (but only some of them).</p>
+<p>Let's add on some memoization, more on this after the next heading.
+For this article we're going to pretend that the determinism is only
+required for the duration of this process. You might consider a database
+for a more highly distributed system and this is the only acceptable
+query our process should perform to maintain integrity. Here we're only
+going to use a local variable:</p>
 <p>In your ABTest package add/alter:</p>
-<div class="sourceCode" id="cb11"><pre class="sourceCode go"><code class="sourceCode go"><span id="cb11-1"><a href="#cb11-1" aria-hidden="true"></a><span class="kw">var</span> memoization = <span class="kw">map</span>[<span class="dt">string</span>]<span class="kw">map</span>[<span class="dt">string</span>]<span class="dt">string</span>{}  <span class="co">//&lt;=====</span></span>
-<span id="cb11-2"><a href="#cb11-2" aria-hidden="true"></a></span>
-<span id="cb11-3"><a href="#cb11-3" aria-hidden="true"></a><span class="kw">func</span> (a ABTest) GetBucket(testName, id <span class="dt">string</span>) (<span class="dt">string</span>, <span class="dt">error</span>) {</span>
-<span id="cb11-4"><a href="#cb11-4" aria-hidden="true"></a>    <span class="kw">var</span> t Test</span>
-<span id="cb11-5"><a href="#cb11-5" aria-hidden="true"></a>    <span class="kw">if</span> ts, ok := a[testName]; !ok || <span class="bu">len</span>(ts) == <span class="dv">0</span> {</span>
-<span id="cb11-6"><a href="#cb11-6" aria-hidden="true"></a>        <span class="kw">return</span> <span class="st">&quot;&quot;</span>, errors.New(fmt.Sprintf(<span class="st">&quot;cannot find test name %s&quot;</span>, testName))</span>
-<span id="cb11-7"><a href="#cb11-7" aria-hidden="true"></a>    } <span class="kw">else</span> {</span>
-<span id="cb11-8"><a href="#cb11-8" aria-hidden="true"></a>        t = ts[<span class="bu">len</span>(ts)-<span class="dv">1</span>]</span>
-<span id="cb11-9"><a href="#cb11-9" aria-hidden="true"></a>        <span class="kw">if</span> memoize[testName] == <span class="ot">nil</span> {                 <span class="co">//&lt;=====</span></span>
-<span id="cb11-10"><a href="#cb11-10" aria-hidden="true"></a>            memoize[testName] = <span class="kw">map</span>[<span class="dt">string</span>]<span class="dt">string</span>{}     <span class="co">//&lt;=====</span></span>
-<span id="cb11-11"><a href="#cb11-11" aria-hidden="true"></a>        }                                             <span class="co">//&lt;=====</span></span>
-<span id="cb11-12"><a href="#cb11-12" aria-hidden="true"></a>    }</span>
-<span id="cb11-13"><a href="#cb11-13" aria-hidden="true"></a>    key := id + <span class="st">&quot;:&quot;</span> + testName</span>
-<span id="cb11-14"><a href="#cb11-14" aria-hidden="true"></a>    <span class="kw">if</span> bkt, ok := memoize[testName][key]; ok {      <span class="co">//&lt;=====</span></span>
-<span id="cb11-15"><a href="#cb11-15" aria-hidden="true"></a>        <span class="kw">return</span> bkt, <span class="ot">nil</span>                               <span class="co">//&lt;=====</span></span>
-<span id="cb11-16"><a href="#cb11-16" aria-hidden="true"></a>    }                                               <span class="co">//&lt;=====</span></span>
-<span id="cb11-17"><a href="#cb11-17" aria-hidden="true"></a></span>
-<span id="cb11-18"><a href="#cb11-18" aria-hidden="true"></a>    bucket, _ := t.getBucket(<span class="dt">int64</span>(hash(key) % t.totalWeight))</span>
-<span id="cb11-19"><a href="#cb11-19" aria-hidden="true"></a>    memoize[testName][key] = bucket</span>
-<span id="cb11-20"><a href="#cb11-20" aria-hidden="true"></a>    <span class="kw">return</span> bucket, <span class="ot">nil</span></span>
-<span id="cb11-21"><a href="#cb11-21" aria-hidden="true"></a>}</span></code></pre></div>
-<p>Testing our assumptions again we'd expect nothing to have changed and nothing does. All clear.</p>
+<div class="sourceCode" id="cb11"><pre
+class="sourceCode go"><code class="sourceCode go"><span id="cb11-1"><a href="#cb11-1" aria-hidden="true" tabindex="-1"></a><span class="kw">var</span> memoization <span class="op">=</span> <span class="kw">map</span><span class="op">[</span><span class="dt">string</span><span class="op">]</span><span class="kw">map</span><span class="op">[</span><span class="dt">string</span><span class="op">]</span><span class="dt">string</span><span class="op">{}</span>  <span class="co">//&lt;=====</span></span>
+<span id="cb11-2"><a href="#cb11-2" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb11-3"><a href="#cb11-3" aria-hidden="true" tabindex="-1"></a><span class="kw">func</span> <span class="op">(</span>a ABTest<span class="op">)</span> GetBucket<span class="op">(</span>testName<span class="op">,</span> id <span class="dt">string</span><span class="op">)</span> <span class="op">(</span><span class="dt">string</span><span class="op">,</span> <span class="dt">error</span><span class="op">)</span> <span class="op">{</span></span>
+<span id="cb11-4"><a href="#cb11-4" aria-hidden="true" tabindex="-1"></a>    <span class="kw">var</span> t Test</span>
+<span id="cb11-5"><a href="#cb11-5" aria-hidden="true" tabindex="-1"></a>    <span class="cf">if</span> ts<span class="op">,</span> ok <span class="op">:=</span> a<span class="op">[</span>testName<span class="op">];</span> <span class="op">!</span>ok <span class="op">||</span> <span class="bu">len</span><span class="op">(</span>ts<span class="op">)</span> <span class="op">==</span> <span class="dv">0</span> <span class="op">{</span></span>
+<span id="cb11-6"><a href="#cb11-6" aria-hidden="true" tabindex="-1"></a>        <span class="cf">return</span> <span class="st">&quot;&quot;</span><span class="op">,</span> errors<span class="op">.</span>New<span class="op">(</span>fmt<span class="op">.</span>Sprintf<span class="op">(</span><span class="st">&quot;cannot find test name %s&quot;</span><span class="op">,</span> testName<span class="op">))</span></span>
+<span id="cb11-7"><a href="#cb11-7" aria-hidden="true" tabindex="-1"></a>    <span class="op">}</span> <span class="cf">else</span> <span class="op">{</span></span>
+<span id="cb11-8"><a href="#cb11-8" aria-hidden="true" tabindex="-1"></a>        t <span class="op">=</span> ts<span class="op">[</span><span class="bu">len</span><span class="op">(</span>ts<span class="op">)-</span><span class="dv">1</span><span class="op">]</span></span>
+<span id="cb11-9"><a href="#cb11-9" aria-hidden="true" tabindex="-1"></a>        <span class="cf">if</span> memoize<span class="op">[</span>testName<span class="op">]</span> <span class="op">==</span> <span class="ot">nil</span> <span class="op">{</span>                 <span class="co">//&lt;=====</span></span>
+<span id="cb11-10"><a href="#cb11-10" aria-hidden="true" tabindex="-1"></a>            memoize<span class="op">[</span>testName<span class="op">]</span> <span class="op">=</span> <span class="kw">map</span><span class="op">[</span><span class="dt">string</span><span class="op">]</span><span class="dt">string</span><span class="op">{}</span>     <span class="co">//&lt;=====</span></span>
+<span id="cb11-11"><a href="#cb11-11" aria-hidden="true" tabindex="-1"></a>        <span class="op">}</span>                                             <span class="co">//&lt;=====</span></span>
+<span id="cb11-12"><a href="#cb11-12" aria-hidden="true" tabindex="-1"></a>    <span class="op">}</span></span>
+<span id="cb11-13"><a href="#cb11-13" aria-hidden="true" tabindex="-1"></a>    key <span class="op">:=</span> id <span class="op">+</span> <span class="st">&quot;:&quot;</span> <span class="op">+</span> testName</span>
+<span id="cb11-14"><a href="#cb11-14" aria-hidden="true" tabindex="-1"></a>    <span class="cf">if</span> bkt<span class="op">,</span> ok <span class="op">:=</span> memoize<span class="op">[</span>testName<span class="op">][</span>key<span class="op">];</span> ok <span class="op">{</span>      <span class="co">//&lt;=====</span></span>
+<span id="cb11-15"><a href="#cb11-15" aria-hidden="true" tabindex="-1"></a>        <span class="cf">return</span> bkt<span class="op">,</span> <span class="ot">nil</span>                               <span class="co">//&lt;=====</span></span>
+<span id="cb11-16"><a href="#cb11-16" aria-hidden="true" tabindex="-1"></a>    <span class="op">}</span>                                               <span class="co">//&lt;=====</span></span>
+<span id="cb11-17"><a href="#cb11-17" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb11-18"><a href="#cb11-18" aria-hidden="true" tabindex="-1"></a>    bucket<span class="op">,</span> _ <span class="op">:=</span> t<span class="op">.</span>getBucket<span class="op">(</span><span class="dt">int64</span><span class="op">(</span>hash<span class="op">(</span>key<span class="op">)</span> <span class="op">%</span> t<span class="op">.</span>totalWeight<span class="op">))</span></span>
+<span id="cb11-19"><a href="#cb11-19" aria-hidden="true" tabindex="-1"></a>    memoize<span class="op">[</span>testName<span class="op">][</span>key<span class="op">]</span> <span class="op">=</span> bucket</span>
+<span id="cb11-20"><a href="#cb11-20" aria-hidden="true" tabindex="-1"></a>    <span class="cf">return</span> bucket<span class="op">,</span> <span class="ot">nil</span></span>
+<span id="cb11-21"><a href="#cb11-21" aria-hidden="true" tabindex="-1"></a><span class="op">}</span></span></code></pre></div>
+<p>Testing our assumptions again we'd expect nothing to have changed and
+nothing does. All clear.</p>
 <h2 id="updating-tests">Updating Tests</h2>
-<p>If you want to be able to update tests then storing bucketed user's bucket is probably fine enough. If you're pure of heart and declare tests with different buckets or distributions to be similar but not the same then the <code>ABTests</code> object could be simplified above. For this article we make no such proclamations and no guarantees. We want to show a user the same bucket they saw before so long as that bucket still exists.</p>
-<p>Next step is to add another <code>Test</code> to our <code>"test1"</code> bucket and make sure we get original distributions with already bucketed ids and new distributions with new ids:</p>
-<div class="sourceCode" id="cb12"><pre class="sourceCode go"><code class="sourceCode go"><span id="cb12-1"><a href="#cb12-1" aria-hidden="true"></a><span class="kw">func</span> main() {</span>
-<span id="cb12-2"><a href="#cb12-2" aria-hidden="true"></a>    <span class="co">//...</span></span>
-<span id="cb12-3"><a href="#cb12-3" aria-hidden="true"></a></span>
-<span id="cb12-4"><a href="#cb12-4" aria-hidden="true"></a>    <span class="co">// test regressions</span></span>
-<span id="cb12-5"><a href="#cb12-5" aria-hidden="true"></a>    tests.AddTest(<span class="st">&quot;test1&quot;</span>, Test{</span>
-<span id="cb12-6"><a href="#cb12-6" aria-hidden="true"></a>        Buckets: []<span class="dt">string</span>{<span class="st">&quot;control&quot;</span>, <span class="st">&quot;a&quot;</span>, <span class="st">&quot;b&quot;</span>},</span>
-<span id="cb12-7"><a href="#cb12-7" aria-hidden="true"></a>        Weights: []<span class="dt">int</span>{<span class="dv">1</span>, <span class="dv">1</span>, <span class="dv">98</span>}, <span class="co">// 1% 1% 98%</span></span>
-<span id="cb12-8"><a href="#cb12-8" aria-hidden="true"></a>    })</span>
-<span id="cb12-9"><a href="#cb12-9" aria-hidden="true"></a></span>
-<span id="cb12-10"><a href="#cb12-10" aria-hidden="true"></a>    buckets = <span class="kw">map</span>[<span class="dt">string</span>]<span class="dt">uint32</span>{}</span>
-<span id="cb12-11"><a href="#cb12-11" aria-hidden="true"></a>    <span class="kw">for</span> i := <span class="dv">0</span>; i &lt; POOL_SIZE; i++ {</span>
-<span id="cb12-12"><a href="#cb12-12" aria-hidden="true"></a>        b, err := tests.GetBucket(<span class="st">&quot;test1&quot;</span>, fmt.Sprintf(<span class="st">&quot;%d&quot;</span>, i))</span>
-<span id="cb12-13"><a href="#cb12-13" aria-hidden="true"></a>        <span class="kw">if</span> err != <span class="ot">nil</span> {</span>
-<span id="cb12-14"><a href="#cb12-14" aria-hidden="true"></a>            fmt.Printf(<span class="st">&quot;err=%v</span><span class="ch">\n</span><span class="st">&quot;</span>, err)</span>
-<span id="cb12-15"><a href="#cb12-15" aria-hidden="true"></a>        }</span>
-<span id="cb12-16"><a href="#cb12-16" aria-hidden="true"></a>        buckets[b]++</span>
-<span id="cb12-17"><a href="#cb12-17" aria-hidden="true"></a>    }</span>
-<span id="cb12-18"><a href="#cb12-18" aria-hidden="true"></a></span>
-<span id="cb12-19"><a href="#cb12-19" aria-hidden="true"></a>    <span class="co">// all of these ids were wentered into a 50/25/25 test</span></span>
-<span id="cb12-20"><a href="#cb12-20" aria-hidden="true"></a>    <span class="kw">for</span> _, bkt := <span class="kw">range</span> tests[<span class="st">&quot;test1&quot;</span>][<span class="dv">0</span>].Buckets {</span>
-<span id="cb12-21"><a href="#cb12-21" aria-hidden="true"></a>        ss, err := tests[<span class="st">&quot;test1&quot;</span>][<span class="dv">0</span>].SampleSize(bkt, POOL_SIZE)</span>
-<span id="cb12-22"><a href="#cb12-22" aria-hidden="true"></a>        <span class="kw">if</span> err != <span class="ot">nil</span> {</span>
-<span id="cb12-23"><a href="#cb12-23" aria-hidden="true"></a>            fmt.Printf(<span class="st">&quot;err=%v</span><span class="ch">\n</span><span class="st">&quot;</span>)</span>
-<span id="cb12-24"><a href="#cb12-24" aria-hidden="true"></a>            <span class="kw">return</span></span>
-<span id="cb12-25"><a href="#cb12-25" aria-hidden="true"></a>        }</span>
-<span id="cb12-26"><a href="#cb12-26" aria-hidden="true"></a>        min := math.Floor(ss * (<span class="dv">1</span> - ACCEPTABLE_THRESHOLD))</span>
-<span id="cb12-27"><a href="#cb12-27" aria-hidden="true"></a>        max := math.Ceil(ss * (<span class="dv">1</span> + ACCEPTABLE_THRESHOLD))</span>
-<span id="cb12-28"><a href="#cb12-28" aria-hidden="true"></a>        <span class="kw">if</span> a, ok := buckets[bkt]; !ok || <span class="dt">float64</span>(a) &gt; max || <span class="dt">float64</span>(a) &lt; min {</span>
-<span id="cb12-29"><a href="#cb12-29" aria-hidden="true"></a>            fmt.Printf(<span class="st">&quot;bucket %s is not within the right range, expected=%d&lt;=x&lt;=%d,got=%d</span><span class="ch">\n</span><span class="st">&quot;</span>, bkt, <span class="dt">uint</span>(min), <span class="dt">uint</span>(max), a)</span>
-<span id="cb12-30"><a href="#cb12-30" aria-hidden="true"></a>        } <span class="kw">else</span> {</span>
-<span id="cb12-31"><a href="#cb12-31" aria-hidden="true"></a>            fmt.Printf(<span class="st">&quot;bucket %s is within the right range, expected=%d&lt;=x&lt;=%d,got=%d</span><span class="ch">\n</span><span class="st">&quot;</span>, bkt, <span class="dt">uint</span>(min), <span class="dt">uint</span>(max), a)</span>
-<span id="cb12-32"><a href="#cb12-32" aria-hidden="true"></a>        }</span>
-<span id="cb12-33"><a href="#cb12-33" aria-hidden="true"></a>    }</span>
-<span id="cb12-34"><a href="#cb12-34" aria-hidden="true"></a>    <span class="co">/*</span></span></code></pre></div>
+<p>If you want to be able to update tests then storing bucketed user's
+bucket is probably fine enough. If you're pure of heart and declare
+tests with different buckets or distributions to be similar but not the
+same then the <code>ABTests</code> object could be simplified above. For
+this article we make no such proclamations and no guarantees. We want to
+show a user the same bucket they saw before so long as that bucket still
+exists.</p>
+<p>Next step is to add another <code>Test</code> to our
+<code>"test1"</code> bucket and make sure we get original distributions
+with already bucketed ids and new distributions with new ids:</p>
+<div class="sourceCode" id="cb12"><pre
+class="sourceCode go"><code class="sourceCode go"><span id="cb12-1"><a href="#cb12-1" aria-hidden="true" tabindex="-1"></a><span class="kw">func</span> main<span class="op">()</span> <span class="op">{</span></span>
+<span id="cb12-2"><a href="#cb12-2" aria-hidden="true" tabindex="-1"></a>    <span class="co">//...</span></span>
+<span id="cb12-3"><a href="#cb12-3" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb12-4"><a href="#cb12-4" aria-hidden="true" tabindex="-1"></a>    <span class="co">// test regressions</span></span>
+<span id="cb12-5"><a href="#cb12-5" aria-hidden="true" tabindex="-1"></a>    tests<span class="op">.</span>AddTest<span class="op">(</span><span class="st">&quot;test1&quot;</span><span class="op">,</span> Test<span class="op">{</span></span>
+<span id="cb12-6"><a href="#cb12-6" aria-hidden="true" tabindex="-1"></a>        Buckets<span class="op">:</span> <span class="op">[]</span><span class="dt">string</span><span class="op">{</span><span class="st">&quot;control&quot;</span><span class="op">,</span> <span class="st">&quot;a&quot;</span><span class="op">,</span> <span class="st">&quot;b&quot;</span><span class="op">},</span></span>
+<span id="cb12-7"><a href="#cb12-7" aria-hidden="true" tabindex="-1"></a>        Weights<span class="op">:</span> <span class="op">[]</span><span class="dt">int</span><span class="op">{</span><span class="dv">1</span><span class="op">,</span> <span class="dv">1</span><span class="op">,</span> <span class="dv">98</span><span class="op">},</span> <span class="co">// 1% 1% 98%</span></span>
+<span id="cb12-8"><a href="#cb12-8" aria-hidden="true" tabindex="-1"></a>    <span class="op">})</span></span>
+<span id="cb12-9"><a href="#cb12-9" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb12-10"><a href="#cb12-10" aria-hidden="true" tabindex="-1"></a>    buckets <span class="op">=</span> <span class="kw">map</span><span class="op">[</span><span class="dt">string</span><span class="op">]</span><span class="dt">uint32</span><span class="op">{}</span></span>
+<span id="cb12-11"><a href="#cb12-11" aria-hidden="true" tabindex="-1"></a>    <span class="cf">for</span> i <span class="op">:=</span> <span class="dv">0</span><span class="op">;</span> i <span class="op">&lt;</span> POOL_SIZE<span class="op">;</span> i<span class="op">++</span> <span class="op">{</span></span>
+<span id="cb12-12"><a href="#cb12-12" aria-hidden="true" tabindex="-1"></a>        b<span class="op">,</span> err <span class="op">:=</span> tests<span class="op">.</span>GetBucket<span class="op">(</span><span class="st">&quot;test1&quot;</span><span class="op">,</span> fmt<span class="op">.</span>Sprintf<span class="op">(</span><span class="st">&quot;%d&quot;</span><span class="op">,</span> i<span class="op">))</span></span>
+<span id="cb12-13"><a href="#cb12-13" aria-hidden="true" tabindex="-1"></a>        <span class="cf">if</span> err <span class="op">!=</span> <span class="ot">nil</span> <span class="op">{</span></span>
+<span id="cb12-14"><a href="#cb12-14" aria-hidden="true" tabindex="-1"></a>            fmt<span class="op">.</span>Printf<span class="op">(</span><span class="st">&quot;err=%v</span><span class="ch">\n</span><span class="st">&quot;</span><span class="op">,</span> err<span class="op">)</span></span>
+<span id="cb12-15"><a href="#cb12-15" aria-hidden="true" tabindex="-1"></a>        <span class="op">}</span></span>
+<span id="cb12-16"><a href="#cb12-16" aria-hidden="true" tabindex="-1"></a>        buckets<span class="op">[</span>b<span class="op">]++</span></span>
+<span id="cb12-17"><a href="#cb12-17" aria-hidden="true" tabindex="-1"></a>    <span class="op">}</span></span>
+<span id="cb12-18"><a href="#cb12-18" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb12-19"><a href="#cb12-19" aria-hidden="true" tabindex="-1"></a>    <span class="co">// all of these ids were wentered into a 50/25/25 test</span></span>
+<span id="cb12-20"><a href="#cb12-20" aria-hidden="true" tabindex="-1"></a>    <span class="cf">for</span> _<span class="op">,</span> bkt <span class="op">:=</span> <span class="kw">range</span> tests<span class="op">[</span><span class="st">&quot;test1&quot;</span><span class="op">][</span><span class="dv">0</span><span class="op">].</span>Buckets <span class="op">{</span></span>
+<span id="cb12-21"><a href="#cb12-21" aria-hidden="true" tabindex="-1"></a>        ss<span class="op">,</span> err <span class="op">:=</span> tests<span class="op">[</span><span class="st">&quot;test1&quot;</span><span class="op">][</span><span class="dv">0</span><span class="op">].</span>SampleSize<span class="op">(</span>bkt<span class="op">,</span> POOL_SIZE<span class="op">)</span></span>
+<span id="cb12-22"><a href="#cb12-22" aria-hidden="true" tabindex="-1"></a>        <span class="cf">if</span> err <span class="op">!=</span> <span class="ot">nil</span> <span class="op">{</span></span>
+<span id="cb12-23"><a href="#cb12-23" aria-hidden="true" tabindex="-1"></a>            fmt<span class="op">.</span>Printf<span class="op">(</span><span class="st">&quot;err=%v</span><span class="ch">\n</span><span class="st">&quot;</span><span class="op">)</span></span>
+<span id="cb12-24"><a href="#cb12-24" aria-hidden="true" tabindex="-1"></a>            <span class="cf">return</span></span>
+<span id="cb12-25"><a href="#cb12-25" aria-hidden="true" tabindex="-1"></a>        <span class="op">}</span></span>
+<span id="cb12-26"><a href="#cb12-26" aria-hidden="true" tabindex="-1"></a>        min <span class="op">:=</span> math<span class="op">.</span>Floor<span class="op">(</span>ss <span class="op">*</span> <span class="op">(</span><span class="dv">1</span> <span class="op">-</span> ACCEPTABLE_THRESHOLD<span class="op">))</span></span>
+<span id="cb12-27"><a href="#cb12-27" aria-hidden="true" tabindex="-1"></a>        max <span class="op">:=</span> math<span class="op">.</span>Ceil<span class="op">(</span>ss <span class="op">*</span> <span class="op">(</span><span class="dv">1</span> <span class="op">+</span> ACCEPTABLE_THRESHOLD<span class="op">))</span></span>
+<span id="cb12-28"><a href="#cb12-28" aria-hidden="true" tabindex="-1"></a>        <span class="cf">if</span> a<span class="op">,</span> ok <span class="op">:=</span> buckets<span class="op">[</span>bkt<span class="op">];</span> <span class="op">!</span>ok <span class="op">||</span> <span class="dt">float64</span><span class="op">(</span>a<span class="op">)</span> <span class="op">&gt;</span> max <span class="op">||</span> <span class="dt">float64</span><span class="op">(</span>a<span class="op">)</span> <span class="op">&lt;</span> min <span class="op">{</span></span>
+<span id="cb12-29"><a href="#cb12-29" aria-hidden="true" tabindex="-1"></a>            fmt<span class="op">.</span>Printf<span class="op">(</span><span class="st">&quot;bucket %s is not within the right range, expected=%d&lt;=x&lt;=%d,got=%d</span><span class="ch">\n</span><span class="st">&quot;</span><span class="op">,</span> bkt<span class="op">,</span> <span class="dt">uint</span><span class="op">(</span>min<span class="op">),</span> <span class="dt">uint</span><span class="op">(</span>max<span class="op">),</span> a<span class="op">)</span></span>
+<span id="cb12-30"><a href="#cb12-30" aria-hidden="true" tabindex="-1"></a>        <span class="op">}</span> <span class="cf">else</span> <span class="op">{</span></span>
+<span id="cb12-31"><a href="#cb12-31" aria-hidden="true" tabindex="-1"></a>            fmt<span class="op">.</span>Printf<span class="op">(</span><span class="st">&quot;bucket %s is within the right range, expected=%d&lt;=x&lt;=%d,got=%d</span><span class="ch">\n</span><span class="st">&quot;</span><span class="op">,</span> bkt<span class="op">,</span> <span class="dt">uint</span><span class="op">(</span>min<span class="op">),</span> <span class="dt">uint</span><span class="op">(</span>max<span class="op">),</span> a<span class="op">)</span></span>
+<span id="cb12-32"><a href="#cb12-32" aria-hidden="true" tabindex="-1"></a>        <span class="op">}</span></span>
+<span id="cb12-33"><a href="#cb12-33" aria-hidden="true" tabindex="-1"></a>    <span class="op">}</span></span>
+<span id="cb12-34"><a href="#cb12-34" aria-hidden="true" tabindex="-1"></a>    <span class="co">/*</span></span></code></pre></div>
 <p>Three more positive affirmations for our day:</p>
 <pre><code>bucket control is within the right range, expected=49500&lt;=x&lt;=50500,got=50000
 bucket a is within the right range, expected=24750&lt;=x&lt;=25250,got=25001
 bucket b is within the right range, expected=24750&lt;=x&lt;=25250,got=24999</code></pre>
-<p>Now let's make sure that new users are bucketed in our zany <code>control:1 / a:1 / b:98</code> bucketing scheme.</p>
-<div class="sourceCode" id="cb14"><pre class="sourceCode go"><code class="sourceCode go"><span id="cb14-1"><a href="#cb14-1" aria-hidden="true"></a><span class="kw">func</span> main() {</span>
-<span id="cb14-2"><a href="#cb14-2" aria-hidden="true"></a>    <span class="co">//...</span></span>
-<span id="cb14-3"><a href="#cb14-3" aria-hidden="true"></a></span>
-<span id="cb14-4"><a href="#cb14-4" aria-hidden="true"></a>    buckets = <span class="kw">map</span>[<span class="dt">string</span>]<span class="dt">uint32</span>{}</span>
-<span id="cb14-5"><a href="#cb14-5" aria-hidden="true"></a>    <span class="kw">for</span> i := POOL_SIZE * <span class="dv">2</span>; i &lt; POOL_SIZE*<span class="dv">3</span>; i++ {</span>
-<span id="cb14-6"><a href="#cb14-6" aria-hidden="true"></a>        b, err := tests.GetBucket(<span class="st">&quot;test1&quot;</span>, fmt.Sprintf(<span class="st">&quot;%d&quot;</span>, i))</span>
-<span id="cb14-7"><a href="#cb14-7" aria-hidden="true"></a>        <span class="kw">if</span> err != <span class="ot">nil</span> {</span>
-<span id="cb14-8"><a href="#cb14-8" aria-hidden="true"></a>            fmt.Printf(<span class="st">&quot;err=%v</span><span class="ch">\n</span><span class="st">&quot;</span>, err)</span>
-<span id="cb14-9"><a href="#cb14-9" aria-hidden="true"></a>        }</span>
-<span id="cb14-10"><a href="#cb14-10" aria-hidden="true"></a>        buckets[b]++</span>
-<span id="cb14-11"><a href="#cb14-11" aria-hidden="true"></a>    }</span>
-<span id="cb14-12"><a href="#cb14-12" aria-hidden="true"></a></span>
-<span id="cb14-13"><a href="#cb14-13" aria-hidden="true"></a>    <span class="co">// none of these ids were wentered into a 50/25/25 test</span></span>
-<span id="cb14-14"><a href="#cb14-14" aria-hidden="true"></a>    <span class="co">// and should conform to the updated test buckets 1/1/98</span></span>
-<span id="cb14-15"><a href="#cb14-15" aria-hidden="true"></a>    <span class="kw">for</span> _, bkt := <span class="kw">range</span> tests[<span class="st">&quot;test1&quot;</span>][<span class="dv">1</span>].Buckets {</span>
-<span id="cb14-16"><a href="#cb14-16" aria-hidden="true"></a>        ss, err := tests[<span class="st">&quot;test1&quot;</span>][<span class="dv">1</span>].SampleSize(bkt, POOL_SIZE)</span>
-<span id="cb14-17"><a href="#cb14-17" aria-hidden="true"></a>        <span class="kw">if</span> err != <span class="ot">nil</span> {</span>
-<span id="cb14-18"><a href="#cb14-18" aria-hidden="true"></a>            fmt.Printf(<span class="st">&quot;err=%v</span><span class="ch">\n</span><span class="st">&quot;</span>)</span>
-<span id="cb14-19"><a href="#cb14-19" aria-hidden="true"></a>            <span class="kw">continue</span></span>
-<span id="cb14-20"><a href="#cb14-20" aria-hidden="true"></a>        }</span>
-<span id="cb14-21"><a href="#cb14-21" aria-hidden="true"></a>        min := math.Floor(ss * (<span class="dv">1</span> - ACCEPTABLE_THRESHOLD))</span>
-<span id="cb14-22"><a href="#cb14-22" aria-hidden="true"></a>        max := math.Ceil(ss * (<span class="dv">1</span> + ACCEPTABLE_THRESHOLD))</span>
-<span id="cb14-23"><a href="#cb14-23" aria-hidden="true"></a>        <span class="kw">if</span> a, ok := buckets[bkt]; !ok || <span class="dt">float64</span>(a) &gt; max || <span class="dt">float64</span>(a) &lt; min {</span>
-<span id="cb14-24"><a href="#cb14-24" aria-hidden="true"></a>            fmt.Printf(<span class="st">&quot;bucket %s is not within the right range, expected=%d&lt;=x&lt;=%d,got=%d</span><span class="ch">\n</span><span class="st">&quot;</span>, bkt, <span class="dt">uint</span>(min), <span class="dt">uint</span>(max), a)</span>
-<span id="cb14-25"><a href="#cb14-25" aria-hidden="true"></a>        } <span class="kw">else</span> {</span>
-<span id="cb14-26"><a href="#cb14-26" aria-hidden="true"></a>            fmt.Printf(<span class="st">&quot;bucket %s is within the right range, expected=%d&lt;=x&lt;=%d,got=%d</span><span class="ch">\n</span><span class="st">&quot;</span>, bkt, <span class="dt">uint</span>(min), <span class="dt">uint</span>(max), a)</span>
-<span id="cb14-27"><a href="#cb14-27" aria-hidden="true"></a>        }</span>
-<span id="cb14-28"><a href="#cb14-28" aria-hidden="true"></a>    }</span>
-<span id="cb14-29"><a href="#cb14-29" aria-hidden="true"></a>}</span></code></pre></div>
+<p>Now let's make sure that new users are bucketed in our zany
+<code>control:1 / a:1 / b:98</code> bucketing scheme.</p>
+<div class="sourceCode" id="cb14"><pre
+class="sourceCode go"><code class="sourceCode go"><span id="cb14-1"><a href="#cb14-1" aria-hidden="true" tabindex="-1"></a><span class="kw">func</span> main<span class="op">()</span> <span class="op">{</span></span>
+<span id="cb14-2"><a href="#cb14-2" aria-hidden="true" tabindex="-1"></a>    <span class="co">//...</span></span>
+<span id="cb14-3"><a href="#cb14-3" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb14-4"><a href="#cb14-4" aria-hidden="true" tabindex="-1"></a>    buckets <span class="op">=</span> <span class="kw">map</span><span class="op">[</span><span class="dt">string</span><span class="op">]</span><span class="dt">uint32</span><span class="op">{}</span></span>
+<span id="cb14-5"><a href="#cb14-5" aria-hidden="true" tabindex="-1"></a>    <span class="cf">for</span> i <span class="op">:=</span> POOL_SIZE <span class="op">*</span> <span class="dv">2</span><span class="op">;</span> i <span class="op">&lt;</span> POOL_SIZE<span class="op">*</span><span class="dv">3</span><span class="op">;</span> i<span class="op">++</span> <span class="op">{</span></span>
+<span id="cb14-6"><a href="#cb14-6" aria-hidden="true" tabindex="-1"></a>        b<span class="op">,</span> err <span class="op">:=</span> tests<span class="op">.</span>GetBucket<span class="op">(</span><span class="st">&quot;test1&quot;</span><span class="op">,</span> fmt<span class="op">.</span>Sprintf<span class="op">(</span><span class="st">&quot;%d&quot;</span><span class="op">,</span> i<span class="op">))</span></span>
+<span id="cb14-7"><a href="#cb14-7" aria-hidden="true" tabindex="-1"></a>        <span class="cf">if</span> err <span class="op">!=</span> <span class="ot">nil</span> <span class="op">{</span></span>
+<span id="cb14-8"><a href="#cb14-8" aria-hidden="true" tabindex="-1"></a>            fmt<span class="op">.</span>Printf<span class="op">(</span><span class="st">&quot;err=%v</span><span class="ch">\n</span><span class="st">&quot;</span><span class="op">,</span> err<span class="op">)</span></span>
+<span id="cb14-9"><a href="#cb14-9" aria-hidden="true" tabindex="-1"></a>        <span class="op">}</span></span>
+<span id="cb14-10"><a href="#cb14-10" aria-hidden="true" tabindex="-1"></a>        buckets<span class="op">[</span>b<span class="op">]++</span></span>
+<span id="cb14-11"><a href="#cb14-11" aria-hidden="true" tabindex="-1"></a>    <span class="op">}</span></span>
+<span id="cb14-12"><a href="#cb14-12" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb14-13"><a href="#cb14-13" aria-hidden="true" tabindex="-1"></a>    <span class="co">// none of these ids were wentered into a 50/25/25 test</span></span>
+<span id="cb14-14"><a href="#cb14-14" aria-hidden="true" tabindex="-1"></a>    <span class="co">// and should conform to the updated test buckets 1/1/98</span></span>
+<span id="cb14-15"><a href="#cb14-15" aria-hidden="true" tabindex="-1"></a>    <span class="cf">for</span> _<span class="op">,</span> bkt <span class="op">:=</span> <span class="kw">range</span> tests<span class="op">[</span><span class="st">&quot;test1&quot;</span><span class="op">][</span><span class="dv">1</span><span class="op">].</span>Buckets <span class="op">{</span></span>
+<span id="cb14-16"><a href="#cb14-16" aria-hidden="true" tabindex="-1"></a>        ss<span class="op">,</span> err <span class="op">:=</span> tests<span class="op">[</span><span class="st">&quot;test1&quot;</span><span class="op">][</span><span class="dv">1</span><span class="op">].</span>SampleSize<span class="op">(</span>bkt<span class="op">,</span> POOL_SIZE<span class="op">)</span></span>
+<span id="cb14-17"><a href="#cb14-17" aria-hidden="true" tabindex="-1"></a>        <span class="cf">if</span> err <span class="op">!=</span> <span class="ot">nil</span> <span class="op">{</span></span>
+<span id="cb14-18"><a href="#cb14-18" aria-hidden="true" tabindex="-1"></a>            fmt<span class="op">.</span>Printf<span class="op">(</span><span class="st">&quot;err=%v</span><span class="ch">\n</span><span class="st">&quot;</span><span class="op">)</span></span>
+<span id="cb14-19"><a href="#cb14-19" aria-hidden="true" tabindex="-1"></a>            <span class="cf">continue</span></span>
+<span id="cb14-20"><a href="#cb14-20" aria-hidden="true" tabindex="-1"></a>        <span class="op">}</span></span>
+<span id="cb14-21"><a href="#cb14-21" aria-hidden="true" tabindex="-1"></a>        min <span class="op">:=</span> math<span class="op">.</span>Floor<span class="op">(</span>ss <span class="op">*</span> <span class="op">(</span><span class="dv">1</span> <span class="op">-</span> ACCEPTABLE_THRESHOLD<span class="op">))</span></span>
+<span id="cb14-22"><a href="#cb14-22" aria-hidden="true" tabindex="-1"></a>        max <span class="op">:=</span> math<span class="op">.</span>Ceil<span class="op">(</span>ss <span class="op">*</span> <span class="op">(</span><span class="dv">1</span> <span class="op">+</span> ACCEPTABLE_THRESHOLD<span class="op">))</span></span>
+<span id="cb14-23"><a href="#cb14-23" aria-hidden="true" tabindex="-1"></a>        <span class="cf">if</span> a<span class="op">,</span> ok <span class="op">:=</span> buckets<span class="op">[</span>bkt<span class="op">];</span> <span class="op">!</span>ok <span class="op">||</span> <span class="dt">float64</span><span class="op">(</span>a<span class="op">)</span> <span class="op">&gt;</span> max <span class="op">||</span> <span class="dt">float64</span><span class="op">(</span>a<span class="op">)</span> <span class="op">&lt;</span> min <span class="op">{</span></span>
+<span id="cb14-24"><a href="#cb14-24" aria-hidden="true" tabindex="-1"></a>            fmt<span class="op">.</span>Printf<span class="op">(</span><span class="st">&quot;bucket %s is not within the right range, expected=%d&lt;=x&lt;=%d,got=%d</span><span class="ch">\n</span><span class="st">&quot;</span><span class="op">,</span> bkt<span class="op">,</span> <span class="dt">uint</span><span class="op">(</span>min<span class="op">),</span> <span class="dt">uint</span><span class="op">(</span>max<span class="op">),</span> a<span class="op">)</span></span>
+<span id="cb14-25"><a href="#cb14-25" aria-hidden="true" tabindex="-1"></a>        <span class="op">}</span> <span class="cf">else</span> <span class="op">{</span></span>
+<span id="cb14-26"><a href="#cb14-26" aria-hidden="true" tabindex="-1"></a>            fmt<span class="op">.</span>Printf<span class="op">(</span><span class="st">&quot;bucket %s is within the right range, expected=%d&lt;=x&lt;=%d,got=%d</span><span class="ch">\n</span><span class="st">&quot;</span><span class="op">,</span> bkt<span class="op">,</span> <span class="dt">uint</span><span class="op">(</span>min<span class="op">),</span> <span class="dt">uint</span><span class="op">(</span>max<span class="op">),</span> a<span class="op">)</span></span>
+<span id="cb14-27"><a href="#cb14-27" aria-hidden="true" tabindex="-1"></a>        <span class="op">}</span></span>
+<span id="cb14-28"><a href="#cb14-28" aria-hidden="true" tabindex="-1"></a>    <span class="op">}</span></span>
+<span id="cb14-29"><a href="#cb14-29" aria-hidden="true" tabindex="-1"></a><span class="op">}</span></span></code></pre></div>
 <p>UH OH:</p>
 <pre><code>bucket control is within the right range, expected=990&lt;=x&lt;=1010,got=1009
 bucket a is not within the right range, expected=990&lt;=x&lt;=1010,got=1042
 bucket b is within the right range, expected=97020&lt;=x&lt;=98980,got=97949</code></pre>
-<p>What's our major malfunction? Looks like we didn't test our distribution enough. Let's try some stuff. We tried <code>fnv</code>, let's give <code>adler32</code> a shot. Modifying our <code>func hash(string)</code>:</p>
-<div class="sourceCode" id="cb16"><pre class="sourceCode go"><code class="sourceCode go"><span id="cb16-1"><a href="#cb16-1" aria-hidden="true"></a><span class="kw">func</span> hash(s <span class="dt">string</span>) <span class="dt">uint32</span> {</span>
-<span id="cb16-2"><a href="#cb16-2" aria-hidden="true"></a>    h := adler32.New()</span>
-<span id="cb16-3"><a href="#cb16-3" aria-hidden="true"></a>    h.Write([]<span class="dt">byte</span>(s))</span>
-<span id="cb16-4"><a href="#cb16-4" aria-hidden="true"></a>    <span class="kw">return</span> h.Sum32()</span>
-<span id="cb16-5"><a href="#cb16-5" aria-hidden="true"></a>}</span></code></pre></div>
+<p>What's our major malfunction? Looks like we didn't test our
+distribution enough. Let's try some stuff. We tried <code>fnv</code>,
+let's give <code>adler32</code> a shot. Modifying our
+<code>func hash(string)</code>:</p>
+<div class="sourceCode" id="cb16"><pre
+class="sourceCode go"><code class="sourceCode go"><span id="cb16-1"><a href="#cb16-1" aria-hidden="true" tabindex="-1"></a><span class="kw">func</span> hash<span class="op">(</span>s <span class="dt">string</span><span class="op">)</span> <span class="dt">uint32</span> <span class="op">{</span></span>
+<span id="cb16-2"><a href="#cb16-2" aria-hidden="true" tabindex="-1"></a>    h <span class="op">:=</span> adler32<span class="op">.</span>New<span class="op">()</span></span>
+<span id="cb16-3"><a href="#cb16-3" aria-hidden="true" tabindex="-1"></a>    h<span class="op">.</span>Write<span class="op">([]</span><span class="dt">byte</span><span class="op">(</span>s<span class="op">))</span></span>
+<span id="cb16-4"><a href="#cb16-4" aria-hidden="true" tabindex="-1"></a>    <span class="cf">return</span> h<span class="op">.</span>Sum32<span class="op">()</span></span>
+<span id="cb16-5"><a href="#cb16-5" aria-hidden="true" tabindex="-1"></a><span class="op">}</span></span></code></pre></div>
 <p>Aaaand, short test again:</p>
 <pre><code>bucket control is within the right range, expected=4950&lt;=x&lt;=5050,got=5034
 bucket a is within the right range, expected=4950&lt;=x&lt;=5050,got=4975
@@ -270,177 +344,212 @@ bucket b is within the right range, expected=89100&lt;=x&lt;=90900,got=89991</co
 <p>WHEW! Back in business.</p>
 <p>Okay, let's recap what our goals were and what we've done:</p>
 <ol>
-<li>✓ Determinism. A user should <em>always</em> be shown the same bucket they initially saw</li>
+<li>✓ Determinism. A user should <em>always</em> be shown the same
+bucket they initially saw</li>
 <li>✓ Even bucket distribution</li>
 <li>✓ Bucketing should never use or require more than one query</li>
-<li>✓ Tests can contain more than two buckets and each bucket can be weighted</li>
-<li>𐄂 Tests can be updated and buckets may disappear, handle gracefully</li>
+<li>✓ Tests can contain more than two buckets and each bucket can be
+weighted</li>
+<li>𐄂 Tests can be updated and buckets may disappear, handle
+gracefully</li>
 </ol>
-<h2 id="how-to-handle-failing-buckets">How to Handle Failing Buckets</h2>
-<p>Your users don't want green text on the yellow background, apparently. Let's see what happens when we update that test to remove bucket <code>a</code>.</p>
-<div class="sourceCode" id="cb18"><pre class="sourceCode go"><code class="sourceCode go"><span id="cb18-1"><a href="#cb18-1" aria-hidden="true"></a><span class="kw">func</span> main() {</span>
-<span id="cb18-2"><a href="#cb18-2" aria-hidden="true"></a>    <span class="co">//...</span></span>
-<span id="cb18-3"><a href="#cb18-3" aria-hidden="true"></a></span>
-<span id="cb18-4"><a href="#cb18-4" aria-hidden="true"></a>    tests.AddTest(<span class="st">&quot;test1&quot;</span>, Test{</span>
-<span id="cb18-5"><a href="#cb18-5" aria-hidden="true"></a>        Buckets: []<span class="dt">string</span>{<span class="st">&quot;control&quot;</span>, <span class="st">&quot;b&quot;</span>},   <span class="co">//&lt;== Notice that bucket &#39;a&#39; is missing</span></span>
-<span id="cb18-6"><a href="#cb18-6" aria-hidden="true"></a>        Weights: []<span class="dt">int</span>{<span class="dv">5</span>, <span class="dv">95</span>}, <span class="co">// 5% 90%</span></span>
-<span id="cb18-7"><a href="#cb18-7" aria-hidden="true"></a>    })</span>
-<span id="cb18-8"><a href="#cb18-8" aria-hidden="true"></a></span>
-<span id="cb18-9"><a href="#cb18-9" aria-hidden="true"></a>    buckets = <span class="kw">map</span>[<span class="dt">string</span>]<span class="dt">uint32</span>{}</span>
-<span id="cb18-10"><a href="#cb18-10" aria-hidden="true"></a>    <span class="kw">for</span> i := <span class="dv">0</span>; i &lt; POOL_SIZE; i++ {</span>
-<span id="cb18-11"><a href="#cb18-11" aria-hidden="true"></a>        b, err := tests.GetBucket(<span class="st">&quot;test1&quot;</span>, fmt.Sprintf(<span class="st">&quot;%d&quot;</span>, i))</span>
-<span id="cb18-12"><a href="#cb18-12" aria-hidden="true"></a>        <span class="kw">if</span> err != <span class="ot">nil</span> {</span>
-<span id="cb18-13"><a href="#cb18-13" aria-hidden="true"></a>            fmt.Printf(<span class="st">&quot;err=%v</span><span class="ch">\n</span><span class="st">&quot;</span>, err)</span>
-<span id="cb18-14"><a href="#cb18-14" aria-hidden="true"></a>        }</span>
-<span id="cb18-15"><a href="#cb18-15" aria-hidden="true"></a>        buckets[b]++</span>
-<span id="cb18-16"><a href="#cb18-16" aria-hidden="true"></a>    }</span>
-<span id="cb18-17"><a href="#cb18-17" aria-hidden="true"></a></span>
-<span id="cb18-18"><a href="#cb18-18" aria-hidden="true"></a>}</span></code></pre></div>
-<p>Another undesirable outcome. We're really disappointing our parents today. <code>buckets</code> contains the original distribution of <code>control:50% / a:25% / b:25%</code> and we've ripped feature <code>a</code> out of the product entirely. Here we have some decisions to make, we could make feature <code>a</code> users now see <code>control</code>, they could be rebucketed into the largest bucket, or they could just be reseeded using the latest <code>Test</code>. Grab your toolbox and let's reseed the users:</p>
-<div class="sourceCode" id="cb19"><pre class="sourceCode go"><code class="sourceCode go"><span id="cb19-1"><a href="#cb19-1" aria-hidden="true"></a><span class="kw">func</span> (a ABTest) GetBucket(testName, id <span class="dt">string</span>) (<span class="dt">string</span>, <span class="dt">error</span>) {</span>
-<span id="cb19-2"><a href="#cb19-2" aria-hidden="true"></a>    <span class="kw">var</span> t Test</span>
-<span id="cb19-3"><a href="#cb19-3" aria-hidden="true"></a>    <span class="kw">if</span> ts, ok := a[testName]; !ok || <span class="bu">len</span>(ts) == <span class="dv">0</span> {</span>
-<span id="cb19-4"><a href="#cb19-4" aria-hidden="true"></a>        <span class="kw">return</span> <span class="st">&quot;&quot;</span>, errors.New(fmt.Sprintf(<span class="st">&quot;cannot find test name %s&quot;</span>, testName))</span>
-<span id="cb19-5"><a href="#cb19-5" aria-hidden="true"></a>    } <span class="kw">else</span> {</span>
-<span id="cb19-6"><a href="#cb19-6" aria-hidden="true"></a>        t = ts[<span class="bu">len</span>(ts)-<span class="dv">1</span>]</span>
-<span id="cb19-7"><a href="#cb19-7" aria-hidden="true"></a>        <span class="kw">if</span> memoize[testName] == <span class="ot">nil</span> {</span>
-<span id="cb19-8"><a href="#cb19-8" aria-hidden="true"></a>            memoize[testName] = <span class="kw">map</span>[<span class="dt">string</span>]<span class="dt">string</span>{}</span>
-<span id="cb19-9"><a href="#cb19-9" aria-hidden="true"></a>        }</span>
-<span id="cb19-10"><a href="#cb19-10" aria-hidden="true"></a>    }</span>
-<span id="cb19-11"><a href="#cb19-11" aria-hidden="true"></a>    key := id + <span class="st">&quot;:&quot;</span> + testName</span>
-<span id="cb19-12"><a href="#cb19-12" aria-hidden="true"></a>    <span class="kw">if</span> bkt, ok := memoize[testName][key]; ok {</span>
-<span id="cb19-13"><a href="#cb19-13" aria-hidden="true"></a>        <span class="kw">for</span> _, tx := <span class="kw">range</span> t.Buckets {              <span class="co">//&lt;== make sure the bucket exists</span></span>
-<span id="cb19-14"><a href="#cb19-14" aria-hidden="true"></a>            <span class="kw">if</span> tx == bkt {</span>
-<span id="cb19-15"><a href="#cb19-15" aria-hidden="true"></a>                <span class="kw">return</span> bkt, <span class="ot">nil</span></span>
-<span id="cb19-16"><a href="#cb19-16" aria-hidden="true"></a>            }</span>
-<span id="cb19-17"><a href="#cb19-17" aria-hidden="true"></a>    }</span>
-<span id="cb19-18"><a href="#cb19-18" aria-hidden="true"></a></span>
-<span id="cb19-19"><a href="#cb19-19" aria-hidden="true"></a>    bucket, _ := t.getBucket(<span class="dt">int64</span>(hash(key) % t.totalWeight))</span>
-<span id="cb19-20"><a href="#cb19-20" aria-hidden="true"></a>    memoize[testName][key] = bucket</span>
-<span id="cb19-21"><a href="#cb19-21" aria-hidden="true"></a>    <span class="kw">return</span> bucket, <span class="ot">nil</span></span>
-<span id="cb19-22"><a href="#cb19-22" aria-hidden="true"></a>}</span></code></pre></div>
-<p>Now when we rerun our tests we end up with a nicer distribution of closer to 50/50 (it's somewhere closer to 51.25/48.75) which is what we'd expect given that we re-bucketed 25% of the users to <code>b</code> 95% of the time and the <code>control</code> 50% can only grow given our constraint that users should have the same experience each time. The math for bucket <code>b</code> is <code>0.25 (original b) + (.25 (original a) * .95 (b's current distribution))</code></p>
+<h2 id="how-to-handle-failing-buckets">How to Handle Failing
+Buckets</h2>
+<p>Your users don't want green text on the yellow background,
+apparently. Let's see what happens when we update that test to remove
+bucket <code>a</code>.</p>
+<div class="sourceCode" id="cb18"><pre
+class="sourceCode go"><code class="sourceCode go"><span id="cb18-1"><a href="#cb18-1" aria-hidden="true" tabindex="-1"></a><span class="kw">func</span> main<span class="op">()</span> <span class="op">{</span></span>
+<span id="cb18-2"><a href="#cb18-2" aria-hidden="true" tabindex="-1"></a>    <span class="co">//...</span></span>
+<span id="cb18-3"><a href="#cb18-3" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb18-4"><a href="#cb18-4" aria-hidden="true" tabindex="-1"></a>    tests<span class="op">.</span>AddTest<span class="op">(</span><span class="st">&quot;test1&quot;</span><span class="op">,</span> Test<span class="op">{</span></span>
+<span id="cb18-5"><a href="#cb18-5" aria-hidden="true" tabindex="-1"></a>        Buckets<span class="op">:</span> <span class="op">[]</span><span class="dt">string</span><span class="op">{</span><span class="st">&quot;control&quot;</span><span class="op">,</span> <span class="st">&quot;b&quot;</span><span class="op">},</span>   <span class="co">//&lt;== Notice that bucket &#39;a&#39; is missing</span></span>
+<span id="cb18-6"><a href="#cb18-6" aria-hidden="true" tabindex="-1"></a>        Weights<span class="op">:</span> <span class="op">[]</span><span class="dt">int</span><span class="op">{</span><span class="dv">5</span><span class="op">,</span> <span class="dv">95</span><span class="op">},</span> <span class="co">// 5% 90%</span></span>
+<span id="cb18-7"><a href="#cb18-7" aria-hidden="true" tabindex="-1"></a>    <span class="op">})</span></span>
+<span id="cb18-8"><a href="#cb18-8" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb18-9"><a href="#cb18-9" aria-hidden="true" tabindex="-1"></a>    buckets <span class="op">=</span> <span class="kw">map</span><span class="op">[</span><span class="dt">string</span><span class="op">]</span><span class="dt">uint32</span><span class="op">{}</span></span>
+<span id="cb18-10"><a href="#cb18-10" aria-hidden="true" tabindex="-1"></a>    <span class="cf">for</span> i <span class="op">:=</span> <span class="dv">0</span><span class="op">;</span> i <span class="op">&lt;</span> POOL_SIZE<span class="op">;</span> i<span class="op">++</span> <span class="op">{</span></span>
+<span id="cb18-11"><a href="#cb18-11" aria-hidden="true" tabindex="-1"></a>        b<span class="op">,</span> err <span class="op">:=</span> tests<span class="op">.</span>GetBucket<span class="op">(</span><span class="st">&quot;test1&quot;</span><span class="op">,</span> fmt<span class="op">.</span>Sprintf<span class="op">(</span><span class="st">&quot;%d&quot;</span><span class="op">,</span> i<span class="op">))</span></span>
+<span id="cb18-12"><a href="#cb18-12" aria-hidden="true" tabindex="-1"></a>        <span class="cf">if</span> err <span class="op">!=</span> <span class="ot">nil</span> <span class="op">{</span></span>
+<span id="cb18-13"><a href="#cb18-13" aria-hidden="true" tabindex="-1"></a>            fmt<span class="op">.</span>Printf<span class="op">(</span><span class="st">&quot;err=%v</span><span class="ch">\n</span><span class="st">&quot;</span><span class="op">,</span> err<span class="op">)</span></span>
+<span id="cb18-14"><a href="#cb18-14" aria-hidden="true" tabindex="-1"></a>        <span class="op">}</span></span>
+<span id="cb18-15"><a href="#cb18-15" aria-hidden="true" tabindex="-1"></a>        buckets<span class="op">[</span>b<span class="op">]++</span></span>
+<span id="cb18-16"><a href="#cb18-16" aria-hidden="true" tabindex="-1"></a>    <span class="op">}</span></span>
+<span id="cb18-17"><a href="#cb18-17" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb18-18"><a href="#cb18-18" aria-hidden="true" tabindex="-1"></a><span class="op">}</span></span></code></pre></div>
+<p>Another undesirable outcome. We're really disappointing our parents
+today. <code>buckets</code> contains the original distribution of
+<code>control:50% / a:25% / b:25%</code> and we've ripped feature
+<code>a</code> out of the product entirely. Here we have some decisions
+to make, we could make feature <code>a</code> users now see
+<code>control</code>, they could be rebucketed into the largest bucket,
+or they could just be reseeded using the latest <code>Test</code>. Grab
+your toolbox and let's reseed the users:</p>
+<div class="sourceCode" id="cb19"><pre
+class="sourceCode go"><code class="sourceCode go"><span id="cb19-1"><a href="#cb19-1" aria-hidden="true" tabindex="-1"></a><span class="kw">func</span> <span class="op">(</span>a ABTest<span class="op">)</span> GetBucket<span class="op">(</span>testName<span class="op">,</span> id <span class="dt">string</span><span class="op">)</span> <span class="op">(</span><span class="dt">string</span><span class="op">,</span> <span class="dt">error</span><span class="op">)</span> <span class="op">{</span></span>
+<span id="cb19-2"><a href="#cb19-2" aria-hidden="true" tabindex="-1"></a>    <span class="kw">var</span> t Test</span>
+<span id="cb19-3"><a href="#cb19-3" aria-hidden="true" tabindex="-1"></a>    <span class="cf">if</span> ts<span class="op">,</span> ok <span class="op">:=</span> a<span class="op">[</span>testName<span class="op">];</span> <span class="op">!</span>ok <span class="op">||</span> <span class="bu">len</span><span class="op">(</span>ts<span class="op">)</span> <span class="op">==</span> <span class="dv">0</span> <span class="op">{</span></span>
+<span id="cb19-4"><a href="#cb19-4" aria-hidden="true" tabindex="-1"></a>        <span class="cf">return</span> <span class="st">&quot;&quot;</span><span class="op">,</span> errors<span class="op">.</span>New<span class="op">(</span>fmt<span class="op">.</span>Sprintf<span class="op">(</span><span class="st">&quot;cannot find test name %s&quot;</span><span class="op">,</span> testName<span class="op">))</span></span>
+<span id="cb19-5"><a href="#cb19-5" aria-hidden="true" tabindex="-1"></a>    <span class="op">}</span> <span class="cf">else</span> <span class="op">{</span></span>
+<span id="cb19-6"><a href="#cb19-6" aria-hidden="true" tabindex="-1"></a>        t <span class="op">=</span> ts<span class="op">[</span><span class="bu">len</span><span class="op">(</span>ts<span class="op">)-</span><span class="dv">1</span><span class="op">]</span></span>
+<span id="cb19-7"><a href="#cb19-7" aria-hidden="true" tabindex="-1"></a>        <span class="cf">if</span> memoize<span class="op">[</span>testName<span class="op">]</span> <span class="op">==</span> <span class="ot">nil</span> <span class="op">{</span></span>
+<span id="cb19-8"><a href="#cb19-8" aria-hidden="true" tabindex="-1"></a>            memoize<span class="op">[</span>testName<span class="op">]</span> <span class="op">=</span> <span class="kw">map</span><span class="op">[</span><span class="dt">string</span><span class="op">]</span><span class="dt">string</span><span class="op">{}</span></span>
+<span id="cb19-9"><a href="#cb19-9" aria-hidden="true" tabindex="-1"></a>        <span class="op">}</span></span>
+<span id="cb19-10"><a href="#cb19-10" aria-hidden="true" tabindex="-1"></a>    <span class="op">}</span></span>
+<span id="cb19-11"><a href="#cb19-11" aria-hidden="true" tabindex="-1"></a>    key <span class="op">:=</span> id <span class="op">+</span> <span class="st">&quot;:&quot;</span> <span class="op">+</span> testName</span>
+<span id="cb19-12"><a href="#cb19-12" aria-hidden="true" tabindex="-1"></a>    <span class="cf">if</span> bkt<span class="op">,</span> ok <span class="op">:=</span> memoize<span class="op">[</span>testName<span class="op">][</span>key<span class="op">];</span> ok <span class="op">{</span></span>
+<span id="cb19-13"><a href="#cb19-13" aria-hidden="true" tabindex="-1"></a>        <span class="cf">for</span> _<span class="op">,</span> tx <span class="op">:=</span> <span class="kw">range</span> t<span class="op">.</span>Buckets <span class="op">{</span>              <span class="co">//&lt;== make sure the bucket exists</span></span>
+<span id="cb19-14"><a href="#cb19-14" aria-hidden="true" tabindex="-1"></a>            <span class="cf">if</span> tx <span class="op">==</span> bkt <span class="op">{</span></span>
+<span id="cb19-15"><a href="#cb19-15" aria-hidden="true" tabindex="-1"></a>                <span class="cf">return</span> bkt<span class="op">,</span> <span class="ot">nil</span></span>
+<span id="cb19-16"><a href="#cb19-16" aria-hidden="true" tabindex="-1"></a>            <span class="op">}</span></span>
+<span id="cb19-17"><a href="#cb19-17" aria-hidden="true" tabindex="-1"></a>    <span class="op">}</span></span>
+<span id="cb19-18"><a href="#cb19-18" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb19-19"><a href="#cb19-19" aria-hidden="true" tabindex="-1"></a>    bucket<span class="op">,</span> _ <span class="op">:=</span> t<span class="op">.</span>getBucket<span class="op">(</span><span class="dt">int64</span><span class="op">(</span>hash<span class="op">(</span>key<span class="op">)</span> <span class="op">%</span> t<span class="op">.</span>totalWeight<span class="op">))</span></span>
+<span id="cb19-20"><a href="#cb19-20" aria-hidden="true" tabindex="-1"></a>    memoize<span class="op">[</span>testName<span class="op">][</span>key<span class="op">]</span> <span class="op">=</span> bucket</span>
+<span id="cb19-21"><a href="#cb19-21" aria-hidden="true" tabindex="-1"></a>    <span class="cf">return</span> bucket<span class="op">,</span> <span class="ot">nil</span></span>
+<span id="cb19-22"><a href="#cb19-22" aria-hidden="true" tabindex="-1"></a><span class="op">}</span></span></code></pre></div>
+<p>Now when we rerun our tests we end up with a nicer distribution of
+closer to 50/50 (it's somewhere closer to 51.25/48.75) which is what
+we'd expect given that we re-bucketed 25% of the users to <code>b</code>
+95% of the time and the <code>control</code> 50% can only grow given our
+constraint that users should have the same experience each time. The
+math for bucket <code>b</code> is
+<code>0.25 (original b) + (.25 (original a) * .95 (b's current distribution))</code></p>
 <p>This gives us goal five, great work everyone!</p>
 <h2 id="bonus-testing">Bonus: Testing</h2>
-<p>Note that about half way through this exercise we had to modify our hashing function. FNV wasn't performing poorly but it wasn't meeting our distribution constraint. One of the more fun aspects of being a programmer is that you can theorize about things then you can benchmark them, and then you get to argue about your findings with people who want nothing more than to gain your power or prove you wrong. Let's write a better test for something real world.</p>
-<p>In the real world, our users aren't sequential numbers and sometimes they're not numbers at all. Users don't also sequentially visit features on your site. Let's find the best distributed algorithm for UUIDs among different sample sizes:</p>
-<div class="sourceCode" id="cb20"><pre class="sourceCode go"><code class="sourceCode go"><span id="cb20-1"><a href="#cb20-1" aria-hidden="true"></a><span class="kw">func</span> adlerHash(s <span class="dt">string</span>) <span class="dt">uint64</span> {</span>
-<span id="cb20-2"><a href="#cb20-2" aria-hidden="true"></a>    h := adler32.New()</span>
-<span id="cb20-3"><a href="#cb20-3" aria-hidden="true"></a>    h.Write([]<span class="dt">byte</span>(s))</span>
-<span id="cb20-4"><a href="#cb20-4" aria-hidden="true"></a>    <span class="kw">return</span> <span class="dt">uint64</span>(h.Sum32())</span>
-<span id="cb20-5"><a href="#cb20-5" aria-hidden="true"></a>}</span>
-<span id="cb20-6"><a href="#cb20-6" aria-hidden="true"></a></span>
-<span id="cb20-7"><a href="#cb20-7" aria-hidden="true"></a><span class="kw">func</span> crc32HashIEEE(s <span class="dt">string</span>) <span class="dt">uint64</span> {</span>
-<span id="cb20-8"><a href="#cb20-8" aria-hidden="true"></a>    h := crc32.New(crc32.MakeTable(crc32.IEEE))</span>
-<span id="cb20-9"><a href="#cb20-9" aria-hidden="true"></a>    h.Write([]<span class="dt">byte</span>(s))</span>
-<span id="cb20-10"><a href="#cb20-10" aria-hidden="true"></a>    <span class="kw">return</span> <span class="dt">uint64</span>(h.Sum32())</span>
-<span id="cb20-11"><a href="#cb20-11" aria-hidden="true"></a>}</span>
-<span id="cb20-12"><a href="#cb20-12" aria-hidden="true"></a></span>
-<span id="cb20-13"><a href="#cb20-13" aria-hidden="true"></a><span class="kw">func</span> crc32HashCastagnoli(s <span class="dt">string</span>) <span class="dt">uint64</span> {</span>
-<span id="cb20-14"><a href="#cb20-14" aria-hidden="true"></a>    h := crc32.New(crc32.MakeTable(crc32.Castagnoli))</span>
-<span id="cb20-15"><a href="#cb20-15" aria-hidden="true"></a>    h.Write([]<span class="dt">byte</span>(s))</span>
-<span id="cb20-16"><a href="#cb20-16" aria-hidden="true"></a>    <span class="kw">return</span> <span class="dt">uint64</span>(h.Sum32())</span>
-<span id="cb20-17"><a href="#cb20-17" aria-hidden="true"></a>}</span>
-<span id="cb20-18"><a href="#cb20-18" aria-hidden="true"></a></span>
-<span id="cb20-19"><a href="#cb20-19" aria-hidden="true"></a><span class="kw">func</span> crc32HashKoopman(s <span class="dt">string</span>) <span class="dt">uint64</span> {</span>
-<span id="cb20-20"><a href="#cb20-20" aria-hidden="true"></a>    h := crc32.New(crc32.MakeTable(crc32.Koopman))</span>
-<span id="cb20-21"><a href="#cb20-21" aria-hidden="true"></a>    h.Write([]<span class="dt">byte</span>(s))</span>
-<span id="cb20-22"><a href="#cb20-22" aria-hidden="true"></a>    <span class="kw">return</span> <span class="dt">uint64</span>(h.Sum32())</span>
-<span id="cb20-23"><a href="#cb20-23" aria-hidden="true"></a>}</span>
-<span id="cb20-24"><a href="#cb20-24" aria-hidden="true"></a></span>
-<span id="cb20-25"><a href="#cb20-25" aria-hidden="true"></a><span class="kw">func</span> crc64HashECMA(s <span class="dt">string</span>) <span class="dt">uint64</span> {</span>
-<span id="cb20-26"><a href="#cb20-26" aria-hidden="true"></a>    h := crc64.New(crc64.MakeTable(crc64.ECMA))</span>
-<span id="cb20-27"><a href="#cb20-27" aria-hidden="true"></a>    h.Write([]<span class="dt">byte</span>(s))</span>
-<span id="cb20-28"><a href="#cb20-28" aria-hidden="true"></a>    <span class="kw">return</span> h.Sum64()</span>
-<span id="cb20-29"><a href="#cb20-29" aria-hidden="true"></a>}</span>
-<span id="cb20-30"><a href="#cb20-30" aria-hidden="true"></a></span>
-<span id="cb20-31"><a href="#cb20-31" aria-hidden="true"></a><span class="kw">func</span> crc64HashISO(s <span class="dt">string</span>) <span class="dt">uint64</span> {</span>
-<span id="cb20-32"><a href="#cb20-32" aria-hidden="true"></a>    h := crc64.New(crc64.MakeTable(crc64.ISO))</span>
-<span id="cb20-33"><a href="#cb20-33" aria-hidden="true"></a>    h.Write([]<span class="dt">byte</span>(s))</span>
-<span id="cb20-34"><a href="#cb20-34" aria-hidden="true"></a>    <span class="kw">return</span> h.Sum64()</span>
-<span id="cb20-35"><a href="#cb20-35" aria-hidden="true"></a>}</span>
-<span id="cb20-36"><a href="#cb20-36" aria-hidden="true"></a></span>
-<span id="cb20-37"><a href="#cb20-37" aria-hidden="true"></a><span class="kw">func</span> fnvHash32(s <span class="dt">string</span>) <span class="dt">uint64</span> {</span>
-<span id="cb20-38"><a href="#cb20-38" aria-hidden="true"></a>    h := fnv.New32()</span>
-<span id="cb20-39"><a href="#cb20-39" aria-hidden="true"></a>    h.Write([]<span class="dt">byte</span>(s))</span>
-<span id="cb20-40"><a href="#cb20-40" aria-hidden="true"></a>    <span class="kw">return</span> <span class="dt">uint64</span>(h.Sum32())</span>
-<span id="cb20-41"><a href="#cb20-41" aria-hidden="true"></a>}</span>
-<span id="cb20-42"><a href="#cb20-42" aria-hidden="true"></a></span>
-<span id="cb20-43"><a href="#cb20-43" aria-hidden="true"></a><span class="kw">func</span> fnvHash64(s <span class="dt">string</span>) <span class="dt">uint64</span> {</span>
-<span id="cb20-44"><a href="#cb20-44" aria-hidden="true"></a>    h := fnv.New64()</span>
-<span id="cb20-45"><a href="#cb20-45" aria-hidden="true"></a>    h.Write([]<span class="dt">byte</span>(s))</span>
-<span id="cb20-46"><a href="#cb20-46" aria-hidden="true"></a>    <span class="kw">return</span> h.Sum64()</span>
-<span id="cb20-47"><a href="#cb20-47" aria-hidden="true"></a>}</span>
-<span id="cb20-48"><a href="#cb20-48" aria-hidden="true"></a></span>
-<span id="cb20-49"><a href="#cb20-49" aria-hidden="true"></a><span class="kw">func</span> main() {</span>
-<span id="cb20-50"><a href="#cb20-50" aria-hidden="true"></a>    sampleSizes := []<span class="dt">int</span>{<span class="dv">30</span>, <span class="dv">100</span>, <span class="dv">100000</span>}</span>
-<span id="cb20-51"><a href="#cb20-51" aria-hidden="true"></a>    buckets := []Test{</span>
-<span id="cb20-52"><a href="#cb20-52" aria-hidden="true"></a>        {</span>
-<span id="cb20-53"><a href="#cb20-53" aria-hidden="true"></a>            Buckets:     []<span class="dt">string</span>{<span class="st">&quot;a&quot;</span>, <span class="st">&quot;b&quot;</span>},</span>
-<span id="cb20-54"><a href="#cb20-54" aria-hidden="true"></a>            Weights:     []<span class="dt">int</span>{<span class="dv">1</span>, <span class="dv">1</span>},</span>
-<span id="cb20-55"><a href="#cb20-55" aria-hidden="true"></a>            totalWeight: <span class="dv">2</span>,</span>
-<span id="cb20-56"><a href="#cb20-56" aria-hidden="true"></a>        },</span>
-<span id="cb20-57"><a href="#cb20-57" aria-hidden="true"></a>        {</span>
-<span id="cb20-58"><a href="#cb20-58" aria-hidden="true"></a>            Buckets:     []<span class="dt">string</span>{<span class="st">&quot;a&quot;</span>, <span class="st">&quot;b&quot;</span>, <span class="st">&quot;c&quot;</span>, <span class="st">&quot;d&quot;</span>},</span>
-<span id="cb20-59"><a href="#cb20-59" aria-hidden="true"></a>            Weights:     []<span class="dt">int</span>{<span class="dv">1</span>, <span class="dv">1</span>, <span class="dv">1</span>, <span class="dv">1</span>},</span>
-<span id="cb20-60"><a href="#cb20-60" aria-hidden="true"></a>            totalWeight: <span class="dv">4</span>,</span>
-<span id="cb20-61"><a href="#cb20-61" aria-hidden="true"></a>        },</span>
-<span id="cb20-62"><a href="#cb20-62" aria-hidden="true"></a>        {</span>
-<span id="cb20-63"><a href="#cb20-63" aria-hidden="true"></a>            Buckets:     []<span class="dt">string</span>{<span class="st">&quot;a&quot;</span>, <span class="st">&quot;b&quot;</span>, <span class="st">&quot;c&quot;</span>, <span class="st">&quot;d&quot;</span>, <span class="st">&quot;e&quot;</span>, <span class="st">&quot;f&quot;</span>, <span class="st">&quot;g&quot;</span>, <span class="st">&quot;h&quot;</span>},</span>
-<span id="cb20-64"><a href="#cb20-64" aria-hidden="true"></a>            Weights:     []<span class="dt">int</span>{<span class="dv">1</span>, <span class="dv">1</span>, <span class="dv">1</span>, <span class="dv">1</span>, <span class="dv">1</span>, <span class="dv">1</span>, <span class="dv">1</span>, <span class="dv">1</span>},</span>
-<span id="cb20-65"><a href="#cb20-65" aria-hidden="true"></a>            totalWeight: <span class="dv">8</span>,</span>
-<span id="cb20-66"><a href="#cb20-66" aria-hidden="true"></a>        },</span>
-<span id="cb20-67"><a href="#cb20-67" aria-hidden="true"></a>        {</span>
-<span id="cb20-68"><a href="#cb20-68" aria-hidden="true"></a>            Buckets:     []<span class="dt">string</span>{<span class="st">&quot;a&quot;</span>, <span class="st">&quot;b&quot;</span>, <span class="st">&quot;c&quot;</span>, <span class="st">&quot;d&quot;</span>, <span class="st">&quot;e&quot;</span>, <span class="st">&quot;f&quot;</span>, <span class="st">&quot;g&quot;</span>, <span class="st">&quot;h&quot;</span>, <span class="st">&quot;i&quot;</span>, <span class="st">&quot;j&quot;</span>, <span class="st">&quot;k&quot;</span>, <span class="st">&quot;l&quot;</span>, <span class="st">&quot;m&quot;</span>, <span class="st">&quot;n&quot;</span>, <span class="st">&quot;o&quot;</span>, <span class="st">&quot;p&quot;</span>},</span>
-<span id="cb20-69"><a href="#cb20-69" aria-hidden="true"></a>            Weights:     []<span class="dt">int</span>{<span class="dv">1</span>, <span class="dv">1</span>, <span class="dv">1</span>, <span class="dv">1</span>, <span class="dv">1</span>, <span class="dv">1</span>, <span class="dv">1</span>, <span class="dv">1</span>, <span class="dv">1</span>, <span class="dv">1</span>, <span class="dv">1</span>, <span class="dv">1</span>, <span class="dv">1</span>, <span class="dv">1</span>, <span class="dv">1</span>, <span class="dv">1</span>},</span>
-<span id="cb20-70"><a href="#cb20-70" aria-hidden="true"></a>            totalWeight: <span class="dv">16</span>,</span>
-<span id="cb20-71"><a href="#cb20-71" aria-hidden="true"></a>        },</span>
-<span id="cb20-72"><a href="#cb20-72" aria-hidden="true"></a>    }</span>
-<span id="cb20-73"><a href="#cb20-73" aria-hidden="true"></a>    ids := []<span class="dt">string</span>{}</span>
-<span id="cb20-74"><a href="#cb20-74" aria-hidden="true"></a>    hashes := <span class="kw">map</span>[<span class="dt">string</span>](<span class="kw">func</span>(<span class="dt">string</span>) <span class="dt">uint64</span>){</span>
-<span id="cb20-75"><a href="#cb20-75" aria-hidden="true"></a>        <span class="st">&quot;adler&quot;</span>:            adlerHash,</span>
-<span id="cb20-76"><a href="#cb20-76" aria-hidden="true"></a>        <span class="st">&quot;crc32 IEEE&quot;</span>:       crc32HashIEEE,</span>
-<span id="cb20-77"><a href="#cb20-77" aria-hidden="true"></a>        <span class="st">&quot;crc32 Castagnoli&quot;</span>: crc32HashCastagnoli,</span>
-<span id="cb20-78"><a href="#cb20-78" aria-hidden="true"></a>        <span class="st">&quot;crc32 Koopman&quot;</span>:    crc32HashKoopman,</span>
-<span id="cb20-79"><a href="#cb20-79" aria-hidden="true"></a>        <span class="st">&quot;crc64 ECMA&quot;</span>:       crc64HashECMA,</span>
-<span id="cb20-80"><a href="#cb20-80" aria-hidden="true"></a>        <span class="st">&quot;crc64 ISO&quot;</span>:        crc64HashISO,</span>
-<span id="cb20-81"><a href="#cb20-81" aria-hidden="true"></a>        <span class="st">&quot;fnv32&quot;</span>:            fnvHash32,</span>
-<span id="cb20-82"><a href="#cb20-82" aria-hidden="true"></a>        <span class="st">&quot;fnv64&quot;</span>:            fnvHash64,</span>
-<span id="cb20-83"><a href="#cb20-83" aria-hidden="true"></a>    }</span>
-<span id="cb20-84"><a href="#cb20-84" aria-hidden="true"></a>    order := []<span class="dt">string</span>{<span class="st">&quot;adler&quot;</span>, <span class="st">&quot;crc32 IEEE&quot;</span>, <span class="st">&quot;crc32 Castagnoli&quot;</span>, <span class="st">&quot;crc32 Koopman&quot;</span>, <span class="st">&quot;crc64 ECMA&quot;</span>, <span class="st">&quot;crc64 ISO&quot;</span>, <span class="st">&quot;fnv32&quot;</span>, <span class="st">&quot;fnv64&quot;</span>}</span>
-<span id="cb20-85"><a href="#cb20-85" aria-hidden="true"></a></span>
-<span id="cb20-86"><a href="#cb20-86" aria-hidden="true"></a>    <span class="kw">for</span> i := <span class="dv">0</span>; i &lt; <span class="dv">100000</span>; i++ {</span>
-<span id="cb20-87"><a href="#cb20-87" aria-hidden="true"></a>        ids = <span class="bu">append</span>(ids, uuid.New().String())</span>
-<span id="cb20-88"><a href="#cb20-88" aria-hidden="true"></a>    }</span>
-<span id="cb20-89"><a href="#cb20-89" aria-hidden="true"></a></span>
-<span id="cb20-90"><a href="#cb20-90" aria-hidden="true"></a>    <span class="co">/* Run our tests, this could take a while depending on your parameters */</span></span>
-<span id="cb20-91"><a href="#cb20-91" aria-hidden="true"></a>    <span class="kw">for</span> _, sample := <span class="kw">range</span> sampleSizes {</span>
-<span id="cb20-92"><a href="#cb20-92" aria-hidden="true"></a>        fmt.Printf(<span class="st">&quot;sample size %d:</span><span class="ch">\n</span><span class="st">&quot;</span>, sample)</span>
-<span id="cb20-93"><a href="#cb20-93" aria-hidden="true"></a></span>
-<span id="cb20-94"><a href="#cb20-94" aria-hidden="true"></a>        <span class="kw">for</span> _, t := <span class="kw">range</span> buckets {</span>
-<span id="cb20-95"><a href="#cb20-95" aria-hidden="true"></a>            fmt.Printf(<span class="st">&quot;  #%d buckets (%0.2f%% dist)</span><span class="ch">\n</span><span class="st">&quot;</span>, t.totalWeight, <span class="dv">100</span>/<span class="dt">float64</span>(t.totalWeight))</span>
-<span id="cb20-96"><a href="#cb20-96" aria-hidden="true"></a></span>
-<span id="cb20-97"><a href="#cb20-97" aria-hidden="true"></a>            dist := <span class="kw">map</span>[<span class="dt">string</span>]<span class="kw">map</span>[<span class="dt">string</span>]<span class="dt">uint64</span>{}</span>
-<span id="cb20-98"><a href="#cb20-98" aria-hidden="true"></a>            <span class="kw">for</span> _, n := <span class="kw">range</span> order {</span>
-<span id="cb20-99"><a href="#cb20-99" aria-hidden="true"></a>                fn := hashes[n]</span>
-<span id="cb20-100"><a href="#cb20-100" aria-hidden="true"></a>                dist[n] = <span class="kw">map</span>[<span class="dt">string</span>]<span class="dt">uint64</span>{}</span>
-<span id="cb20-101"><a href="#cb20-101" aria-hidden="true"></a>                <span class="kw">for</span> idx := <span class="dv">0</span>; idx &lt; sample; idx++ { <span class="co">// only use the first X of sample</span></span>
-<span id="cb20-102"><a href="#cb20-102" aria-hidden="true"></a>                    b, _ := t.getBucket(<span class="dt">int64</span>(fn(ids[idx]) % <span class="dt">uint64</span>(t.totalWeight)))</span>
-<span id="cb20-103"><a href="#cb20-103" aria-hidden="true"></a>                    dist[n][b]++</span>
-<span id="cb20-104"><a href="#cb20-104" aria-hidden="true"></a>                }</span>
-<span id="cb20-105"><a href="#cb20-105" aria-hidden="true"></a>            }</span>
-<span id="cb20-106"><a href="#cb20-106" aria-hidden="true"></a></span>
-<span id="cb20-107"><a href="#cb20-107" aria-hidden="true"></a>            <span class="kw">for</span> _, h := <span class="kw">range</span> order {</span>
-<span id="cb20-108"><a href="#cb20-108" aria-hidden="true"></a>                fmt.Printf(<span class="st">&quot;    %-16s: &quot;</span>, h)</span>
-<span id="cb20-109"><a href="#cb20-109" aria-hidden="true"></a>                <span class="kw">for</span> _, tx := <span class="kw">range</span> dist[h] {</span>
-<span id="cb20-110"><a href="#cb20-110" aria-hidden="true"></a>                    fmt.Printf(<span class="st">&quot;%02.2f%% &quot;</span>, <span class="dt">float64</span>(tx)*<span class="dv">100</span><span class="fl">.0</span>/<span class="dt">float64</span>(sample))</span>
-<span id="cb20-111"><a href="#cb20-111" aria-hidden="true"></a>                }</span>
-<span id="cb20-112"><a href="#cb20-112" aria-hidden="true"></a>                fmt.Printf(<span class="st">&quot;</span><span class="ch">\n</span><span class="st">&quot;</span>)</span>
-<span id="cb20-113"><a href="#cb20-113" aria-hidden="true"></a>            }</span>
-<span id="cb20-114"><a href="#cb20-114" aria-hidden="true"></a>        }</span>
-<span id="cb20-115"><a href="#cb20-115" aria-hidden="true"></a>    }</span>
-<span id="cb20-116"><a href="#cb20-116" aria-hidden="true"></a>}</span></code></pre></div>
-<p>This will give you a nice little table showing different distribution characteristics given different sample and bucket sizes for each hashing method listed. A fun thing to do before you head out to return your library books is to implement your own bucketing method, try to get a better distribution with low sample sizes!</p>
+<p>Note that about half way through this exercise we had to modify our
+hashing function. FNV wasn't performing poorly but it wasn't meeting our
+distribution constraint. One of the more fun aspects of being a
+programmer is that you can theorize about things then you can benchmark
+them, and then you get to argue about your findings with people who want
+nothing more than to gain your power or prove you wrong. Let's write a
+better test for something real world.</p>
+<p>In the real world, our users aren't sequential numbers and sometimes
+they're not numbers at all. Users don't also sequentially visit features
+on your site. Let's find the best distributed algorithm for UUIDs among
+different sample sizes:</p>
+<div class="sourceCode" id="cb20"><pre
+class="sourceCode go"><code class="sourceCode go"><span id="cb20-1"><a href="#cb20-1" aria-hidden="true" tabindex="-1"></a><span class="kw">func</span> adlerHash<span class="op">(</span>s <span class="dt">string</span><span class="op">)</span> <span class="dt">uint64</span> <span class="op">{</span></span>
+<span id="cb20-2"><a href="#cb20-2" aria-hidden="true" tabindex="-1"></a>    h <span class="op">:=</span> adler32<span class="op">.</span>New<span class="op">()</span></span>
+<span id="cb20-3"><a href="#cb20-3" aria-hidden="true" tabindex="-1"></a>    h<span class="op">.</span>Write<span class="op">([]</span><span class="dt">byte</span><span class="op">(</span>s<span class="op">))</span></span>
+<span id="cb20-4"><a href="#cb20-4" aria-hidden="true" tabindex="-1"></a>    <span class="cf">return</span> <span class="dt">uint64</span><span class="op">(</span>h<span class="op">.</span>Sum32<span class="op">())</span></span>
+<span id="cb20-5"><a href="#cb20-5" aria-hidden="true" tabindex="-1"></a><span class="op">}</span></span>
+<span id="cb20-6"><a href="#cb20-6" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb20-7"><a href="#cb20-7" aria-hidden="true" tabindex="-1"></a><span class="kw">func</span> crc32HashIEEE<span class="op">(</span>s <span class="dt">string</span><span class="op">)</span> <span class="dt">uint64</span> <span class="op">{</span></span>
+<span id="cb20-8"><a href="#cb20-8" aria-hidden="true" tabindex="-1"></a>    h <span class="op">:=</span> crc32<span class="op">.</span>New<span class="op">(</span>crc32<span class="op">.</span>MakeTable<span class="op">(</span>crc32<span class="op">.</span>IEEE<span class="op">))</span></span>
+<span id="cb20-9"><a href="#cb20-9" aria-hidden="true" tabindex="-1"></a>    h<span class="op">.</span>Write<span class="op">([]</span><span class="dt">byte</span><span class="op">(</span>s<span class="op">))</span></span>
+<span id="cb20-10"><a href="#cb20-10" aria-hidden="true" tabindex="-1"></a>    <span class="cf">return</span> <span class="dt">uint64</span><span class="op">(</span>h<span class="op">.</span>Sum32<span class="op">())</span></span>
+<span id="cb20-11"><a href="#cb20-11" aria-hidden="true" tabindex="-1"></a><span class="op">}</span></span>
+<span id="cb20-12"><a href="#cb20-12" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb20-13"><a href="#cb20-13" aria-hidden="true" tabindex="-1"></a><span class="kw">func</span> crc32HashCastagnoli<span class="op">(</span>s <span class="dt">string</span><span class="op">)</span> <span class="dt">uint64</span> <span class="op">{</span></span>
+<span id="cb20-14"><a href="#cb20-14" aria-hidden="true" tabindex="-1"></a>    h <span class="op">:=</span> crc32<span class="op">.</span>New<span class="op">(</span>crc32<span class="op">.</span>MakeTable<span class="op">(</span>crc32<span class="op">.</span>Castagnoli<span class="op">))</span></span>
+<span id="cb20-15"><a href="#cb20-15" aria-hidden="true" tabindex="-1"></a>    h<span class="op">.</span>Write<span class="op">([]</span><span class="dt">byte</span><span class="op">(</span>s<span class="op">))</span></span>
+<span id="cb20-16"><a href="#cb20-16" aria-hidden="true" tabindex="-1"></a>    <span class="cf">return</span> <span class="dt">uint64</span><span class="op">(</span>h<span class="op">.</span>Sum32<span class="op">())</span></span>
+<span id="cb20-17"><a href="#cb20-17" aria-hidden="true" tabindex="-1"></a><span class="op">}</span></span>
+<span id="cb20-18"><a href="#cb20-18" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb20-19"><a href="#cb20-19" aria-hidden="true" tabindex="-1"></a><span class="kw">func</span> crc32HashKoopman<span class="op">(</span>s <span class="dt">string</span><span class="op">)</span> <span class="dt">uint64</span> <span class="op">{</span></span>
+<span id="cb20-20"><a href="#cb20-20" aria-hidden="true" tabindex="-1"></a>    h <span class="op">:=</span> crc32<span class="op">.</span>New<span class="op">(</span>crc32<span class="op">.</span>MakeTable<span class="op">(</span>crc32<span class="op">.</span>Koopman<span class="op">))</span></span>
+<span id="cb20-21"><a href="#cb20-21" aria-hidden="true" tabindex="-1"></a>    h<span class="op">.</span>Write<span class="op">([]</span><span class="dt">byte</span><span class="op">(</span>s<span class="op">))</span></span>
+<span id="cb20-22"><a href="#cb20-22" aria-hidden="true" tabindex="-1"></a>    <span class="cf">return</span> <span class="dt">uint64</span><span class="op">(</span>h<span class="op">.</span>Sum32<span class="op">())</span></span>
+<span id="cb20-23"><a href="#cb20-23" aria-hidden="true" tabindex="-1"></a><span class="op">}</span></span>
+<span id="cb20-24"><a href="#cb20-24" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb20-25"><a href="#cb20-25" aria-hidden="true" tabindex="-1"></a><span class="kw">func</span> crc64HashECMA<span class="op">(</span>s <span class="dt">string</span><span class="op">)</span> <span class="dt">uint64</span> <span class="op">{</span></span>
+<span id="cb20-26"><a href="#cb20-26" aria-hidden="true" tabindex="-1"></a>    h <span class="op">:=</span> crc64<span class="op">.</span>New<span class="op">(</span>crc64<span class="op">.</span>MakeTable<span class="op">(</span>crc64<span class="op">.</span>ECMA<span class="op">))</span></span>
+<span id="cb20-27"><a href="#cb20-27" aria-hidden="true" tabindex="-1"></a>    h<span class="op">.</span>Write<span class="op">([]</span><span class="dt">byte</span><span class="op">(</span>s<span class="op">))</span></span>
+<span id="cb20-28"><a href="#cb20-28" aria-hidden="true" tabindex="-1"></a>    <span class="cf">return</span> h<span class="op">.</span>Sum64<span class="op">()</span></span>
+<span id="cb20-29"><a href="#cb20-29" aria-hidden="true" tabindex="-1"></a><span class="op">}</span></span>
+<span id="cb20-30"><a href="#cb20-30" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb20-31"><a href="#cb20-31" aria-hidden="true" tabindex="-1"></a><span class="kw">func</span> crc64HashISO<span class="op">(</span>s <span class="dt">string</span><span class="op">)</span> <span class="dt">uint64</span> <span class="op">{</span></span>
+<span id="cb20-32"><a href="#cb20-32" aria-hidden="true" tabindex="-1"></a>    h <span class="op">:=</span> crc64<span class="op">.</span>New<span class="op">(</span>crc64<span class="op">.</span>MakeTable<span class="op">(</span>crc64<span class="op">.</span>ISO<span class="op">))</span></span>
+<span id="cb20-33"><a href="#cb20-33" aria-hidden="true" tabindex="-1"></a>    h<span class="op">.</span>Write<span class="op">([]</span><span class="dt">byte</span><span class="op">(</span>s<span class="op">))</span></span>
+<span id="cb20-34"><a href="#cb20-34" aria-hidden="true" tabindex="-1"></a>    <span class="cf">return</span> h<span class="op">.</span>Sum64<span class="op">()</span></span>
+<span id="cb20-35"><a href="#cb20-35" aria-hidden="true" tabindex="-1"></a><span class="op">}</span></span>
+<span id="cb20-36"><a href="#cb20-36" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb20-37"><a href="#cb20-37" aria-hidden="true" tabindex="-1"></a><span class="kw">func</span> fnvHash32<span class="op">(</span>s <span class="dt">string</span><span class="op">)</span> <span class="dt">uint64</span> <span class="op">{</span></span>
+<span id="cb20-38"><a href="#cb20-38" aria-hidden="true" tabindex="-1"></a>    h <span class="op">:=</span> fnv<span class="op">.</span>New32<span class="op">()</span></span>
+<span id="cb20-39"><a href="#cb20-39" aria-hidden="true" tabindex="-1"></a>    h<span class="op">.</span>Write<span class="op">([]</span><span class="dt">byte</span><span class="op">(</span>s<span class="op">))</span></span>
+<span id="cb20-40"><a href="#cb20-40" aria-hidden="true" tabindex="-1"></a>    <span class="cf">return</span> <span class="dt">uint64</span><span class="op">(</span>h<span class="op">.</span>Sum32<span class="op">())</span></span>
+<span id="cb20-41"><a href="#cb20-41" aria-hidden="true" tabindex="-1"></a><span class="op">}</span></span>
+<span id="cb20-42"><a href="#cb20-42" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb20-43"><a href="#cb20-43" aria-hidden="true" tabindex="-1"></a><span class="kw">func</span> fnvHash64<span class="op">(</span>s <span class="dt">string</span><span class="op">)</span> <span class="dt">uint64</span> <span class="op">{</span></span>
+<span id="cb20-44"><a href="#cb20-44" aria-hidden="true" tabindex="-1"></a>    h <span class="op">:=</span> fnv<span class="op">.</span>New64<span class="op">()</span></span>
+<span id="cb20-45"><a href="#cb20-45" aria-hidden="true" tabindex="-1"></a>    h<span class="op">.</span>Write<span class="op">([]</span><span class="dt">byte</span><span class="op">(</span>s<span class="op">))</span></span>
+<span id="cb20-46"><a href="#cb20-46" aria-hidden="true" tabindex="-1"></a>    <span class="cf">return</span> h<span class="op">.</span>Sum64<span class="op">()</span></span>
+<span id="cb20-47"><a href="#cb20-47" aria-hidden="true" tabindex="-1"></a><span class="op">}</span></span>
+<span id="cb20-48"><a href="#cb20-48" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb20-49"><a href="#cb20-49" aria-hidden="true" tabindex="-1"></a><span class="kw">func</span> main<span class="op">()</span> <span class="op">{</span></span>
+<span id="cb20-50"><a href="#cb20-50" aria-hidden="true" tabindex="-1"></a>    sampleSizes <span class="op">:=</span> <span class="op">[]</span><span class="dt">int</span><span class="op">{</span><span class="dv">30</span><span class="op">,</span> <span class="dv">100</span><span class="op">,</span> <span class="dv">100000</span><span class="op">}</span></span>
+<span id="cb20-51"><a href="#cb20-51" aria-hidden="true" tabindex="-1"></a>    buckets <span class="op">:=</span> <span class="op">[]</span>Test<span class="op">{</span></span>
+<span id="cb20-52"><a href="#cb20-52" aria-hidden="true" tabindex="-1"></a>        <span class="op">{</span></span>
+<span id="cb20-53"><a href="#cb20-53" aria-hidden="true" tabindex="-1"></a>            Buckets<span class="op">:</span>     <span class="op">[]</span><span class="dt">string</span><span class="op">{</span><span class="st">&quot;a&quot;</span><span class="op">,</span> <span class="st">&quot;b&quot;</span><span class="op">},</span></span>
+<span id="cb20-54"><a href="#cb20-54" aria-hidden="true" tabindex="-1"></a>            Weights<span class="op">:</span>     <span class="op">[]</span><span class="dt">int</span><span class="op">{</span><span class="dv">1</span><span class="op">,</span> <span class="dv">1</span><span class="op">},</span></span>
+<span id="cb20-55"><a href="#cb20-55" aria-hidden="true" tabindex="-1"></a>            totalWeight<span class="op">:</span> <span class="dv">2</span><span class="op">,</span></span>
+<span id="cb20-56"><a href="#cb20-56" aria-hidden="true" tabindex="-1"></a>        <span class="op">},</span></span>
+<span id="cb20-57"><a href="#cb20-57" aria-hidden="true" tabindex="-1"></a>        <span class="op">{</span></span>
+<span id="cb20-58"><a href="#cb20-58" aria-hidden="true" tabindex="-1"></a>            Buckets<span class="op">:</span>     <span class="op">[]</span><span class="dt">string</span><span class="op">{</span><span class="st">&quot;a&quot;</span><span class="op">,</span> <span class="st">&quot;b&quot;</span><span class="op">,</span> <span class="st">&quot;c&quot;</span><span class="op">,</span> <span class="st">&quot;d&quot;</span><span class="op">},</span></span>
+<span id="cb20-59"><a href="#cb20-59" aria-hidden="true" tabindex="-1"></a>            Weights<span class="op">:</span>     <span class="op">[]</span><span class="dt">int</span><span class="op">{</span><span class="dv">1</span><span class="op">,</span> <span class="dv">1</span><span class="op">,</span> <span class="dv">1</span><span class="op">,</span> <span class="dv">1</span><span class="op">},</span></span>
+<span id="cb20-60"><a href="#cb20-60" aria-hidden="true" tabindex="-1"></a>            totalWeight<span class="op">:</span> <span class="dv">4</span><span class="op">,</span></span>
+<span id="cb20-61"><a href="#cb20-61" aria-hidden="true" tabindex="-1"></a>        <span class="op">},</span></span>
+<span id="cb20-62"><a href="#cb20-62" aria-hidden="true" tabindex="-1"></a>        <span class="op">{</span></span>
+<span id="cb20-63"><a href="#cb20-63" aria-hidden="true" tabindex="-1"></a>            Buckets<span class="op">:</span>     <span class="op">[]</span><span class="dt">string</span><span class="op">{</span><span class="st">&quot;a&quot;</span><span class="op">,</span> <span class="st">&quot;b&quot;</span><span class="op">,</span> <span class="st">&quot;c&quot;</span><span class="op">,</span> <span class="st">&quot;d&quot;</span><span class="op">,</span> <span class="st">&quot;e&quot;</span><span class="op">,</span> <span class="st">&quot;f&quot;</span><span class="op">,</span> <span class="st">&quot;g&quot;</span><span class="op">,</span> <span class="st">&quot;h&quot;</span><span class="op">},</span></span>
+<span id="cb20-64"><a href="#cb20-64" aria-hidden="true" tabindex="-1"></a>            Weights<span class="op">:</span>     <span class="op">[]</span><span class="dt">int</span><span class="op">{</span><span class="dv">1</span><span class="op">,</span> <span class="dv">1</span><span class="op">,</span> <span class="dv">1</span><span class="op">,</span> <span class="dv">1</span><span class="op">,</span> <span class="dv">1</span><span class="op">,</span> <span class="dv">1</span><span class="op">,</span> <span class="dv">1</span><span class="op">,</span> <span class="dv">1</span><span class="op">},</span></span>
+<span id="cb20-65"><a href="#cb20-65" aria-hidden="true" tabindex="-1"></a>            totalWeight<span class="op">:</span> <span class="dv">8</span><span class="op">,</span></span>
+<span id="cb20-66"><a href="#cb20-66" aria-hidden="true" tabindex="-1"></a>        <span class="op">},</span></span>
+<span id="cb20-67"><a href="#cb20-67" aria-hidden="true" tabindex="-1"></a>        <span class="op">{</span></span>
+<span id="cb20-68"><a href="#cb20-68" aria-hidden="true" tabindex="-1"></a>            Buckets<span class="op">:</span>     <span class="op">[]</span><span class="dt">string</span><span class="op">{</span><span class="st">&quot;a&quot;</span><span class="op">,</span> <span class="st">&quot;b&quot;</span><span class="op">,</span> <span class="st">&quot;c&quot;</span><span class="op">,</span> <span class="st">&quot;d&quot;</span><span class="op">,</span> <span class="st">&quot;e&quot;</span><span class="op">,</span> <span class="st">&quot;f&quot;</span><span class="op">,</span> <span class="st">&quot;g&quot;</span><span class="op">,</span> <span class="st">&quot;h&quot;</span><span class="op">,</span> <span class="st">&quot;i&quot;</span><span class="op">,</span> <span class="st">&quot;j&quot;</span><span class="op">,</span> <span class="st">&quot;k&quot;</span><span class="op">,</span> <span class="st">&quot;l&quot;</span><span class="op">,</span> <span class="st">&quot;m&quot;</span><span class="op">,</span> <span class="st">&quot;n&quot;</span><span class="op">,</span> <span class="st">&quot;o&quot;</span><span class="op">,</span> <span class="st">&quot;p&quot;</span><span class="op">},</span></span>
+<span id="cb20-69"><a href="#cb20-69" aria-hidden="true" tabindex="-1"></a>            Weights<span class="op">:</span>     <span class="op">[]</span><span class="dt">int</span><span class="op">{</span><span class="dv">1</span><span class="op">,</span> <span class="dv">1</span><span class="op">,</span> <span class="dv">1</span><span class="op">,</span> <span class="dv">1</span><span class="op">,</span> <span class="dv">1</span><span class="op">,</span> <span class="dv">1</span><span class="op">,</span> <span class="dv">1</span><span class="op">,</span> <span class="dv">1</span><span class="op">,</span> <span class="dv">1</span><span class="op">,</span> <span class="dv">1</span><span class="op">,</span> <span class="dv">1</span><span class="op">,</span> <span class="dv">1</span><span class="op">,</span> <span class="dv">1</span><span class="op">,</span> <span class="dv">1</span><span class="op">,</span> <span class="dv">1</span><span class="op">,</span> <span class="dv">1</span><span class="op">},</span></span>
+<span id="cb20-70"><a href="#cb20-70" aria-hidden="true" tabindex="-1"></a>            totalWeight<span class="op">:</span> <span class="dv">16</span><span class="op">,</span></span>
+<span id="cb20-71"><a href="#cb20-71" aria-hidden="true" tabindex="-1"></a>        <span class="op">},</span></span>
+<span id="cb20-72"><a href="#cb20-72" aria-hidden="true" tabindex="-1"></a>    <span class="op">}</span></span>
+<span id="cb20-73"><a href="#cb20-73" aria-hidden="true" tabindex="-1"></a>    ids <span class="op">:=</span> <span class="op">[]</span><span class="dt">string</span><span class="op">{}</span></span>
+<span id="cb20-74"><a href="#cb20-74" aria-hidden="true" tabindex="-1"></a>    hashes <span class="op">:=</span> <span class="kw">map</span><span class="op">[</span><span class="dt">string</span><span class="op">](</span><span class="kw">func</span><span class="op">(</span><span class="dt">string</span><span class="op">)</span> <span class="dt">uint64</span><span class="op">){</span></span>
+<span id="cb20-75"><a href="#cb20-75" aria-hidden="true" tabindex="-1"></a>        <span class="st">&quot;adler&quot;</span><span class="op">:</span>            adlerHash<span class="op">,</span></span>
+<span id="cb20-76"><a href="#cb20-76" aria-hidden="true" tabindex="-1"></a>        <span class="st">&quot;crc32 IEEE&quot;</span><span class="op">:</span>       crc32HashIEEE<span class="op">,</span></span>
+<span id="cb20-77"><a href="#cb20-77" aria-hidden="true" tabindex="-1"></a>        <span class="st">&quot;crc32 Castagnoli&quot;</span><span class="op">:</span> crc32HashCastagnoli<span class="op">,</span></span>
+<span id="cb20-78"><a href="#cb20-78" aria-hidden="true" tabindex="-1"></a>        <span class="st">&quot;crc32 Koopman&quot;</span><span class="op">:</span>    crc32HashKoopman<span class="op">,</span></span>
+<span id="cb20-79"><a href="#cb20-79" aria-hidden="true" tabindex="-1"></a>        <span class="st">&quot;crc64 ECMA&quot;</span><span class="op">:</span>       crc64HashECMA<span class="op">,</span></span>
+<span id="cb20-80"><a href="#cb20-80" aria-hidden="true" tabindex="-1"></a>        <span class="st">&quot;crc64 ISO&quot;</span><span class="op">:</span>        crc64HashISO<span class="op">,</span></span>
+<span id="cb20-81"><a href="#cb20-81" aria-hidden="true" tabindex="-1"></a>        <span class="st">&quot;fnv32&quot;</span><span class="op">:</span>            fnvHash32<span class="op">,</span></span>
+<span id="cb20-82"><a href="#cb20-82" aria-hidden="true" tabindex="-1"></a>        <span class="st">&quot;fnv64&quot;</span><span class="op">:</span>            fnvHash64<span class="op">,</span></span>
+<span id="cb20-83"><a href="#cb20-83" aria-hidden="true" tabindex="-1"></a>    <span class="op">}</span></span>
+<span id="cb20-84"><a href="#cb20-84" aria-hidden="true" tabindex="-1"></a>    order <span class="op">:=</span> <span class="op">[]</span><span class="dt">string</span><span class="op">{</span><span class="st">&quot;adler&quot;</span><span class="op">,</span> <span class="st">&quot;crc32 IEEE&quot;</span><span class="op">,</span> <span class="st">&quot;crc32 Castagnoli&quot;</span><span class="op">,</span> <span class="st">&quot;crc32 Koopman&quot;</span><span class="op">,</span> <span class="st">&quot;crc64 ECMA&quot;</span><span class="op">,</span> <span class="st">&quot;crc64 ISO&quot;</span><span class="op">,</span> <span class="st">&quot;fnv32&quot;</span><span class="op">,</span> <span class="st">&quot;fnv64&quot;</span><span class="op">}</span></span>
+<span id="cb20-85"><a href="#cb20-85" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb20-86"><a href="#cb20-86" aria-hidden="true" tabindex="-1"></a>    <span class="cf">for</span> i <span class="op">:=</span> <span class="dv">0</span><span class="op">;</span> i <span class="op">&lt;</span> <span class="dv">100000</span><span class="op">;</span> i<span class="op">++</span> <span class="op">{</span></span>
+<span id="cb20-87"><a href="#cb20-87" aria-hidden="true" tabindex="-1"></a>        ids <span class="op">=</span> <span class="bu">append</span><span class="op">(</span>ids<span class="op">,</span> uuid<span class="op">.</span>New<span class="op">().</span>String<span class="op">())</span></span>
+<span id="cb20-88"><a href="#cb20-88" aria-hidden="true" tabindex="-1"></a>    <span class="op">}</span></span>
+<span id="cb20-89"><a href="#cb20-89" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb20-90"><a href="#cb20-90" aria-hidden="true" tabindex="-1"></a>    <span class="co">/* Run our tests, this could take a while depending on your parameters */</span></span>
+<span id="cb20-91"><a href="#cb20-91" aria-hidden="true" tabindex="-1"></a>    <span class="cf">for</span> _<span class="op">,</span> sample <span class="op">:=</span> <span class="kw">range</span> sampleSizes <span class="op">{</span></span>
+<span id="cb20-92"><a href="#cb20-92" aria-hidden="true" tabindex="-1"></a>        fmt<span class="op">.</span>Printf<span class="op">(</span><span class="st">&quot;sample size %d:</span><span class="ch">\n</span><span class="st">&quot;</span><span class="op">,</span> sample<span class="op">)</span></span>
+<span id="cb20-93"><a href="#cb20-93" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb20-94"><a href="#cb20-94" aria-hidden="true" tabindex="-1"></a>        <span class="cf">for</span> _<span class="op">,</span> t <span class="op">:=</span> <span class="kw">range</span> buckets <span class="op">{</span></span>
+<span id="cb20-95"><a href="#cb20-95" aria-hidden="true" tabindex="-1"></a>            fmt<span class="op">.</span>Printf<span class="op">(</span><span class="st">&quot;  #%d buckets (%0.2f%% dist)</span><span class="ch">\n</span><span class="st">&quot;</span><span class="op">,</span> t<span class="op">.</span>totalWeight<span class="op">,</span> <span class="dv">100</span><span class="op">/</span><span class="dt">float64</span><span class="op">(</span>t<span class="op">.</span>totalWeight<span class="op">))</span></span>
+<span id="cb20-96"><a href="#cb20-96" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb20-97"><a href="#cb20-97" aria-hidden="true" tabindex="-1"></a>            dist <span class="op">:=</span> <span class="kw">map</span><span class="op">[</span><span class="dt">string</span><span class="op">]</span><span class="kw">map</span><span class="op">[</span><span class="dt">string</span><span class="op">]</span><span class="dt">uint64</span><span class="op">{}</span></span>
+<span id="cb20-98"><a href="#cb20-98" aria-hidden="true" tabindex="-1"></a>            <span class="cf">for</span> _<span class="op">,</span> n <span class="op">:=</span> <span class="kw">range</span> order <span class="op">{</span></span>
+<span id="cb20-99"><a href="#cb20-99" aria-hidden="true" tabindex="-1"></a>                fn <span class="op">:=</span> hashes<span class="op">[</span>n<span class="op">]</span></span>
+<span id="cb20-100"><a href="#cb20-100" aria-hidden="true" tabindex="-1"></a>                dist<span class="op">[</span>n<span class="op">]</span> <span class="op">=</span> <span class="kw">map</span><span class="op">[</span><span class="dt">string</span><span class="op">]</span><span class="dt">uint64</span><span class="op">{}</span></span>
+<span id="cb20-101"><a href="#cb20-101" aria-hidden="true" tabindex="-1"></a>                <span class="cf">for</span> idx <span class="op">:=</span> <span class="dv">0</span><span class="op">;</span> idx <span class="op">&lt;</span> sample<span class="op">;</span> idx<span class="op">++</span> <span class="op">{</span> <span class="co">// only use the first X of sample</span></span>
+<span id="cb20-102"><a href="#cb20-102" aria-hidden="true" tabindex="-1"></a>                    b<span class="op">,</span> _ <span class="op">:=</span> t<span class="op">.</span>getBucket<span class="op">(</span><span class="dt">int64</span><span class="op">(</span>fn<span class="op">(</span>ids<span class="op">[</span>idx<span class="op">])</span> <span class="op">%</span> <span class="dt">uint64</span><span class="op">(</span>t<span class="op">.</span>totalWeight<span class="op">)))</span></span>
+<span id="cb20-103"><a href="#cb20-103" aria-hidden="true" tabindex="-1"></a>                    dist<span class="op">[</span>n<span class="op">][</span>b<span class="op">]++</span></span>
+<span id="cb20-104"><a href="#cb20-104" aria-hidden="true" tabindex="-1"></a>                <span class="op">}</span></span>
+<span id="cb20-105"><a href="#cb20-105" aria-hidden="true" tabindex="-1"></a>            <span class="op">}</span></span>
+<span id="cb20-106"><a href="#cb20-106" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb20-107"><a href="#cb20-107" aria-hidden="true" tabindex="-1"></a>            <span class="cf">for</span> _<span class="op">,</span> h <span class="op">:=</span> <span class="kw">range</span> order <span class="op">{</span></span>
+<span id="cb20-108"><a href="#cb20-108" aria-hidden="true" tabindex="-1"></a>                fmt<span class="op">.</span>Printf<span class="op">(</span><span class="st">&quot;    %-16s: &quot;</span><span class="op">,</span> h<span class="op">)</span></span>
+<span id="cb20-109"><a href="#cb20-109" aria-hidden="true" tabindex="-1"></a>                <span class="cf">for</span> _<span class="op">,</span> tx <span class="op">:=</span> <span class="kw">range</span> dist<span class="op">[</span>h<span class="op">]</span> <span class="op">{</span></span>
+<span id="cb20-110"><a href="#cb20-110" aria-hidden="true" tabindex="-1"></a>                    fmt<span class="op">.</span>Printf<span class="op">(</span><span class="st">&quot;%02.2f%% &quot;</span><span class="op">,</span> <span class="dt">float64</span><span class="op">(</span>tx<span class="op">)*</span><span class="dv">100</span><span class="fl">.0</span><span class="op">/</span><span class="dt">float64</span><span class="op">(</span>sample<span class="op">))</span></span>
+<span id="cb20-111"><a href="#cb20-111" aria-hidden="true" tabindex="-1"></a>                <span class="op">}</span></span>
+<span id="cb20-112"><a href="#cb20-112" aria-hidden="true" tabindex="-1"></a>                fmt<span class="op">.</span>Printf<span class="op">(</span><span class="st">&quot;</span><span class="ch">\n</span><span class="st">&quot;</span><span class="op">)</span></span>
+<span id="cb20-113"><a href="#cb20-113" aria-hidden="true" tabindex="-1"></a>            <span class="op">}</span></span>
+<span id="cb20-114"><a href="#cb20-114" aria-hidden="true" tabindex="-1"></a>        <span class="op">}</span></span>
+<span id="cb20-115"><a href="#cb20-115" aria-hidden="true" tabindex="-1"></a>    <span class="op">}</span></span>
+<span id="cb20-116"><a href="#cb20-116" aria-hidden="true" tabindex="-1"></a><span class="op">}</span></span></code></pre></div>
+<p>This will give you a nice little table showing different distribution
+characteristics given different sample and bucket sizes for each hashing
+method listed. A fun thing to do before you head out to return your
+library books is to implement your own bucketing method, try to get a
+better distribution with low sample sizes!</p>
 
 
     </div>

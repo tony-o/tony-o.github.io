@@ -20,50 +20,85 @@
       <h6>// <a href="https://deathbykeystroke.com/articles/20231212-thoughts-on-coding-interviews-in-the-era-of-gpt.html">perma</a></h6>
       <br/>
 
-      <h1 id="thoughts-on-coding-interviews-in-the-era-of-gpt">Thoughts on Coding Interviews in the Era of GPT</h1>
-<p>GPT seems to have ruined a lot of coding interviews, or at least provides the threat of it. A typical coding interview go through the process of:</p>
+      <p>GPT seems to have ruined a lot of coding interviews, or at least
+provides the threat of it. A typical coding interview go through the
+process of:</p>
 <ol>
 <li>Define a problem to be solved by code</li>
 <li>The interviewee codes the problem in <em>some lang</em></li>
-<li>The interviewer provides some test inputs, sometimes containing edge cases depending on the engineering level</li>
+<li>The interviewer provides some test inputs, sometimes containing edge
+cases depending on the engineering level</li>
 </ol>
-<p>With GPT comes the threat of #2 no longer coming from the interviewee exclusively. The pitfalls of eliminating something entirely are well documented but if you need a refresher, see:</p>
+<p>With GPT comes the threat of #2 no longer coming from the interviewee
+exclusively. The pitfalls of eliminating something entirely are well
+documented but if you need a refresher, see:</p>
 <ul>
 <li>The Prohibition</li>
 <li>War on Drugs</li>
 <li>Banning calculators from math classrooms</li>
 </ul>
-<p>A couple of reasonable options for interviewing in the era of GPT that we'll discuss are:</p>
+<p>A couple of reasonable options for interviewing in the era of GPT
+that we'll discuss are:</p>
 <ol>
 <li>Working with GPT</li>
 <li>Edge casing GPT</li>
 </ol>
 <h1 id="working-with-gpt">Working with GPT</h1>
-<p>An interesting option is generating prompts during the interview and using that as an interview starter. The prompt:</p>
+<p>An interesting option is generating prompts during the interview and
+using that as an interview starter. The prompt:</p>
 <pre><code>i want you to act a technical programming interviewing assistant, we&#39;re going to be interviewing a senior engineer in python i&#39;d like you to generate 50 lines of code with two difficult to spot bugs and provide a solution to those bugs</code></pre>
 <p>The result:</p>
-<div class="sourceCode" id="cb2"><pre class="sourceCode python"><code class="sourceCode python"><span id="cb2-1"><a href="#cb2-1" aria-hidden="true"></a><span class="kw">def</span> calculate_average(numbers):</span>
-<span id="cb2-2"><a href="#cb2-2" aria-hidden="true"></a>    total <span class="op">=</span> <span class="dv">0</span></span>
-<span id="cb2-3"><a href="#cb2-3" aria-hidden="true"></a>    count <span class="op">=</span> <span class="dv">0</span></span>
-<span id="cb2-4"><a href="#cb2-4" aria-hidden="true"></a>    <span class="cf">for</span> num <span class="kw">in</span> <span class="bu">range</span>(numbers):</span>
-<span id="cb2-5"><a href="#cb2-5" aria-hidden="true"></a>        total <span class="op">+=</span> num</span>
-<span id="cb2-6"><a href="#cb2-6" aria-hidden="true"></a>        count <span class="op">+=</span> <span class="dv">1</span></span>
-<span id="cb2-7"><a href="#cb2-7" aria-hidden="true"></a>    average <span class="op">=</span> total <span class="op">/</span> count</span>
-<span id="cb2-8"><a href="#cb2-8" aria-hidden="true"></a>    <span class="cf">return</span> average</span>
-<span id="cb2-9"><a href="#cb2-9" aria-hidden="true"></a></span>
-<span id="cb2-10"><a href="#cb2-10" aria-hidden="true"></a><span class="kw">def</span> main():</span>
-<span id="cb2-11"><a href="#cb2-11" aria-hidden="true"></a>    data <span class="op">=</span> [<span class="dv">10</span>, <span class="dv">20</span>, <span class="dv">30</span>, <span class="dv">40</span>, <span class="dv">50</span>]</span>
-<span id="cb2-12"><a href="#cb2-12" aria-hidden="true"></a>    result <span class="op">=</span> calculate_average(data)</span>
-<span id="cb2-13"><a href="#cb2-13" aria-hidden="true"></a>    <span class="bu">print</span>(<span class="ss">f&quot;The average is: </span><span class="sc">{</span>result<span class="sc">}</span><span class="ss">&quot;</span>)</span>
-<span id="cb2-14"><a href="#cb2-14" aria-hidden="true"></a></span>
-<span id="cb2-15"><a href="#cb2-15" aria-hidden="true"></a><span class="cf">if</span> <span class="va">__name__</span> <span class="op">==</span> <span class="st">&quot;__main__&quot;</span>:</span>
-<span id="cb2-16"><a href="#cb2-16" aria-hidden="true"></a>    main()</span></code></pre></div>
-<p>Okay, so it didn't generate 50 lines of code and the bugs are fairly obvious and not difficult to spot. However, this is pretty promising. By tweaking the prompt you can definitely get something usable from this and the interviewee, given a short period, should be able to walk through this code and find the bugs upon reading without them being able to type all of that into GPT and have it give them the answer. Finding bugs is what most of us do day to day anyway so interviewing this way is more representative than <code>create X from scratch</code>.</p>
-<p>This also presents the opportunity for the interviewee to optimize code they didn't write and gives the interviewer even more insight as to how the interviewee reasons about, and looks at problems they didn't present.</p>
+<div class="sourceCode" id="cb2"><pre
+class="sourceCode python"><code class="sourceCode python"><span id="cb2-1"><a href="#cb2-1" aria-hidden="true" tabindex="-1"></a><span class="kw">def</span> calculate_average(numbers):</span>
+<span id="cb2-2"><a href="#cb2-2" aria-hidden="true" tabindex="-1"></a>    total <span class="op">=</span> <span class="dv">0</span></span>
+<span id="cb2-3"><a href="#cb2-3" aria-hidden="true" tabindex="-1"></a>    count <span class="op">=</span> <span class="dv">0</span></span>
+<span id="cb2-4"><a href="#cb2-4" aria-hidden="true" tabindex="-1"></a>    <span class="cf">for</span> num <span class="kw">in</span> <span class="bu">range</span>(numbers):</span>
+<span id="cb2-5"><a href="#cb2-5" aria-hidden="true" tabindex="-1"></a>        total <span class="op">+=</span> num</span>
+<span id="cb2-6"><a href="#cb2-6" aria-hidden="true" tabindex="-1"></a>        count <span class="op">+=</span> <span class="dv">1</span></span>
+<span id="cb2-7"><a href="#cb2-7" aria-hidden="true" tabindex="-1"></a>    average <span class="op">=</span> total <span class="op">/</span> count</span>
+<span id="cb2-8"><a href="#cb2-8" aria-hidden="true" tabindex="-1"></a>    <span class="cf">return</span> average</span>
+<span id="cb2-9"><a href="#cb2-9" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb2-10"><a href="#cb2-10" aria-hidden="true" tabindex="-1"></a><span class="kw">def</span> main():</span>
+<span id="cb2-11"><a href="#cb2-11" aria-hidden="true" tabindex="-1"></a>    data <span class="op">=</span> [<span class="dv">10</span>, <span class="dv">20</span>, <span class="dv">30</span>, <span class="dv">40</span>, <span class="dv">50</span>]</span>
+<span id="cb2-12"><a href="#cb2-12" aria-hidden="true" tabindex="-1"></a>    result <span class="op">=</span> calculate_average(data)</span>
+<span id="cb2-13"><a href="#cb2-13" aria-hidden="true" tabindex="-1"></a>    <span class="bu">print</span>(<span class="ss">f&quot;The average is: </span><span class="sc">{</span>result<span class="sc">}</span><span class="ss">&quot;</span>)</span>
+<span id="cb2-14"><a href="#cb2-14" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb2-15"><a href="#cb2-15" aria-hidden="true" tabindex="-1"></a><span class="cf">if</span> <span class="va">__name__</span> <span class="op">==</span> <span class="st">&quot;__main__&quot;</span>:</span>
+<span id="cb2-16"><a href="#cb2-16" aria-hidden="true" tabindex="-1"></a>    main()</span></code></pre></div>
+<p>Okay, so it didn't generate 50 lines of code and the bugs are fairly
+obvious and not difficult to spot. However, this is pretty promising. By
+tweaking the prompt you can definitely get something usable from this
+and the interviewee, given a short period, should be able to walk
+through this code and find the bugs upon reading without them being able
+to type all of that into GPT and have it give them the answer. Finding
+bugs is what most of us do day to day anyway so interviewing this way is
+more representative than <code>create X from scratch</code>.</p>
+<p>This also presents the opportunity for the interviewee to optimize
+code they didn't write and gives the interviewer even more insight as to
+how the interviewee reasons about, and looks at problems they didn't
+present.</p>
 <h1 id="edge-casing-gpt">Edge Casing GPT</h1>
-<p>This is an unsustainable course but is interesting for higher level engineers and certainly viable for positions where heavy algorithms knowledge is required. This section is mainly talking as the code this would generate would necessarily be complex. Asking GPT to generate something such as a GZIP compression/decompression utility is something a lot of programmers are only familiar with in the form of using GZIP and not actually implementing it so the edge case here is that most people are unfamiliar with how it works and GPT does not have a lot of code to pull from to generate something useful.</p>
-<p>Most implementations generated by GPT contain very subtle bugs that cause the files generated to fail when using the <code>tar xf</code> or <code>gunzip</code> utilities that come on most systems while basic compressions work. This makes the bugs subtle and GPT is mainly unhelpful in resolving those bugs so it requires the interviewee to actually think about, debug, and resolve the bugs on their own.</p>
-<p>Extrapolating on this knowledge allows you to find edge cases in what GPT has actually been exposed to rather than common programming algorithms people are expected to know and testing for those. Again, this only works with higher level positions and probably only useful for pure programming positions where algorithm knowledge is explicitly needed.</p>
+<p>This is an unsustainable course but is interesting for higher level
+engineers and certainly viable for positions where heavy algorithms
+knowledge is required. This section is mainly talking as the code this
+would generate would necessarily be complex. Asking GPT to generate
+something such as a GZIP compression/decompression utility is something
+a lot of programmers are only familiar with in the form of using GZIP
+and not actually implementing it so the edge case here is that most
+people are unfamiliar with how it works and GPT does not have a lot of
+code to pull from to generate something useful.</p>
+<p>Most implementations generated by GPT contain very subtle bugs that
+cause the files generated to fail when using the <code>tar xf</code> or
+<code>gunzip</code> utilities that come on most systems while basic
+compressions work. This makes the bugs subtle and GPT is mainly
+unhelpful in resolving those bugs so it requires the interviewee to
+actually think about, debug, and resolve the bugs on their own.</p>
+<p>Extrapolating on this knowledge allows you to find edge cases in what
+GPT has actually been exposed to rather than common programming
+algorithms people are expected to know and testing for those. Again,
+this only works with higher level positions and probably only useful for
+pure programming positions where algorithm knowledge is explicitly
+needed.</p>
 
 
     </div>

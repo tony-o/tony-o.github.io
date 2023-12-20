@@ -2,8 +2,6 @@ Thoughts on Coding Interviews in the Era of GPT
 thoughts-on-coding-interviews-in-the-era-of-gpt
 programming,ai
 
-# Thoughts on Coding Interviews in the Era of GPT
-
 GPT seems to have ruined a lot of coding interviews, or at least provides the threat of it.  A typical coding interview go through the process of:
 
 1. Define a problem to be solved by code
