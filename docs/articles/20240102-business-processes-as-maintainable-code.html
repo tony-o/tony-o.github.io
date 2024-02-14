@@ -1,0 +1,351 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <title>dbks - Business Processes as Maintainable Code</title>
+   	<meta name="description" content="Business Processes as Maintainable Code" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta content="text/html;charset=utf-8" http-equiv="Content-Type" />
+    <meta content="utf-8" http-equiv="encoding" />
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.2.0/styles/base16/danqing.min.css" />
+    <link rel="stylesheet" href="/s/style.css" />
+  </head>
+  <body>
+    <div id="title">
+      <a href="/"><img alt="dbks logo" src="/i/dbks.png" /></a> <a href="/"><h1>deathbykeystroke</h1></a>
+    </div>
+    <div id="article">
+      <h1>Business Processes as Maintainable Code</h1>
+      <h6>// date:  2024-01-02</h6>
+      <h6>// filed: <a href="/tags/programming.html">programming</a></h6>
+      <h6>// <a href="https://deathbykeystroke.com/articles/20240102-business-processes-as-maintainable-code.html">perma</a></h6>
+      <br/>
+
+      <p>This article is going to walk through structuring web applications (yes, even large ones) as maintainable, modular code paths that maintain a clear separation of storage, process, and server. The article will be written in python and will be translated to some other languages at the end.</p>
+<p>First, let's take a look at a typical order endpoint (pseudo-ish, we're not going to run this or curl, just analyze the structure):</p>
+<div class="sourceCode" id="cb1"><pre class="sourceCode python"><code class="sourceCode python"><span id="cb1-1"><a href="#cb1-1" aria-hidden="true"></a><span class="im">from</span> flask <span class="im">import</span> Flask, request, session</span>
+<span id="cb1-2"><a href="#cb1-2" aria-hidden="true"></a><span class="im">from</span> peewee <span class="im">import</span> Model, SqliteDatabase</span>
+<span id="cb1-3"><a href="#cb1-3" aria-hidden="true"></a></span>
+<span id="cb1-4"><a href="#cb1-4" aria-hidden="true"></a>app <span class="op">=</span> Flask(<span class="st">&#39;example&#39;</span>)</span>
+<span id="cb1-5"><a href="#cb1-5" aria-hidden="true"></a>db <span class="op">=</span> SqliteDatabase(<span class="st">&#39;local.db&#39;</span>)</span>
+<span id="cb1-6"><a href="#cb1-6" aria-hidden="true"></a></span>
+<span id="cb1-7"><a href="#cb1-7" aria-hidden="true"></a>app.secret_key <span class="op">=</span> <span class="st">&#39;abc&#39;</span></span>
+<span id="cb1-8"><a href="#cb1-8" aria-hidden="true"></a></span>
+<span id="cb1-9"><a href="#cb1-9" aria-hidden="true"></a></span>
+<span id="cb1-10"><a href="#cb1-10" aria-hidden="true"></a><span class="kw">class</span> Order(Model):</span>
+<span id="cb1-11"><a href="#cb1-11" aria-hidden="true"></a>    <span class="kw">class</span> Meta:</span>
+<span id="cb1-12"><a href="#cb1-12" aria-hidden="true"></a>        database <span class="op">=</span> db</span>
+<span id="cb1-13"><a href="#cb1-13" aria-hidden="true"></a></span>
+<span id="cb1-14"><a href="#cb1-14" aria-hidden="true"></a>    <span class="bu">id</span> <span class="op">=</span> BigAutoField(<span class="st">&#39;id&#39;</span>)</span>
+<span id="cb1-15"><a href="#cb1-15" aria-hidden="true"></a>    user_id <span class="op">=</span> BigIntegerField(<span class="st">&#39;user_id&#39;</span>)</span>
+<span id="cb1-16"><a href="#cb1-16" aria-hidden="true"></a></span>
+<span id="cb1-17"><a href="#cb1-17" aria-hidden="true"></a><span class="kw">class</span> LineItem(Model):</span>
+<span id="cb1-18"><a href="#cb1-18" aria-hidden="true"></a>    <span class="kw">class</span> Meta:</span>
+<span id="cb1-19"><a href="#cb1-19" aria-hidden="true"></a>        database <span class="op">=</span> db</span>
+<span id="cb1-20"><a href="#cb1-20" aria-hidden="true"></a></span>
+<span id="cb1-21"><a href="#cb1-21" aria-hidden="true"></a>    <span class="bu">id</span> <span class="op">=</span> BigAutoField(<span class="st">&#39;id&#39;</span>)</span>
+<span id="cb1-22"><a href="#cb1-22" aria-hidden="true"></a>    order_id <span class="op">=</span> BigIntegerField(<span class="st">&#39;order_id&#39;</span>)</span>
+<span id="cb1-23"><a href="#cb1-23" aria-hidden="true"></a>    quantity <span class="op">=</span> IntegerField(<span class="st">&#39;quantity&#39;</span>)</span>
+<span id="cb1-24"><a href="#cb1-24" aria-hidden="true"></a>    product_id <span class="op">=</span> IntegerField(<span class="st">&#39;product_id&#39;</span>)</span>
+<span id="cb1-25"><a href="#cb1-25" aria-hidden="true"></a></span>
+<span id="cb1-26"><a href="#cb1-26" aria-hidden="true"></a><span class="kw">class</span> Product(Model):</span>
+<span id="cb1-27"><a href="#cb1-27" aria-hidden="true"></a>    <span class="kw">class</span> Meta:</span>
+<span id="cb1-28"><a href="#cb1-28" aria-hidden="true"></a>        database <span class="op">=</span> db</span>
+<span id="cb1-29"><a href="#cb1-29" aria-hidden="true"></a></span>
+<span id="cb1-30"><a href="#cb1-30" aria-hidden="true"></a>    <span class="bu">id</span> <span class="op">=</span> BigAutoField(<span class="st">&#39;id&#39;</span>)</span>
+<span id="cb1-31"><a href="#cb1-31" aria-hidden="true"></a>    name <span class="op">=</span> StringField(<span class="st">&#39;name&#39;</span>)</span>
+<span id="cb1-32"><a href="#cb1-32" aria-hidden="true"></a>    cost <span class="op">=</span> IntegerField(<span class="st">&#39;cost&#39;</span>)</span>
+<span id="cb1-33"><a href="#cb1-33" aria-hidden="true"></a>    price <span class="op">=</span> IntegerField(<span class="st">&#39;price&#39;</span>)</span>
+<span id="cb1-34"><a href="#cb1-34" aria-hidden="true"></a></span>
+<span id="cb1-35"><a href="#cb1-35" aria-hidden="true"></a><span class="at">@app.route</span>(<span class="st">&#39;/order&#39;</span>, methods<span class="op">=</span>[<span class="st">&#39;POST&#39;</span>])</span>
+<span id="cb1-36"><a href="#cb1-36" aria-hidden="true"></a><span class="kw">def</span> order():</span>
+<span id="cb1-37"><a href="#cb1-37" aria-hidden="true"></a>    details <span class="op">=</span> request.get_json()</span>
+<span id="cb1-38"><a href="#cb1-38" aria-hidden="true"></a></span>
+<span id="cb1-39"><a href="#cb1-39" aria-hidden="true"></a>    order <span class="op">=</span> Order(user_id<span class="op">=</span>session[<span class="st">&#39;user_id&#39;</span>])</span>
+<span id="cb1-40"><a href="#cb1-40" aria-hidden="true"></a>    order.save()</span>
+<span id="cb1-41"><a href="#cb1-41" aria-hidden="true"></a>    line_items <span class="op">=</span> []</span>
+<span id="cb1-42"><a href="#cb1-42" aria-hidden="true"></a>    product_map <span class="op">=</span> {</span>
+<span id="cb1-43"><a href="#cb1-43" aria-hidden="true"></a>        k.<span class="bu">id</span>: k</span>
+<span id="cb1-44"><a href="#cb1-44" aria-hidden="true"></a>        <span class="cf">for</span> k <span class="kw">in</span> Product.select().where(Product.<span class="bu">id</span>.in_(details[<span class="st">&#39;products&#39;</span>]))</span>
+<span id="cb1-45"><a href="#cb1-45" aria-hidden="true"></a>    }</span>
+<span id="cb1-46"><a href="#cb1-46" aria-hidden="true"></a></span>
+<span id="cb1-47"><a href="#cb1-47" aria-hidden="true"></a>    <span class="cf">for</span> product_id, quantity <span class="kw">in</span> details[<span class="st">&#39;products&#39;</span>].items():</span>
+<span id="cb1-48"><a href="#cb1-48" aria-hidden="true"></a>        <span class="cf">if</span> <span class="kw">not</span> product_map.get(product_id):</span>
+<span id="cb1-49"><a href="#cb1-49" aria-hidden="true"></a>            <span class="cf">return</span> <span class="ss">f&#39;error: product_id(</span><span class="sc">{</span>product_id<span class="sc">}</span><span class="ss">) does not exist&#39;</span></span>
+<span id="cb1-50"><a href="#cb1-50" aria-hidden="true"></a>        <span class="cf">if</span> quantity <span class="op">&lt;=</span> <span class="dv">0</span>:</span>
+<span id="cb1-51"><a href="#cb1-51" aria-hidden="true"></a>            <span class="cf">return</span> <span class="ss">f&#39;error: product </span><span class="sc">{</span>product_map[product_id]<span class="sc">.</span>name<span class="sc">}</span><span class="ss"> quantity must be &gt; 0&#39;</span></span>
+<span id="cb1-52"><a href="#cb1-52" aria-hidden="true"></a></span>
+<span id="cb1-53"><a href="#cb1-53" aria-hidden="true"></a>        amount <span class="op">+=</span> product_map[product].price</span>
+<span id="cb1-54"><a href="#cb1-54" aria-hidden="true"></a>        LineItem(</span>
+<span id="cb1-55"><a href="#cb1-55" aria-hidden="true"></a>            order<span class="op">=</span>order,</span>
+<span id="cb1-56"><a href="#cb1-56" aria-hidden="true"></a>            quantity<span class="op">=</span>quantity,</span>
+<span id="cb1-57"><a href="#cb1-57" aria-hidden="true"></a>            product_id<span class="op">=</span>product_id,</span>
+<span id="cb1-58"><a href="#cb1-58" aria-hidden="true"></a>        ).save()</span>
+<span id="cb1-59"><a href="#cb1-59" aria-hidden="true"></a></span>
+<span id="cb1-60"><a href="#cb1-60" aria-hidden="true"></a></span>
+<span id="cb1-61"><a href="#cb1-61" aria-hidden="true"></a>    <span class="cf">return</span> <span class="st">&#39;success&#39;</span></span></code></pre></div>
+<p>Typically this stuff is littered over a number of files and you'd do all of this in a transaction, etc etc. Right now we're making an example of how a typical endpoint is written so we can pull it apart and find useful indirections within it that will minimize the sprawl and mess that exists in a lot of codebases.</p>
+<p>So, we're going to look specifically at the <code>def order()</code>. It's responsibilities are nearly endless, and again, this is a pretty typical endpoint. This endpoint does:</p>
+<ol>
+<li>Parse out the details of the request</li>
+<li>Validates inputs</li>
+<li>Handles the process of order creation</li>
+<li>Return a valid response or renders a template</li>
+</ol>
+<p>This is too many responsibilities. How often is the "break up code into logical chunks" horse beaten? A whole lot. You might be thinking, it's fine! The ORM does the DB, the endpoint does the process! Sure. In this readable small example it's probably fine until another endpoint, or, one of your colleagues creates a script needs to create an order and then you have to hack around because the <em>process</em> is muddled with business logic, ORM magic, HTTP server magic, and templating.</p>
+<p>Well, smarty pants, how should these be broken up rather than the typical way we see?</p>
+<p>Break the process apart from the rest of the noise. To start, we'll take a look at what that looks like in isolation:</p>
+<div class="sourceCode" id="cb2"><pre class="sourceCode python"><code class="sourceCode python"><span id="cb2-1"><a href="#cb2-1" aria-hidden="true"></a><span class="kw">class</span> ICreateOrder:</span>
+<span id="cb2-2"><a href="#cb2-2" aria-hidden="true"></a>    <span class="kw">def</span> <span class="fu">__init__</span>(<span class="va">self</span>, user_id: <span class="bu">int</span>, order_details: <span class="bu">dict</span>):</span>
+<span id="cb2-3"><a href="#cb2-3" aria-hidden="true"></a>        <span class="co"># do some validations</span></span>
+<span id="cb2-4"><a href="#cb2-4" aria-hidden="true"></a>        <span class="co">## products and quantities all exist:</span></span>
+<span id="cb2-5"><a href="#cb2-5" aria-hidden="true"></a>        product_map <span class="op">=</span> {</span>
+<span id="cb2-6"><a href="#cb2-6" aria-hidden="true"></a>            k.<span class="bu">id</span>: k</span>
+<span id="cb2-7"><a href="#cb2-7" aria-hidden="true"></a>            <span class="cf">for</span> k <span class="kw">in</span> Product.select().where(Product.<span class="bu">id</span>.in_(details[<span class="st">&#39;products&#39;</span>]))</span>
+<span id="cb2-8"><a href="#cb2-8" aria-hidden="true"></a>        }</span>
+<span id="cb2-9"><a href="#cb2-9" aria-hidden="true"></a>        <span class="va">self</span>.product_map <span class="op">=</span> product_map</span>
+<span id="cb2-10"><a href="#cb2-10" aria-hidden="true"></a>        <span class="va">self</span>.line_items <span class="op">=</span> []</span>
+<span id="cb2-11"><a href="#cb2-11" aria-hidden="true"></a>        <span class="cf">for</span> product_id, quantity <span class="kw">in</span> details[<span class="st">&#39;products&#39;</span>].items():</span>
+<span id="cb2-12"><a href="#cb2-12" aria-hidden="true"></a>            <span class="cf">if</span> <span class="kw">not</span> product_map.get(product_id):</span>
+<span id="cb2-13"><a href="#cb2-13" aria-hidden="true"></a>                <span class="cf">raise</span> <span class="pp">Exception</span>(<span class="ss">f&#39;error: product_id(</span><span class="sc">{</span>product_id<span class="sc">}</span><span class="ss">) does not exist&#39;</span>)</span>
+<span id="cb2-14"><a href="#cb2-14" aria-hidden="true"></a>            <span class="cf">if</span> quantity <span class="op">&lt;=</span> <span class="dv">0</span>:</span>
+<span id="cb2-15"><a href="#cb2-15" aria-hidden="true"></a>                <span class="cf">raise</span> <span class="pp">Exception</span>(<span class="ss">f&#39;error: product </span><span class="sc">{</span>product_map[product_id]<span class="sc">.</span>name<span class="sc">}</span><span class="ss"> quantity must be &gt; 0&#39;</span>)</span>
+<span id="cb2-16"><a href="#cb2-16" aria-hidden="true"></a></span>
+<span id="cb2-17"><a href="#cb2-17" aria-hidden="true"></a>            <span class="co"># may as well do this while we&#39;re in here</span></span>
+<span id="cb2-18"><a href="#cb2-18" aria-hidden="true"></a>            <span class="va">self</span>.line_items.append(</span>
+<span id="cb2-19"><a href="#cb2-19" aria-hidden="true"></a>                LineItem(</span>
+<span id="cb2-20"><a href="#cb2-20" aria-hidden="true"></a>                    quantity<span class="op">=</span>quantity,</span>
+<span id="cb2-21"><a href="#cb2-21" aria-hidden="true"></a>                    product_id<span class="op">=</span>product_id,</span>
+<span id="cb2-22"><a href="#cb2-22" aria-hidden="true"></a>                )</span>
+<span id="cb2-23"><a href="#cb2-23" aria-hidden="true"></a>            )</span>
+<span id="cb2-24"><a href="#cb2-24" aria-hidden="true"></a></span>
+<span id="cb2-25"><a href="#cb2-25" aria-hidden="true"></a>        <span class="co">## ensure user exists</span></span>
+<span id="cb2-26"><a href="#cb2-26" aria-hidden="true"></a>        User.get(User.<span class="bu">id</span> <span class="op">==</span> user_id)</span>
+<span id="cb2-27"><a href="#cb2-27" aria-hidden="true"></a></span>
+<span id="cb2-28"><a href="#cb2-28" aria-hidden="true"></a>        <span class="co">## all we need.</span></span>
+<span id="cb2-29"><a href="#cb2-29" aria-hidden="true"></a>        <span class="va">self</span>.user_id <span class="op">=</span> user_id</span>
+<span id="cb2-30"><a href="#cb2-30" aria-hidden="true"></a>        <span class="va">self</span>.order_details <span class="op">=</span> order_details            </span>
+<span id="cb2-31"><a href="#cb2-31" aria-hidden="true"></a></span>
+<span id="cb2-32"><a href="#cb2-32" aria-hidden="true"></a><span class="kw">def</span> create_order(order_details: ICreateOrder):</span>
+<span id="cb2-33"><a href="#cb2-33" aria-hidden="true"></a>    order <span class="op">=</span> Order(user_id<span class="op">=</span>order_details.user_id)</span>
+<span id="cb2-34"><a href="#cb2-34" aria-hidden="true"></a>    order.save()</span>
+<span id="cb2-35"><a href="#cb2-35" aria-hidden="true"></a>    <span class="cf">for</span> li <span class="kw">in</span> order_details.line_items:</span>
+<span id="cb2-36"><a href="#cb2-36" aria-hidden="true"></a>        li.order_id <span class="op">=</span> order.<span class="bu">id</span></span>
+<span id="cb2-37"><a href="#cb2-37" aria-hidden="true"></a>    LineItem.insert_many(order_details.line_items)</span></code></pre></div>
+<p>Sure, the code is longer but now you can see a clear deliniation of responsibility. <code>ICreateOrder</code> is an interface responsible for validating inputs, <code>create_order</code> is very clear on what actions it takes and when it does those actions. It creates an order, it updates all of the line items we cleverly stored (so as not to iterate the list twice) with the correct order id, and then saves them.</p>
+<p>Now our http endpoint can look like this:</p>
+<div class="sourceCode" id="cb3"><pre class="sourceCode python"><code class="sourceCode python"><span id="cb3-1"><a href="#cb3-1" aria-hidden="true"></a><span class="at">@app.route</span>(<span class="st">&#39;/order&#39;</span>, methods<span class="op">=</span>[<span class="st">&#39;POST&#39;</span>])</span>
+<span id="cb3-2"><a href="#cb3-2" aria-hidden="true"></a><span class="kw">def</span> order():</span>
+<span id="cb3-3"><a href="#cb3-3" aria-hidden="true"></a>    details <span class="op">=</span> request.get_json()</span>
+<span id="cb3-4"><a href="#cb3-4" aria-hidden="true"></a>    create_order(ICreateOrder(details))</span></code></pre></div>
+<p>More clarity. Someone pinch me. We can still improve upon this but now we see the responsibilities better:</p>
+<p>HTTP endpoint:</p>
+<ul>
+<li>Parse out the details of the request</li>
+<li>Return a valid response or renders a template</li>
+</ul>
+<p><code>ICreateOrder</code>:</p>
+<ul>
+<li>Creates/Saves ORM objects</li>
+</ul>
+<p><code>create_order</code>:</p>
+<ul>
+<li>Handles the process of order creation</li>
+</ul>
+<p>Clarity is great but what do we really gain? We gain the ability to re-use this process elsewhere. Once this function is hooked up to another system or used via an API while you migrate to react you can <em>just use</em> the process without mucking around in the other thousand endpoints, or rewriting the function as a rest call or...</p>
+<p>You said we can improve upon this still!? HEKCIN YES [sic]. The fact that you need to screw around with any of this is crazy making enough but we're seeing clear business processes developing independent of the noise, let's make some more indirection with interfaces.</p>
+<div class="sourceCode" id="cb4"><pre class="sourceCode python"><code class="sourceCode python"><span id="cb4-1"><a href="#cb4-1" aria-hidden="true"></a><span class="kw">class</span> ResponseType(Enum):</span>
+<span id="cb4-2"><a href="#cb4-2" aria-hidden="true"></a>    JSON<span class="op">=</span><span class="dv">1</span></span>
+<span id="cb4-3"><a href="#cb4-3" aria-hidden="true"></a>    TEMPLATE<span class="op">=</span><span class="dv">2</span></span>
+<span id="cb4-4"><a href="#cb4-4" aria-hidden="true"></a></span>
+<span id="cb4-5"><a href="#cb4-5" aria-hidden="true"></a><span class="kw">class</span> CustomResponse:</span>
+<span id="cb4-6"><a href="#cb4-6" aria-hidden="true"></a>    <span class="kw">def</span> render(<span class="va">self</span>, response_type: ResponseType <span class="op">=</span> ResponseType.JSON):</span>
+<span id="cb4-7"><a href="#cb4-7" aria-hidden="true"></a>        data <span class="op">=</span> <span class="st">&#39;&#39;</span></span>
+<span id="cb4-8"><a href="#cb4-8" aria-hidden="true"></a>        mime_type <span class="op">=</span> <span class="st">&#39;&#39;</span></span>
+<span id="cb4-9"><a href="#cb4-9" aria-hidden="true"></a>        <span class="cf">if</span> response_type <span class="op">==</span> ResponseType.TEMPLATE:</span>
+<span id="cb4-10"><a href="#cb4-10" aria-hidden="true"></a>            data <span class="op">=</span> <span class="va">self</span>.render_template()</span>
+<span id="cb4-11"><a href="#cb4-11" aria-hidden="true"></a>            mime_type <span class="op">=</span> <span class="st">&#39;text_html&#39;</span></span>
+<span id="cb4-12"><a href="#cb4-12" aria-hidden="true"></a>        <span class="cf">else</span>:</span>
+<span id="cb4-13"><a href="#cb4-13" aria-hidden="true"></a>            data <span class="op">=</span> json.dumps(<span class="va">self</span>.data)</span>
+<span id="cb4-14"><a href="#cb4-14" aria-hidden="true"></a></span>
+<span id="cb4-15"><a href="#cb4-15" aria-hidden="true"></a>        <span class="cf">return</span> Response(</span>
+<span id="cb4-16"><a href="#cb4-16" aria-hidden="true"></a>            response<span class="op">=</span>data,</span>
+<span id="cb4-17"><a href="#cb4-17" aria-hidden="true"></a>            status<span class="op">=</span><span class="va">self</span>.status,</span>
+<span id="cb4-18"><a href="#cb4-18" aria-hidden="true"></a>            mimetype<span class="op">=</span>mime_type</span>
+<span id="cb4-19"><a href="#cb4-19" aria-hidden="true"></a>        )</span>
+<span id="cb4-20"><a href="#cb4-20" aria-hidden="true"></a></span>
+<span id="cb4-21"><a href="#cb4-21" aria-hidden="true"></a>    <span class="kw">def</span> render_template(<span class="va">self</span>):</span>
+<span id="cb4-22"><a href="#cb4-22" aria-hidden="true"></a>        <span class="co"># plug in your template renderer here</span></span>
+<span id="cb4-23"><a href="#cb4-23" aria-hidden="true"></a>        <span class="cf">return</span> template_engine.render(<span class="va">self</span>.template_file, <span class="va">self</span>.data)</span>
+<span id="cb4-24"><a href="#cb4-24" aria-hidden="true"></a></span>
+<span id="cb4-25"><a href="#cb4-25" aria-hidden="true"></a><span class="kw">class</span> CreateOrderResponse(CustomResponse):</span>
+<span id="cb4-26"><a href="#cb4-26" aria-hidden="true"></a>    template_file <span class="op">=</span> <span class="st">&#39;templates/create_order_response.templ&#39;</span></span>
+<span id="cb4-27"><a href="#cb4-27" aria-hidden="true"></a></span>
+<span id="cb4-28"><a href="#cb4-28" aria-hidden="true"></a>    <span class="kw">def</span> <span class="fu">__init__</span>(<span class="va">self</span>, data, status: <span class="bu">int</span> <span class="op">=</span> <span class="dv">201</span>):</span>
+<span id="cb4-29"><a href="#cb4-29" aria-hidden="true"></a>        <span class="va">self</span>.status <span class="op">=</span> status</span>
+<span id="cb4-30"><a href="#cb4-30" aria-hidden="true"></a>        <span class="va">self</span>.data <span class="op">=</span> data</span></code></pre></div>
+<p>A lot of code here that kind of looks like overkill, we're just returning an HTTP response afterall. Yea, you're right, kind of. This logic gets repeated across endpoints constantly and they never remain consistent long term. Instead, we can centralize this with an explicit way of handling responses that actually assists and simplifies debugging problems and working/reasoning your way through the HTTP request -&gt; process(es) -&gt; response flow.</p>
+<div class="sourceCode" id="cb5"><pre class="sourceCode python"><code class="sourceCode python"><span id="cb5-1"><a href="#cb5-1" aria-hidden="true"></a><span class="kw">def</span> create_order(order_details: ICreateOrder) <span class="op">-&gt;</span> CustomResponse:</span>
+<span id="cb5-2"><a href="#cb5-2" aria-hidden="true"></a>    order <span class="op">=</span> Order(user_id<span class="op">=</span>order_details.user_id)</span>
+<span id="cb5-3"><a href="#cb5-3" aria-hidden="true"></a>    order.save()</span>
+<span id="cb5-4"><a href="#cb5-4" aria-hidden="true"></a>    amount <span class="op">=</span> <span class="dv">0</span></span>
+<span id="cb5-5"><a href="#cb5-5" aria-hidden="true"></a>    <span class="cf">for</span> li <span class="kw">in</span> order_details.line_items:</span>
+<span id="cb5-6"><a href="#cb5-6" aria-hidden="true"></a>        li.order_id <span class="op">=</span> order.<span class="bu">id</span></span>
+<span id="cb5-7"><a href="#cb5-7" aria-hidden="true"></a>        amount <span class="op">+=</span> li.quantity <span class="op">*</span> <span class="va">self</span>.product_map[li.product_id].price</span>
+<span id="cb5-8"><a href="#cb5-8" aria-hidden="true"></a></span>
+<span id="cb5-9"><a href="#cb5-9" aria-hidden="true"></a>    LineItem.insert_many(order_details.line_items)</span>
+<span id="cb5-10"><a href="#cb5-10" aria-hidden="true"></a></span>
+<span id="cb5-11"><a href="#cb5-11" aria-hidden="true"></a>    <span class="cf">return</span> CreateOrderResponse(</span>
+<span id="cb5-12"><a href="#cb5-12" aria-hidden="true"></a>        data<span class="op">=</span>{</span>
+<span id="cb5-13"><a href="#cb5-13" aria-hidden="true"></a>            <span class="st">&#39;amount&#39;</span>: amount,</span>
+<span id="cb5-14"><a href="#cb5-14" aria-hidden="true"></a>            <span class="st">&#39;order_id&#39;</span>: order.<span class="bu">id</span>,</span>
+<span id="cb5-15"><a href="#cb5-15" aria-hidden="true"></a>        }</span>
+<span id="cb5-16"><a href="#cb5-16" aria-hidden="true"></a>    )</span></code></pre></div>
+<p>We've added some useful details our consumers may want in the future; amount, and order_id. This response interface allows our endpoint to make the distinction on how it renders the return values and what it actually does with that information. It's important to note that you definitely <em>should not</em> call <code>.render()</code> in the process function, you don't know who or what is consuming this! For instance, if we have a business process that needs to create an order in the middle of another process they can still use <code>CreateOrderResponse.data</code> to grab the amount/order_id. Also notice, we don't have any HTTP server functions muddled in here, there's no ORM trouble mixed into it - we're already using the ORM as a data structure <em>as one should!</em></p>
+<p>Likewise our endpoint needs to change now:</p>
+<div class="sourceCode" id="cb6"><pre class="sourceCode python"><code class="sourceCode python"><span id="cb6-1"><a href="#cb6-1" aria-hidden="true"></a><span class="at">@app.route</span>(<span class="st">&#39;/order&#39;</span>, methods<span class="op">=</span>[<span class="st">&#39;POST&#39;</span>])</span>
+<span id="cb6-2"><a href="#cb6-2" aria-hidden="true"></a><span class="kw">def</span> order():</span>
+<span id="cb6-3"><a href="#cb6-3" aria-hidden="true"></a>    details <span class="op">=</span> request.get_json()</span>
+<span id="cb6-4"><a href="#cb6-4" aria-hidden="true"></a>    <span class="cf">return</span> create_order(ICreateOrder(details)).render()</span></code></pre></div>
+<p>That's it. That's about as complicated as an endpoint should ever be. From here we could introduce a decorators that takes an <code>I</code> interface to validate the incoming data to ensure it's well formed before we even get to the endpoint. We'll ignore this since decorators aren't well understood even by pythonistas.</p>
+<p>In this case you couldd end up with an endpoint that looks like:</p>
+<div class="sourceCode" id="cb7"><pre class="sourceCode python"><code class="sourceCode python"><span id="cb7-1"><a href="#cb7-1" aria-hidden="true"></a><span class="at">@endpoint</span>(<span class="st">&#39;/order&#39;</span>, methods<span class="op">=</span>[<span class="st">&#39;POST&#39;</span>], ICreateOrder)</span>
+<span id="cb7-2"><a href="#cb7-2" aria-hidden="true"></a><span class="kw">def</span> order(<span class="kw">in</span>: ICreateOrder):</span>
+<span id="cb7-3"><a href="#cb7-3" aria-hidden="true"></a>    <span class="cf">return</span> create_order(<span class="kw">in</span>)</span></code></pre></div>
+<p>And the decorator would handle calling <code>.render</code>, creating the <code>ICreateOrder</code> from the request JSON, and whatever else our little heart desires. Maybe setting up a transaction for the process, maybe ejecting the CD-ROM so we have somewhere to place our coffee mug.</p>
+<p>This is a really nice way to handle errors since the decorator can handle the errors appropriately. Here's what that would look like with error handling in the endpoint itself:</p>
+<div class="sourceCode" id="cb8"><pre class="sourceCode python"><code class="sourceCode python"><span id="cb8-1"><a href="#cb8-1" aria-hidden="true"></a><span class="kw">class</span> GenericException(CustomResponse):</span>
+<span id="cb8-2"><a href="#cb8-2" aria-hidden="true"></a>    <span class="kw">def</span> <span class="fu">__init__</span>(<span class="va">self</span>, data, status<span class="op">=</span><span class="dv">400</span>):</span>
+<span id="cb8-3"><a href="#cb8-3" aria-hidden="true"></a>        <span class="va">self</span>.data <span class="op">=</span> {</span>
+<span id="cb8-4"><a href="#cb8-4" aria-hidden="true"></a>            <span class="st">&#39;message&#39;</span>: <span class="bu">str</span>(data),</span>
+<span id="cb8-5"><a href="#cb8-5" aria-hidden="true"></a>            <span class="st">&#39;backtrace&#39;</span>: traceback.format_exception(</span>
+<span id="cb8-6"><a href="#cb8-6" aria-hidden="true"></a>                etype<span class="op">=</span><span class="bu">type</span>(data),</span>
+<span id="cb8-7"><a href="#cb8-7" aria-hidden="true"></a>                value<span class="op">=</span>data,</span>
+<span id="cb8-8"><a href="#cb8-8" aria-hidden="true"></a>                tb<span class="op">=</span>data.__traceback__,</span>
+<span id="cb8-9"><a href="#cb8-9" aria-hidden="true"></a>            ),</span>
+<span id="cb8-10"><a href="#cb8-10" aria-hidden="true"></a>        }</span>
+<span id="cb8-11"><a href="#cb8-11" aria-hidden="true"></a>        <span class="va">self</span>.status <span class="op">=</span> status</span>
+<span id="cb8-12"><a href="#cb8-12" aria-hidden="true"></a></span>
+<span id="cb8-13"><a href="#cb8-13" aria-hidden="true"></a><span class="at">@app.route</span>(<span class="st">&#39;/order&#39;</span>, methods<span class="op">=</span>[<span class="st">&#39;POST&#39;</span>])</span>
+<span id="cb8-14"><a href="#cb8-14" aria-hidden="true"></a><span class="kw">def</span> order():</span>
+<span id="cb8-15"><a href="#cb8-15" aria-hidden="true"></a>    details <span class="op">=</span> request.get_json()</span>
+<span id="cb8-16"><a href="#cb8-16" aria-hidden="true"></a>    <span class="cf">try</span>:</span>
+<span id="cb8-17"><a href="#cb8-17" aria-hidden="true"></a>        <span class="cf">return</span> create_order(ICreateOrder(details)).render()</span>
+<span id="cb8-18"><a href="#cb8-18" aria-hidden="true"></a>    <span class="cf">except</span> <span class="pp">Exception</span> <span class="im">as</span> e:</span>
+<span id="cb8-19"><a href="#cb8-19" aria-hidden="true"></a>        <span class="cf">return</span> GenericException(data<span class="op">=</span>e).render()</span></code></pre></div>
+<p>Now when our endpoint raises an exception we'll get back reasonable data.</p>
+<p>That's it. That's all there is to it. This is a very targeted/specific example of how to move all of your endpoint code into logical chunks that make sense across the HTTP server, database layers and abstractions, template/json endpoint rendering, and provides a way for your process functions to model the actual business process they're performing rather than modeling how a typical HTTP request flows. It's a small change, requires more code, but you gain so much in readability and logical separation of responsibilities that you have practically no excuse <em>not</em> to reuse the process where needed!</p>
+<h2 id="examples-ported-to-other-languages">Examples ported to other languages</h2>
+<p>These are all going to be fragments rather than reproducing the entirety of the examples above as even if you're not a python person (I'm not, either) it's readable enough to follow along.</p>
+<h3 id="go">Go</h3>
+<div class="sourceCode" id="cb9"><pre class="sourceCode go"><code class="sourceCode go"><span id="cb9-1"><a href="#cb9-1" aria-hidden="true"></a></span>
+<span id="cb9-2"><a href="#cb9-2" aria-hidden="true"></a><span class="co">// types</span></span>
+<span id="cb9-3"><a href="#cb9-3" aria-hidden="true"></a><span class="kw">type</span> I_CreateOrder <span class="kw">struct</span> {</span>
+<span id="cb9-4"><a href="#cb9-4" aria-hidden="true"></a>    Items []<span class="kw">struct</span>{</span>
+<span id="cb9-5"><a href="#cb9-5" aria-hidden="true"></a>        ProductID <span class="dt">uint64</span> <span class="st">`json:&quot;product_id&quot;`</span></span>
+<span id="cb9-6"><a href="#cb9-6" aria-hidden="true"></a>        Quantity  <span class="dt">uint64</span> <span class="st">`json:&quot;quantity&quot;`</span></span>
+<span id="cb9-7"><a href="#cb9-7" aria-hidden="true"></a>    }</span>
+<span id="cb9-8"><a href="#cb9-8" aria-hidden="true"></a>}</span>
+<span id="cb9-9"><a href="#cb9-9" aria-hidden="true"></a></span>
+<span id="cb9-10"><a href="#cb9-10" aria-hidden="true"></a><span class="kw">func</span> (i *I_CreateOrder) FromJSON(json []<span class="dt">byte</span>) *Response {</span>
+<span id="cb9-11"><a href="#cb9-11" aria-hidden="true"></a>    <span class="kw">if</span> err := json.Unmarshal(json, i); err != <span class="ot">nil</span> {</span>
+<span id="cb9-12"><a href="#cb9-12" aria-hidden="true"></a>        <span class="kw">return</span> S_Exception{</span>
+<span id="cb9-13"><a href="#cb9-13" aria-hidden="true"></a>            Message: <span class="st">&quot;Invalid input.&quot;</span>,</span>
+<span id="cb9-14"><a href="#cb9-14" aria-hidden="true"></a>            Error: err.Error(),</span>
+<span id="cb9-15"><a href="#cb9-15" aria-hidden="true"></a>        }</span>
+<span id="cb9-16"><a href="#cb9-16" aria-hidden="true"></a>    }</span>
+<span id="cb9-17"><a href="#cb9-17" aria-hidden="true"></a>    <span class="kw">return</span> <span class="ot">nil</span></span>
+<span id="cb9-18"><a href="#cb9-18" aria-hidden="true"></a>}</span>
+<span id="cb9-19"><a href="#cb9-19" aria-hidden="true"></a></span>
+<span id="cb9-20"><a href="#cb9-20" aria-hidden="true"></a><span class="kw">type</span> Response <span class="kw">interface</span> {</span>
+<span id="cb9-21"><a href="#cb9-21" aria-hidden="true"></a>    <span class="kw">func</span> Render() (<span class="dt">int</span>, <span class="dt">string</span>)</span>
+<span id="cb9-22"><a href="#cb9-22" aria-hidden="true"></a>}</span>
+<span id="cb9-23"><a href="#cb9-23" aria-hidden="true"></a></span>
+<span id="cb9-24"><a href="#cb9-24" aria-hidden="true"></a><span class="kw">type</span> S_CreateOrder <span class="kw">struct</span> {</span>
+<span id="cb9-25"><a href="#cb9-25" aria-hidden="true"></a>    OrderID <span class="dt">uint64</span> <span class="st">`json:&quot;order_id&quot;`</span></span>
+<span id="cb9-26"><a href="#cb9-26" aria-hidden="true"></a>    Amount  <span class="dt">uint64</span> <span class="st">`json:&quot;amount&quot;`</span></span>
+<span id="cb9-27"><a href="#cb9-27" aria-hidden="true"></a>}</span>
+<span id="cb9-28"><a href="#cb9-28" aria-hidden="true"></a><span class="kw">func</span> (co *S_CreateOrder) Render() (<span class="dt">int</span>, <span class="dt">string</span>) {</span>
+<span id="cb9-29"><a href="#cb9-29" aria-hidden="true"></a>    <span class="co">//...this logic can be extracted out</span></span>
+<span id="cb9-30"><a href="#cb9-30" aria-hidden="true"></a>}</span>
+<span id="cb9-31"><a href="#cb9-31" aria-hidden="true"></a></span>
+<span id="cb9-32"><a href="#cb9-32" aria-hidden="true"></a><span class="kw">type</span> S_Exception <span class="kw">struct</span> {</span>
+<span id="cb9-33"><a href="#cb9-33" aria-hidden="true"></a>    Message <span class="dt">string</span></span>
+<span id="cb9-34"><a href="#cb9-34" aria-hidden="true"></a>    Error   <span class="dt">string</span></span>
+<span id="cb9-35"><a href="#cb9-35" aria-hidden="true"></a>}</span>
+<span id="cb9-36"><a href="#cb9-36" aria-hidden="true"></a><span class="kw">func</span> (e *S_Exception) Render() (<span class="dt">int</span>, <span class="dt">string</span>) {</span>
+<span id="cb9-37"><a href="#cb9-37" aria-hidden="true"></a>    <span class="co">//...same</span></span>
+<span id="cb9-38"><a href="#cb9-38" aria-hidden="true"></a>}</span>
+<span id="cb9-39"><a href="#cb9-39" aria-hidden="true"></a></span>
+<span id="cb9-40"><a href="#cb9-40" aria-hidden="true"></a><span class="co">// Create order process</span></span>
+<span id="cb9-41"><a href="#cb9-41" aria-hidden="true"></a><span class="kw">func</span> CreateOrder(db *gorm.DB, details *I_CreateOrder) *Response {</span>
+<span id="cb9-42"><a href="#cb9-42" aria-hidden="true"></a>    pids := []<span class="dt">uint64</span>{}</span>
+<span id="cb9-43"><a href="#cb9-43" aria-hidden="true"></a>    <span class="kw">for</span> _, detail := <span class="kw">range</span> details.Items {</span>
+<span id="cb9-44"><a href="#cb9-44" aria-hidden="true"></a>        <span class="kw">if</span> detail.Quantity &lt;= <span class="dv">0</span> {</span>
+<span id="cb9-45"><a href="#cb9-45" aria-hidden="true"></a>            <span class="kw">return</span> S_Exception{</span>
+<span id="cb9-46"><a href="#cb9-46" aria-hidden="true"></a>                Message: <span class="st">&quot;Quantity of order item must be &gt; 0&quot;</span>,</span>
+<span id="cb9-47"><a href="#cb9-47" aria-hidden="true"></a>                Error: <span class="st">&quot;&quot;</span>,</span>
+<span id="cb9-48"><a href="#cb9-48" aria-hidden="true"></a>            }</span>
+<span id="cb9-49"><a href="#cb9-49" aria-hidden="true"></a>        }</span>
+<span id="cb9-50"><a href="#cb9-50" aria-hidden="true"></a>        pids = <span class="bu">append</span>(pids, detail.ProductID)</span>
+<span id="cb9-51"><a href="#cb9-51" aria-hidden="true"></a>    }</span>
+<span id="cb9-52"><a href="#cb9-52" aria-hidden="true"></a>    ps := []Product{}</span>
+<span id="cb9-53"><a href="#cb9-53" aria-hidden="true"></a>    <span class="kw">if</span> err := db.Where(<span class="st">&quot;id in (?)&quot;</span>, pids).Find(&amp;ps).Error; err != <span class="ot">nil</span> {</span>
+<span id="cb9-54"><a href="#cb9-54" aria-hidden="true"></a>        <span class="kw">return</span> S_Exception{</span>
+<span id="cb9-55"><a href="#cb9-55" aria-hidden="true"></a>            Message: <span class="st">&quot;Requested product id doesn&#39;t exist&quot;</span>,</span>
+<span id="cb9-56"><a href="#cb9-56" aria-hidden="true"></a>            Error: err.Error(),</span>
+<span id="cb9-57"><a href="#cb9-57" aria-hidden="true"></a>        };</span>
+<span id="cb9-58"><a href="#cb9-58" aria-hidden="true"></a>    }</span>
+<span id="cb9-59"><a href="#cb9-59" aria-hidden="true"></a>    </span>
+<span id="cb9-60"><a href="#cb9-60" aria-hidden="true"></a>    <span class="co">// do all of your ORM stuff</span></span>
+<span id="cb9-61"><a href="#cb9-61" aria-hidden="true"></a></span>
+<span id="cb9-62"><a href="#cb9-62" aria-hidden="true"></a>    <span class="kw">return</span> S_CreateOrder{</span>
+<span id="cb9-63"><a href="#cb9-63" aria-hidden="true"></a>        OrderID: order.ID,</span>
+<span id="cb9-64"><a href="#cb9-64" aria-hidden="true"></a>        Amount: order.Amount,</span>
+<span id="cb9-65"><a href="#cb9-65" aria-hidden="true"></a>    }</span>
+<span id="cb9-66"><a href="#cb9-66" aria-hidden="true"></a>}</span>
+<span id="cb9-67"><a href="#cb9-67" aria-hidden="true"></a></span>
+<span id="cb9-68"><a href="#cb9-68" aria-hidden="true"></a></span></code></pre></div>
+
+
+    </div>
+    <div id="footer">
+      <h6>// social twitter:<a href="https://twitter.com/oynoto">@oynoto</a>, patreon:<a href="https://www.patreon.com/oynot">@oynot</a>, github:<a href="https://github.com/tony-o">tony-o</a></h6>
+    </div>
+    <script src="//cdnjs.cloudflare.com/ajax/libs/highlight.js/11.2.0/highlight.min.js"></script>
+    <script src="/s/hljs-raku.js"></script>
+    <script>
+      hljs.registerLanguage("raku", hljs_raku);
+      (function(){
+        languages = {}
+        pres      = document.getElementsByTagName("pre");
+        for(i = 0; i < hljs.listLanguages().length; i++){
+          languages['language-' + hljs.listLanguages()[i]] = 1;
+        }
+        for(i = 0; i < pres.length; i++){
+          pre = pres[i];
+          cn  = 'language-plaintext';
+          ls  = (pre.getAttribute("class") || 'plaintext').split(' ');
+          for(j = 0; j < ls.length; j++){
+            if(languages['language-' + ls[j]]){
+              cn = 'language-' + ls[j];
+              break;
+            }
+          }
+          codes = pre.getElementsByTagName("code")
+          for(j = 0; j < codes.length; j++){
+            codes[j].setAttribute("class", (codes[j].getAttribute("class") + " hljs " + cn).trim())
+          }
+        }
+        hljs.highlightAll();
+      })();
+    </script>
+    <script async src="https://www.googletagmanager.com/gtag/js?id=G-FKJQZPJ2XK"></script>
+    <script>
+      window.dataLayer = window.dataLayer || [];
+      function gtag(){dataLayer.push(arguments);}
+      gtag('js', new Date());
+      gtag('config', 'G-FKJQZPJ2XK');
+    </script>
+
+  </body>
+</html>

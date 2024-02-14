@@ -296,6 +296,9 @@ process they're performing rather than modeling how a typical HTTP request flows
 more code, but you gain so much in readability and logical separation of responsibilities that you have practically
 no excuse *not* to reuse the process where needed!
 
+Next steps from here make it possible to generate all of your routes files (either by decorators or by static
+generation) and create a RESTish API built entirely around *processes* rather than around how HTTP servers work.
+
 ## Examples ported to other languages
 
 These are all going to be fragments rather than reproducing the entirety of the examples above as even if you're
@@ -370,7 +373,7 @@ func CreateOrder(db *gorm.DB, details *I_CreateOrder) *Response {
         Amount: order.Amount,
     }
 }
+```
 
-
-
+```raku
 ```
